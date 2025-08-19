@@ -81,13 +81,6 @@ export default function Appointments() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold text-foreground">Agendamentos</h2>
-        <p className="text-muted-foreground">
-          Visualize e gerencie os agendamentos das clínicas
-        </p>
-      </div>
-
       <div className="grid gap-4 md:grid-cols-2">
         <div className="space-y-2">
           <Label htmlFor="search">Buscar</Label>

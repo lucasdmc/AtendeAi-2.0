@@ -418,7 +418,6 @@ export default function Conversations() {
       <div className="w-80 border-r flex flex-col">
         {/* Header da sidebar */}
         <div className="p-4 border-b bg-muted/30">
-          <h2 className="text-lg font-semibold mb-3">Conversas</h2>
           <div className="relative">
             <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
             <Input

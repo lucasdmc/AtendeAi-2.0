@@ -258,13 +258,6 @@ export default function Context() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold text-foreground">Contexto da Clínica</h2>
-        <p className="text-muted-foreground">
-          Visualize as informações contextuais configuradas para o atendente virtual
-        </p>
-      </div>
-
       <Tabs defaultValue="geral" className="w-full">
         <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="geral">Geral</TabsTrigger>

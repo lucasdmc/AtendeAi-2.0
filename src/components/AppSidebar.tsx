@@ -1,4 +1,4 @@
-import { Building2, Users, Calendar, MessageSquare, FileText } from "lucide-react"
+import { Building2, Users, Calendar, MessageSquare, FileText, Home } from "lucide-react"
 import { NavLink, useLocation } from "react-router-dom"
 
 import {
@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/sidebar"
 
 const items = [
+  { title: "Dashboard", url: "/", icon: Home },
   { title: "Gestão de Clínicas", url: "/clinics", icon: Building2 },
   { title: "Gestão de Usuários", url: "/users", icon: Users },
   { title: "Agendamentos", url: "/appointments", icon: Calendar },
