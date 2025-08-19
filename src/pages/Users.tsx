@@ -1,11 +1,12 @@
 import { useState } from "react"
-import { Plus, Edit, Trash2 } from "lucide-react"
+import { Plus, Edit, Trash2, User, Mail, Shield, Building2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Badge } from "@/components/ui/badge"
 
 interface User {
   id: string
@@ -87,6 +88,19 @@ export default function Users() {
       viewer: "Visualizador"
     }
     return roles[role] || role
+  }
+
+  const getRoleBadgeVariant = (role: string): "default" | "secondary" | "destructive" | "outline" => {
+    switch (role) {
+      case "admin":
+        return "default"
+      case "operator":
+        return "secondary"
+      case "viewer":
+        return "outline"
+      default:
+        return "outline"
+    }
   }
 
   return (
@@ -176,45 +190,93 @@ export default function Users() {
         </Dialog>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {users.map((user) => (
-          <Card key={user.id} className="hover:shadow-md transition-shadow">
-            <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                <span>{user.name}</span>
-                <div className="flex gap-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => handleOpenDialog(user)}
-                  >
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="destructive"
-                    onClick={() => handleDelete(user.id)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+      <div className="border rounded-lg">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-[300px]">
+                <div className="flex items-center gap-2">
+                  <User className="h-4 w-4" />
+                  Nome
                 </div>
-              </CardTitle>
-              <CardDescription>{user.email}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <Label className="text-sm font-medium">Perfil:</Label>
-                  <span className="text-sm">{getRoleLabel(user.role)}</span>
+              </TableHead>
+              <TableHead>
+                <div className="flex items-center gap-2">
+                  <Mail className="h-4 w-4" />
+                  E-mail
                 </div>
-                <div className="flex justify-between">
-                  <Label className="text-sm font-medium">Clínica:</Label>
-                  <span className="text-sm">{user.clinic}</span>
+              </TableHead>
+              <TableHead>
+                <div className="flex items-center gap-2">
+                  <Shield className="h-4 w-4" />
+                  Perfil
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+              </TableHead>
+              <TableHead>
+                <div className="flex items-center gap-2">
+                  <Building2 className="h-4 w-4" />
+                  Clínica
+                </div>
+              </TableHead>
+              <TableHead className="text-right w-[140px]">Ações</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {users.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
+                  Nenhum usuário cadastrado
+                </TableCell>
+              </TableRow>
+            ) : (
+              users.map((user) => (
+                <TableRow key={user.id} className="hover:bg-muted/50">
+                  <TableCell className="font-medium">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                        <User className="h-4 w-4 text-primary" />
+                      </div>
+                      {user.name}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="text-sm text-muted-foreground">
+                      {user.email}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant={getRoleBadgeVariant(user.role)}>
+                      {getRoleLabel(user.role)}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <div className="text-sm">
+                      {user.clinic}
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex gap-2 justify-end">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleOpenDialog(user)}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => handleDelete(user.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
       </div>
     </div>
   )
