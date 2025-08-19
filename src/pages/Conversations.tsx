@@ -13,7 +13,8 @@ import {
   Smile,
   UserCheck,
   Bot,
-  Users
+  Users,
+  Paperclip
 } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -593,6 +594,9 @@ export default function Conversations() {
                 <div className="flex items-end gap-2">
                   <Button variant="ghost" size="sm">
                     <Smile className="h-4 w-4" />
+                  </Button>
+                  <Button variant="ghost" size="sm" title="Anexar arquivo">
+                    <Paperclip className="h-4 w-4" />
                   </Button>
                   
                   <div className="flex-1 relative">
