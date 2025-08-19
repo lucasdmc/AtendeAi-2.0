@@ -258,24 +258,11 @@ export default function Context() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-foreground">Contexto da Clínica</h2>
-          <p className="text-muted-foreground">
-            Visualize as informações contextuais configuradas para o atendente virtual
-          </p>
-        </div>
-        
-        <div className="w-72">
-          <Select value={selectedClinic} onValueChange={setSelectedClinic}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="cardioprime_blumenau_2024">CardioPrime - Blumenau</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+      <div>
+        <h2 className="text-2xl font-bold text-foreground">Contexto da Clínica</h2>
+        <p className="text-muted-foreground">
+          Visualize as informações contextuais configuradas para o atendente virtual
+        </p>
       </div>
 
       <Tabs defaultValue="geral" className="w-full">
