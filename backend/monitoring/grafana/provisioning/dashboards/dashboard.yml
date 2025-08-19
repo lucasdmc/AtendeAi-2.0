@@ -1,0 +1,17 @@
+# =====================================================
+# PROVISIONAMENTO DE DASHBOARDS - GRAFANA
+# ATENDEAI 2.0 - ENTREGÁVEL 1
+# =====================================================
+
+apiVersion: 1
+
+providers:
+  - name: 'AtendeAI 2.0'
+    orgId: 1
+    folder: ''
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 10
+    allowUiUpdates: true
+    options:
+      path: /etc/grafana/provisioning/dashboards

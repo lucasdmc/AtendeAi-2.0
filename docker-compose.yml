@@ -1,0 +1,445 @@
+# =====================================================
+# DOCKER COMPOSE - ENTREGÁVEL 1: FUNDAÇÃO E INFRAESTRUTURA
+# ATENDEAI 2.0
+# =====================================================
+
+# Docker Compose version removed (obsolete in newer versions)
+
+services:
+  # =====================================================
+  # SUPABASE DATABASE (REMOTE)
+  # =====================================================
+  # PostgreSQL local removido - usando Supabase remoto
+  # As tabelas serão criadas diretamente no Supabase
+  # NOTA: Todos os serviços se conectam diretamente ao Supabase
+
+  # =====================================================
+  # REDIS CACHE CLUSTER
+  # =====================================================
+  redis:
+    image: redis:7-alpine
+    container_name: atendeai-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --requirepass redis123
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - atendeai-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # =====================================================
+  # KONG API GATEWAY
+  # =====================================================
+  kong:
+    image: kong:3.4
+    container_name: atendeai-kong
+    restart: unless-stopped
+    environment:
+      KONG_DATABASE: "off"
+      KONG_PROXY_ACCESS_LOG: /dev/stdout
+      KONG_ADMIN_ACCESS_LOG: /dev/stdout
+      KONG_PROXY_ERROR_LOG: /dev/stderr
+      KONG_ADMIN_ERROR_LOG: /dev/stderr
+      KONG_ADMIN_LISTEN: 0.0.0.0:8001
+      KONG_ADMIN_GUI_LISTEN: 0.0.0.0:8002
+      KONG_PROXY_LISTEN: 0.0.0.0:8000
+      KONG_PROXY_LISTEN_SSL: 0.0.0.0:8443
+      KONG_SSL: "off"
+      KONG_ANONYMOUS_REPORTS: "false"
+      KONG_CLUSTER_TELEMETRY: "false"
+    ports:
+      - "8000:8000"   # Proxy
+      - "8001:8001"   # Admin API
+      - "8002:8002"   # Admin GUI
+      - "8443:8443"   # SSL Proxy
+    volumes:
+      - ./framework/deliverables/01-foundation/kong-config.yml:/kong.yml
+    networks:
+      - atendeai-network
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "kong", "health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # =====================================================
+  # AUTH SERVICE
+  # =====================================================
+  auth-service:
+    build:
+      context: ./services/auth-service
+      dockerfile: Dockerfile
+    container_name: atendeai-auth-service
+    restart: unless-stopped
+    environment:
+      NODE_ENV: development
+      PORT: 3001
+      DATABASE_URL: postgresql://postgres:supabase@1234@db.kytphnasmdvebmdvvwtx.supabase.co:5432/postgres
+      REDIS_URL: redis://:redis123@redis:6379
+      JWT_SECRET: your-super-secret-jwt-key-change-in-production
+      JWT_ACCESS_TOKEN_EXPIRY: 15m
+      JWT_REFRESH_TOKEN_EXPIRY: 7d
+      BCRYPT_ROUNDS: 12
+      SUPABASE_URL: https://kytphnasmdvebmdvvwtx.supabase.co
+      SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt5dHBobmFzbWR2ZWJtZHZ2d3R4Iiwicm9lIjoiYW5vbiIsImlhdCI6MTc1NTYyMjgxMCwiZXhwIjoyMDcxMTk4ODEwfQ.gfH3VNqxLZWAbjlrlk44VrBdyF1QKv7CyOSLmhFwbqA
+      SUPABASE_SERVICE_ROLE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt5dHBobmFzbWR2ZWJtZHZ2d3R4Iiwicm9lIjoic2VydmljZV9yb2xlIiwiaWF0IjoxNzU1NjIyODEwLCJleHAiOjIwNzExOTg4MTB9LjM2SXA5Tld2cWg2YWVGUXVvd1Y3OXI1NEMyWVFQYzVOLU1uX2RuMlFENzA
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./services/auth-service:/app
+      - /app/node_modules
+    networks:
+      - atendeai-network
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # =====================================================
+  # USER SERVICE
+  # =====================================================
+  user-service:
+    build:
+      context: ./services/user-service
+      dockerfile: Dockerfile
+    container_name: atendeai-user-service
+    restart: unless-stopped
+    environment:
+      NODE_ENV: development
+      PORT: 3002
+      DATABASE_URL: postgresql://postgres:supabase@1234@db.kytphnasmdvebmdvvwtx.supabase.co:5432/postgres
+      REDIS_URL: redis://:redis123@redis:6379
+      JWT_SECRET: your-super-secret-jwt-key-change-in-production
+      SUPABASE_URL: https://kytphnasmdvebmdvvwtx.supabase.co
+      SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt5dHBobmFzbWR2ZWJtZHZ2d3R4Iiwicm9lIjoiYW5vbiIsImlhdCI6MTc1NTYyMjgxMCwiZXhwIjoyMDcxMTk4ODEwfQ.gfH3VNqxLZWAbjlrlk44VrBdyF1QKv7CyOSLmhFwbqA
+      SUPABASE_SERVICE_ROLE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt5dHBobmFzbWR2ZWJtZHZ2d3R4Iiwicm9lIjoic2VydmljZV9yb2xlIiwiaWF0IjoxNzU1NjIyODEwLCJleHAiOjIwNzExOTg4MTB9LjM2SXA5Tld2cWg2YWVGUXVvd1Y3OXI1NEMyWVFQYzVOLU1uX2RuMlFENzA
+    ports:
+      - "3002:3002"
+    volumes:
+      - ./services/user-service:/app
+      - /app/node_modules
+    networks:
+      - atendeai-network
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # =====================================================
+  # CLINIC SERVICE
+  # =====================================================
+  clinic-service:
+    build:
+      context: ./services/clinic-service
+      dockerfile: Dockerfile
+    container_name: atendeai-clinic-service
+    restart: unless-stopped
+    environment:
+      NODE_ENV: development
+      PORT: 3003
+      DATABASE_URL: postgresql://postgres:supabase@1234@db.kytphnasmdvebmdvvwtx.supabase.co:5432/postgres
+      REDIS_URL: redis://:redis123@redis:6379
+      JWT_SECRET: your-super-secret-jwt-key-change-in-production
+      SUPABASE_URL: https://kytphnasmdvebmdvvwtx.supabase.co
+      SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt5dHBobmFzbWR2ZWJtZHZ2d3R4Iiwicm9lIjoiYW5vbiIsImlhdCI6MTc1NTYyMjgxMCwiZXhwIjoyMDcxMTk4ODEwfQ.gfH3VNqxLZWAbjlrlk44VrBdyF1QKv7CyOSLmhFwbqA
+      SUPABASE_SERVICE_ROLE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt5dHBobmFzbWR2ZWJtZHZ2d3R4Iiwicm9lIjoic2VydmljZV9yb2xlIiwiaWF0IjoxNzU1NjIyODEwLCJleHAiOjIwNzExOTg4MTB9LjM2SXA5Tld2cWg2YWVGUXVvd1Y3OXI1NEMyWVFQYzVOLU1uX2RuMlFENzA
+    ports:
+      - "3003:3003"
+    volumes:
+      - ./services/clinic-service:/app
+      - /app/node_modules
+    networks:
+      - atendeai-network
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3003/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # =====================================================
+  # HEALTH SERVICE
+  # =====================================================
+  health-service:
+    build:
+      context: ./services/health-service
+      dockerfile: Dockerfile
+    container_name: atendeai-health-service
+    restart: unless-stopped
+    environment:
+      NODE_ENV: development
+      PORT: 3004
+      REDIS_URL: redis://:redis123@redis:6379
+    ports:
+      - "3004:3004"
+    volumes:
+      - ./services/health-service:/app
+      - /app/node_modules
+    networks:
+      - atendeai-network
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3004/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # =====================================================
+  # CONVERSATION SERVICE
+  # =====================================================
+  conversation-service:
+    build:
+      context: ./services/conversation-service
+      dockerfile: Dockerfile
+    container_name: atendeai-conversation-service
+    restart: unless-stopped
+    environment:
+      NODE_ENV: development
+      PORT: 3005
+      DATABASE_URL: postgresql://postgres:supabase@1234@db.kytphnasmdvebmdvvwtx.supabase.co:5432/postgres
+      REDIS_URL: redis://:redis123@redis:6379
+      JWT_SECRET: your-super-secret-jwt-key-change-in-production
+      SUPABASE_URL: https://kytphnasmdvebmdvvwtx.supabase.co
+      SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt5dHBobmFzbWR2ZWJtZHZ2d3R4Iiwicm9lIjoiYW5vbiIsImlhdCI6MTc1NTYyMjgxMCwiZXhwIjoyMDcxMTk4ODEwfQ.gfH3VNqxLZWAbjlrlk44VrBdyF1QKv7CyOSLmhFwbqA
+      SUPABASE_SERVICE_ROLE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt5dHBobmFzbWR2ZWJtZHZ2d3R4Iiwicm9lIjoic2VydmljZV9yb2xlIiwiaWF0IjoxNzU1NjIyODEwLCJleHAiOjIwNzExOTg4MTB9LjM2SXA5Tld2cWg2YWVGUXVvd1Y3OXI1NEMyWVFQYzVOLU1uX2RuMlFENzA
+    ports:
+      - "3005:3005"
+    volumes:
+      - ./services/conversation-service:/app
+      - /app/node_modules
+    networks:
+      - atendeai-network
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3005/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # =====================================================
+  # APPOINTMENT SERVICE
+  # =====================================================
+  appointment-service:
+    build:
+      context: ./services/appointment-service
+      dockerfile: Dockerfile
+    container_name: atendeai-appointment-service
+    restart: unless-stopped
+    environment:
+      NODE_ENV: development
+      PORT: 3006
+      DATABASE_URL: postgresql://postgres:supabase@1234@db.kytphnasmdvebmdvvwtx.supabase.co:5432/postgres
+      REDIS_URL: redis://:redis123@redis:6379
+      JWT_SECRET: your-super-secret-jwt-key-change-in-production
+      SUPABASE_URL: https://kytphnasmdvebmdvvwtx.supabase.co
+      SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt5dHBobmFzbWR2ZWJtZHZ2d3R4Iiwicm9lIjoiYW5vbiIsImlhdCI6MTc1NTYyMjgxMCwiZXhwIjoyMDcxMTk4ODEwfQ.gfH3VNqxLZWAbjlrlk44VrBdyF1QKv7CyOSLmhFwbqA
+      SUPABASE_SERVICE_ROLE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt5dHBobmFzbWR2ZWJtZHZ2d3R4Iiwicm9lIjoic2VydmljZV9yb2xlIiwiaWF0IjoxNzU1NjIyODEwLCJleHAiOjIwNzExOTg4MTB9LjM2SXA5Tld2cWg2YWVGUXVvd1Y3OXI1NEMyWVFQYzVOLU1uX2RuMlFENzA
+    ports:
+      - "3006:3006"
+    volumes:
+      - ./services/appointment-service:/app
+      - /app/node_modules
+    networks:
+      - atendeai-network
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3006/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # =====================================================
+  # WHATSAPP SERVICE
+  # =====================================================
+  whatsapp-service:
+    build:
+      context: ./services/whatsapp-service
+      dockerfile: Dockerfile
+    container_name: atendeai-whatsapp-service
+    restart: unless-stopped
+    environment:
+      NODE_ENV: development
+      PORT: 3007
+      DATABASE_URL: postgresql://postgres:supabase@1234@db.kytphnasmdvebmdvvwtx.supabase.co:5432/postgres
+      REDIS_URL: redis://:redis123@redis:6379
+      JWT_SECRET: your-super-secret-jwt-key-change-in-production
+      SUPABASE_URL: https://kytphnasmdvebmdvvwtx.supabase.co
+      SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt5dHBobmFzbWR2ZWJtZHZ2d3R4Iiwicm9lIjoiYW5vbiIsImlhdCI6MTc1NTYyMjgxMCwiZXhwIjoyMDcxMTk4ODEwfQ.gfH3VNqxLZWAbjlrlk44VrBdyF1QKv7CyOSLmhFwbqA
+      SUPABASE_SERVICE_ROLE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt5dHBobmFzbWR2ZWJtZHZ2d3R4Iiwicm9lIjoic2VydmljZV9yb2xlIiwiaWF0IjoxNzU1NjIyODEwLCJleHAiOjIwNzExOTg4MTB9LjM2SXA5Tld2cWg2YWVGUXVvd1Y3OXI1NEMyWVFQYzVOLU1uX2RuMlFENzA
+    ports:
+      - "3007:3007"
+    volumes:
+      - ./services/whatsapp-service:/app
+      - /app/node_modules
+    networks:
+      - atendeai-network
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3007/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # =====================================================
+  # GOOGLE CALENDAR SERVICE
+  # =====================================================
+  google-calendar-service:
+    build:
+      context: ./services/google-calendar-service
+      dockerfile: Dockerfile
+    container_name: atendeai-google-calendar-service
+    restart: unless-stopped
+    environment:
+      NODE_ENV: development
+      PORT: 3008
+      DATABASE_URL: postgresql://postgres:supabase@1234@db.kytphnasmdvebmdvvwtx.supabase.co:5432/postgres
+      REDIS_URL: redis://:redis123@redis:6379
+      JWT_SECRET: your-super-secret-jwt-key-change-in-production
+      SUPABASE_URL: https://kytphnasmdvebmdvvwtx.supabase.co
+      SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt5dHBobmFzbWR2ZWJtZHZ2d3R4Iiwicm9lIjoiYW5vbiIsImlhdCI6MTc1NTYyMjgxMCwiZXhwIjoyMDcxMTk4ODEwfQ.gfH3VNqxLZWAbjlrlk44VrBdyF1QKv7CyOSLmhFwbqA
+      SUPABASE_SERVICE_ROLE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt5dHBobmFzbWR2ZWJtZHZ2d3R4Iiwicm9lIjoic2VydmljZV9yb2xlIiwiaWF0IjoxNzU1NjIyODEwLCJleHAiOjIwNzExOTg4MTB9LjM2SXA5Tld2cWg2YWVGUXVvd1Y3OXI1NEMyWVFQYzVOLU1uX2RuMlFENzA
+    ports:
+      - "3008:3008"
+    volumes:
+      - ./services/google-calendar-service:/app
+      - /app/node_modules
+    networks:
+      - atendeai-network
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3008/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # =====================================================
+  # LOAD BALANCER (HAProxy)
+  # =====================================================
+  haproxy:
+    image: haproxy:2.8-alpine
+    container_name: atendeai-haproxy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./haproxy/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
+    networks:
+      - atendeai-network
+    depends_on:
+      - kong
+      - auth-service
+      - user-service
+      - clinic-service
+      - health-service
+      - conversation-service
+      - appointment-service
+      - whatsapp-service
+      - google-calendar-service
+    healthcheck:
+      test: ["CMD", "haproxy", "-c", "-f", "/usr/local/etc/haproxy/haproxy.cfg"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # =====================================================
+  # PROMETHEUS (MONITORAMENTO)
+  # =====================================================
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: atendeai-prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    networks:
+      - atendeai-network
+
+  # =====================================================
+  # GRAFANA (DASHBOARDS)
+  # =====================================================
+  grafana:
+    image: grafana/grafana:latest
+    container_name: atendeai-grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: admin123
+      GF_USERS_ALLOW_SIGN_UP: false
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+    networks:
+      - atendeai-network
+    depends_on:
+      - prometheus
+
+# =====================================================
+# VOLUMES
+# =====================================================
+volumes:
+  redis_data:
+    driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local
+
+# =====================================================
+# NETWORKS
+# =====================================================
+networks:
+  atendeai-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
