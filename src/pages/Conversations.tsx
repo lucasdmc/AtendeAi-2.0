@@ -10,7 +10,10 @@ import {
   MoreVertical,
   Check,
   CheckCheck,
-  Smile
+  Smile,
+  UserCheck,
+  Bot,
+  Users
 } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -40,6 +43,8 @@ interface Conversation {
   messages: Message[]
   avatar?: string
   unreadCount?: number
+  isManualMode?: boolean
+  assignedAgent?: string
 }
 
 const mockConversations: Conversation[] = [
@@ -53,6 +58,7 @@ const mockConversations: Conversation[] = [
     lastActivity: "2024-01-20 14:30",
     messageCount: 5,
     unreadCount: 2,
+    isManualMode: false,
     messages: [
       {
         id: "1",
@@ -101,6 +107,7 @@ const mockConversations: Conversation[] = [
     lastActivity: "2024-01-20 13:15",
     messageCount: 3,
     unreadCount: 1,
+    isManualMode: false,
     messages: [
       {
         id: "1",
@@ -134,6 +141,7 @@ const mockConversations: Conversation[] = [
     lastMessage: "Obrigada! Até mais.",
     lastActivity: "2024-01-19 16:45", 
     messageCount: 8,
+    isManualMode: false,
     messages: [
       {
         id: "1",
@@ -210,6 +218,8 @@ const mockConversations: Conversation[] = [
     lastActivity: "2024-01-20 15:45",
     messageCount: 4,
     unreadCount: 0,
+    isManualMode: true,
+    assignedAgent: "João Silva",
     messages: [
       {
         id: "1",
@@ -296,7 +306,7 @@ export default function Conversations() {
 
     const newMsg: Message = {
       id: Date.now().toString(),
-      sender: "bot",
+      sender: selectedConversation.isManualMode ? "bot" : "bot", // Em modo manual, o atendente responde
       content: newMessage,
       timestamp: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
       status: "sent"
@@ -315,6 +325,83 @@ export default function Conversations() {
     )
 
     setNewMessage("")
+
+    // Simular resposta automática apenas se não estiver em modo manual
+    if (!selectedConversation.isManualMode) {
+      setTimeout(() => {
+        const autoReply: Message = {
+          id: (Date.now() + 1).toString(),
+          sender: "bot",
+          content: "Esta é uma resposta automática do assistente virtual. Para atendimento personalizado, um de nossos atendentes pode assumir esta conversa.",
+          timestamp: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+          status: "delivered"
+        }
+
+        setConversations(prev => 
+          prev.map(conv => 
+            conv.id === selectedConversation.id 
+              ? { ...conv, messages: [...conv.messages, autoReply] }
+              : conv
+          )
+        )
+
+        setSelectedConversation(prev => 
+          prev ? { ...prev, messages: [...prev.messages, autoReply] } : null
+        )
+      }, 2000)
+    }
+  }
+
+  const toggleManualMode = () => {
+    if (!selectedConversation) return
+
+    const newManualMode = !selectedConversation.isManualMode
+    const agentName = "João Silva" // Nome do atendente logado (seria obtido do contexto de autenticação)
+
+    setConversations(prev => 
+      prev.map(conv => 
+        conv.id === selectedConversation.id 
+          ? { 
+              ...conv, 
+              isManualMode: newManualMode,
+              assignedAgent: newManualMode ? agentName : undefined
+            }
+          : conv
+      )
+    )
+
+    setSelectedConversation(prev => 
+      prev ? { 
+        ...prev, 
+        isManualMode: newManualMode,
+        assignedAgent: newManualMode ? agentName : undefined
+      } : null
+    )
+
+    // Adicionar mensagem do sistema informando a mudança
+    const systemMessage: Message = {
+      id: Date.now().toString(),
+      sender: "bot",
+      content: newManualMode 
+        ? `🧑‍💼 Atendente ${agentName} assumiu esta conversa. Agora você será atendido por uma pessoa.`
+        : `🤖 Conversa retornada para atendimento automático.`,
+      timestamp: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+      status: "delivered"
+    }
+
+    setTimeout(() => {
+      setConversations(prev => 
+        prev.map(conv => 
+          conv.id === selectedConversation.id 
+            ? { ...conv, messages: [...conv.messages, systemMessage] }
+            : conv
+        )
+      )
+
+      setSelectedConversation(prev => 
+        prev ? { ...prev, messages: [...prev.messages, systemMessage] } : null
+      )
+    }, 500)
   }
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -386,6 +473,12 @@ export default function Conversations() {
                     >
                       {conversation.status === 'active' ? 'Ativa' : conversation.status === 'pending' ? 'Pendente' : 'Finalizada'}
                     </Badge>
+                    {conversation.isManualMode && (
+                      <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
+                        <Users className="h-3 w-3 mr-1" />
+                        Manual
+                      </Badge>
+                    )}
                   </div>
                 </div>
               </div>
@@ -408,12 +501,42 @@ export default function Conversations() {
                   </AvatarFallback>
                 </Avatar>
                 <div className="ml-3">
-                  <h3 className="font-medium">{selectedConversation.customerName}</h3>
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-medium">{selectedConversation.customerName}</h3>
+                    {selectedConversation.isManualMode ? (
+                      <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                        <Users className="h-3 w-3 mr-1" />
+                        {selectedConversation.assignedAgent}
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                        <Bot className="h-3 w-3 mr-1" />
+                        Automático
+                      </Badge>
+                    )}
+                  </div>
                   <p className="text-sm text-muted-foreground">{selectedConversation.customerPhone}</p>
                 </div>
               </div>
               
               <div className="flex items-center gap-2">
+                <Button 
+                  variant={selectedConversation.isManualMode ? "default" : "outline"}
+                  size="sm"
+                  onClick={toggleManualMode}
+                >
+                  {selectedConversation.isManualMode ? (
+                    <>
+                      <Bot className="h-4 w-4 mr-2" />
+                      Voltar para Automático
+                    </>
+                  ) : (
+                    <>
+                      <UserCheck className="h-4 w-4 mr-2" />
+                      Assumir Conversa
+                    </>
+                  )}
+                </Button>
                 <Button variant="ghost" size="sm">
                   <Phone className="h-4 w-4" />
                 </Button>
@@ -466,29 +589,49 @@ export default function Conversations() {
 
             {/* Input de mensagem */}
             <div className="p-4 border-t">
-              <div className="flex items-end gap-2">
-                <Button variant="ghost" size="sm">
-                  <Smile className="h-4 w-4" />
-                </Button>
-                
-                <div className="flex-1 relative">
-                  <Input
-                    placeholder="Digite uma mensagem..."
-                    value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
-                    onKeyPress={handleKeyPress}
-                    className="pr-12"
-                  />
+              {selectedConversation.isManualMode ? (
+                <div className="flex items-end gap-2">
+                  <Button variant="ghost" size="sm">
+                    <Smile className="h-4 w-4" />
+                  </Button>
+                  
+                  <div className="flex-1 relative">
+                    <Input
+                      placeholder="Digite sua mensagem como atendente..."
+                      value={newMessage}
+                      onChange={(e) => setNewMessage(e.target.value)}
+                      onKeyPress={handleKeyPress}
+                      className="pr-12"
+                    />
+                  </div>
+                  
+                  <Button 
+                    onClick={sendMessage}
+                    disabled={!newMessage.trim()}
+                    size="sm"
+                  >
+                    <Send className="h-4 w-4" />
+                  </Button>
                 </div>
-                
-                <Button 
-                  onClick={sendMessage}
-                  disabled={!newMessage.trim()}
-                  size="sm"
-                >
-                  <Send className="h-4 w-4" />
-                </Button>
-              </div>
+              ) : (
+                <div className="bg-muted/50 rounded-lg p-4 text-center">
+                  <div className="flex items-center justify-center gap-2 text-muted-foreground">
+                    <Bot className="h-5 w-5" />
+                    <span className="text-sm">
+                      Conversa em modo automático - o bot está respondendo
+                    </span>
+                  </div>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={toggleManualMode}
+                    className="mt-3"
+                  >
+                    <UserCheck className="h-4 w-4 mr-2" />
+                    Assumir Conversa
+                  </Button>
+                </div>
+              )}
             </div>
           </>
         ) : (
