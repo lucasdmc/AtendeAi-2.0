@@ -1,11 +1,12 @@
 import { useState } from "react"
-import { Plus, Edit, Trash2 } from "lucide-react"
+import { Plus, Edit, Trash2, Phone, Building2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Badge } from "@/components/ui/badge"
 
 interface Clinic {
   id: string
@@ -148,41 +149,79 @@ export default function Clinics() {
         </Dialog>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {clinics.map((clinic) => (
-          <Card key={clinic.id} className="hover:shadow-md transition-shadow">
-            <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                <span>{clinic.name}</span>
-                <div className="flex gap-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => handleOpenDialog(clinic)}
-                  >
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="destructive"
-                    onClick={() => handleDelete(clinic.id)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+      <div className="border rounded-lg">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-[300px]">
+                <div className="flex items-center gap-2">
+                  <Building2 className="h-4 w-4" />
+                  Nome da Clínica
                 </div>
-              </CardTitle>
-              <CardDescription>{clinic.whatsapp}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <Label className="text-sm font-medium">Contexto:</Label>
-                <pre className="text-xs bg-muted p-2 rounded overflow-x-auto">
-                  {clinic.context}
-                </pre>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+              </TableHead>
+              <TableHead>
+                <div className="flex items-center gap-2">
+                  <Phone className="h-4 w-4" />
+                  WhatsApp
+                </div>
+              </TableHead>
+              <TableHead>Contexto</TableHead>
+              <TableHead className="text-right w-[140px]">Ações</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {clinics.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={4} className="h-24 text-center text-muted-foreground">
+                  Nenhuma clínica cadastrada
+                </TableCell>
+              </TableRow>
+            ) : (
+              clinics.map((clinic) => (
+                <TableRow key={clinic.id} className="hover:bg-muted/50">
+                  <TableCell className="font-medium">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                        <Building2 className="h-4 w-4 text-primary" />
+                      </div>
+                      {clinic.name}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="outline" className="font-mono">
+                      {clinic.whatsapp}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <div className="max-w-xs">
+                      <pre className="text-xs bg-muted/50 p-2 rounded overflow-x-auto">
+                        {clinic.context}
+                      </pre>
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex gap-2 justify-end">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleOpenDialog(clinic)}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => handleDelete(clinic.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
       </div>
     </div>
   )
