@@ -18,7 +18,6 @@ export function Layout({ children }: LayoutProps) {
         <div className="flex-1 flex flex-col">
           <header className="h-16 flex items-center justify-between px-6 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
             <div className="flex items-center">
-              <SidebarTrigger className="mr-4" />
               <h1 className="text-xl font-semibold text-foreground">
                 Sistema de Gestão de Atendimento Virtual
               </h1>
