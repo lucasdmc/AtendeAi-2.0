@@ -1,8 +1,11 @@
-import { Building2, Users, Calendar, FileText, MessageSquare } from "lucide-react"
+import { Building2, Users, Calendar, FileText, MessageSquare, LogIn, LogOut } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
 import { Link } from "react-router-dom"
+import { useAuth } from "@/hooks/useAuth"
 
 const Index = () => {
+  const { user, signOut, loading } = useAuth()
   const modules = [
     {
       title: "Gestão de Clínicas",
@@ -41,6 +44,17 @@ const Index = () => {
     }
   ]
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Carregando...</p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-8">
       <div className="text-center">
@@ -50,6 +64,32 @@ const Index = () => {
         <p className="text-lg text-muted-foreground">
           Gerencie seu chatbot para clínicas médicas de forma simples e eficiente
         </p>
+        {user && (
+          <div className="mt-4 flex items-center justify-center gap-4">
+            <p className="text-sm text-muted-foreground">
+              Bem-vindo, {user.email}
+            </p>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={signOut}
+              className="flex items-center gap-2"
+            >
+              <LogOut className="w-4 h-4" />
+              Sair
+            </Button>
+          </div>
+        )}
+        {!user && (
+          <div className="mt-4">
+            <Link to="/auth">
+              <Button className="flex items-center gap-2">
+                <LogIn className="w-4 h-4" />
+                Fazer Login
+              </Button>
+            </Link>
+          </div>
+        )}
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">

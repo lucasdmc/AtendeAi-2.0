@@ -20,7 +20,8 @@ export function Layout({ children }: LayoutProps) {
       "/appointments": "Agendamentos",
       "/calendar": "Calendário",
       "/context": "Contexto",
-      "/conversations": "Conversas"
+      "/conversations": "Conversas",
+      "/auth": "Autenticação"
     }
     return pageTitles[location.pathname] || "Sistema de Gestão"
   }
