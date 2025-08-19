@@ -18,6 +18,7 @@ export function Layout({ children }: LayoutProps) {
       "/clinics": "Gestão de Clínicas",
       "/users": "Gestão de Usuários", 
       "/appointments": "Agendamentos",
+      "/calendar": "Calendário",
       "/context": "Contexto",
       "/conversations": "Conversas"
     }

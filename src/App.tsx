@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import Clinics from "./pages/Clinics";
 import Users from "./pages/Users";
 import Appointments from "./pages/Appointments";
+import Calendar from "./pages/Calendar";
 import Context from "./pages/Context";
 import Conversations from "./pages/Conversations";
 import NotFound from "./pages/NotFound";
@@ -26,6 +27,7 @@ const App = () => (
             <Route path="/clinics" element={<Clinics />} />
             <Route path="/users" element={<Users />} />
             <Route path="/appointments" element={<Appointments />} />
+            <Route path="/calendar" element={<Calendar />} />
             <Route path="/context" element={<Context />} />
             <Route path="/conversations" element={<Conversations />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
