@@ -50,7 +50,6 @@ export default function Appointments() {
   const [appointments] = useState<Appointment[]>(mockAppointments)
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
-  const [clinicFilter, setClinicFilter] = useState("all")
 
   const getStatusLabel = (status: string) => {
     const statuses: Record<string, string> = {
@@ -76,9 +75,8 @@ export default function Appointments() {
     const matchesSearch = appointment.patientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          appointment.specialty.toLowerCase().includes(searchTerm.toLowerCase())
     const matchesStatus = statusFilter === "all" || appointment.status === statusFilter
-    const matchesClinic = clinicFilter === "all" || appointment.clinic === clinicFilter
     
-    return matchesSearch && matchesStatus && matchesClinic
+    return matchesSearch && matchesStatus
   })
 
   return (
@@ -90,7 +88,7 @@ export default function Appointments() {
         </p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2">
         <div className="space-y-2">
           <Label htmlFor="search">Buscar</Label>
           <Input
@@ -113,20 +111,6 @@ export default function Appointments() {
               <SelectItem value="confirmed">Confirmado</SelectItem>
               <SelectItem value="cancelled">Cancelado</SelectItem>
               <SelectItem value="completed">Realizado</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        
-        <div className="space-y-2">
-          <Label htmlFor="clinic">Clínica</Label>
-          <Select value={clinicFilter} onValueChange={setClinicFilter}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todas as clínicas</SelectItem>
-              <SelectItem value="Clínica São José">Clínica São José</SelectItem>
-              <SelectItem value="Centro Médico Saúde+">Centro Médico Saúde+</SelectItem>
             </SelectContent>
           </Select>
         </div>
