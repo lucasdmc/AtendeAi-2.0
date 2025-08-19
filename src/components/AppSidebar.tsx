@@ -38,7 +38,7 @@ export function AppSidebar() {
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel className="text-sidebar-primary font-semibold">
-            Sistema de Atendimento
+            Atendei Aí - Atendente Virtual
           </SidebarGroupLabel>
 
           <SidebarGroupContent>
