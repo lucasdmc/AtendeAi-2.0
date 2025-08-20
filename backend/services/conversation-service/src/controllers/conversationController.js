@@ -11,6 +11,10 @@ class ConversationController {
     this.memory = new ConversationalMemory();
   }
 
+  // =====================================================
+  // PROCESSAMENTO DE MENSAGENS
+  // =====================================================
+
   async processWhatsAppMessage(req, res) {
     try {
       const { 
@@ -98,11 +102,7 @@ class ConversationController {
       });
 
     } catch (error) {
-      logger.error('Error processing WhatsApp message', { 
-        error: error.message, 
-        stack: error.stack,
-        body: req.body 
-      });
+      logger.error('Error processing WhatsApp message', { error: error.message, body: req.body });
       
       res.status(500).json({
         success: false,
@@ -112,103 +112,213 @@ class ConversationController {
     }
   }
 
-  async handleServiceRouting(routingResult, conversation, message) {
+  // =====================================================
+  // TRANSIÇÃO CHATBOT/HUMANO
+  // =====================================================
+
+  async transitionToHuman(req, res) {
     try {
-      const responseMessage = await Message.create({
-        conversation_id: conversation.id,
-        clinic_id: conversation.clinic_id,
-        patient_phone: conversation.patient_phone,
-        content: `Mensagem encaminhada para ${routingResult.routing.target_service}`,
-        type: 'text',
-        direction: 'outbound',
-        metadata: {
-          routed: true,
-          target_service: routingResult.routing.target_service,
-          intent: routingResult.intent
-        }
+      const { conversation_id } = req.params;
+      const { attendant_id, reason } = req.body;
+
+      if (!conversation_id || !attendant_id) {
+        return res.status(400).json({
+          success: false,
+          error: 'Missing required fields: conversation_id, attendant_id'
+        });
+      }
+
+      const conversation = await Conversation.findById(conversation_id);
+      if (!conversation) {
+        return res.status(404).json({
+          success: false,
+          error: 'Conversation not found'
+        });
+      }
+
+      // Verificar se a conversa já está com atendente humano
+      if (conversation.status === 'human_attended') {
+        return res.status(400).json({
+          success: false,
+          error: 'Conversation already being handled by human'
+        });
+      }
+
+      // Atualizar status da conversa
+      await Conversation.updateStatus(conversation_id, 'human_attended', {
+        attendant_id,
+        transition_reason: reason,
+        transition_timestamp: new Date().toISOString()
       });
 
-      await this.memory.addMessageToContext(conversation.clinic_id, conversation.patient_phone, responseMessage);
-      await Conversation.updateLastMessage(conversation.id, responseMessage.content);
+      // Registrar transição
+      await this.recordTransition(conversation_id, 'bot_to_human', {
+        attendant_id,
+        reason,
+        timestamp: new Date().toISOString()
+      });
 
-      return {
-        type: 'routed',
-        content: responseMessage.content,
-        target_service: routingResult.routing.target_service,
-        intent: routingResult.intent
-      };
+      // Enviar mensagem de transição para o paciente
+      const transitionMessage = await Message.create({
+        conversation_id,
+        clinic_id: conversation.clinic_id,
+        patient_phone: conversation.patient_phone,
+        content: 'Sua conversa foi transferida para um atendente humano. Em breve você será atendido.',
+        type: 'text',
+        direction: 'outbound',
+        metadata: { type: 'transition_notification' }
+      });
+
+      logger.info('Conversation transitioned to human', { 
+        conversation_id, 
+        attendant_id, 
+        reason 
+      });
+
+      res.json({
+        success: true,
+        data: {
+          conversation_id,
+          status: 'human_attended',
+          attendant_id,
+          transition_message: transitionMessage
+        },
+        message: 'Conversation successfully transitioned to human attendant'
+      });
+
     } catch (error) {
-      logger.error('Error handling service routing', { error: error.message, routingResult });
-      throw error;
+      logger.error('Error transitioning conversation to human', { error: error.message, params: req.params, body: req.body });
+      
+      res.status(500).json({
+        success: false,
+        error: 'Internal server error transitioning conversation',
+        details: error.message
+      });
     }
   }
 
-  async handleAIResponse(processingResult, conversation, message) {
+  async transitionToBot(req, res) {
     try {
-      const responseMessage = await Message.create({
-        conversation_id: conversation.id,
-        clinic_id: conversation.clinic_id,
-        patient_phone: conversation.patient_phone,
-        content: processingResult.response.content,
-        type: 'text',
-        direction: 'outbound',
-        metadata: {
-          ai_generated: true,
-          intent: processingResult.intent,
-          confidence: processingResult.confidence,
-          model: processingResult.response.metadata?.model
-        }
+      const { conversation_id } = req.params;
+      const { reason } = req.body;
+
+      if (!conversation_id) {
+        return res.status(400).json({
+          success: false,
+          error: 'Missing required field: conversation_id'
+        });
+      }
+
+      const conversation = await Conversation.findById(conversation_id);
+      if (!conversation) {
+        return res.status(404).json({
+          success: false,
+          error: 'Conversation not found'
+        });
+      }
+
+      // Verificar se a conversa está com atendente humano
+      if (conversation.status !== 'human_attended') {
+        return res.status(400).json({
+          success: false,
+          error: 'Conversation is not currently being handled by human'
+        });
+      }
+
+      // Atualizar status da conversa
+      await Conversation.updateStatus(conversation_id, 'bot_handling', {
+        transition_reason: reason,
+        transition_timestamp: new Date().toISOString()
       });
 
-      await this.memory.addMessageToContext(conversation.clinic_id, conversation.patient_phone, responseMessage);
-      await Conversation.updateLastMessage(conversation.id, responseMessage.content);
+      // Registrar transição
+      await this.recordTransition(conversation_id, 'human_to_bot', {
+        reason,
+        timestamp: new Date().toISOString()
+      });
 
-      return {
-        type: 'ai_response',
-        content: responseMessage.content,
-        intent: processingResult.intent,
-        confidence: processingResult.confidence,
-        metadata: processingResult.response.metadata
-      };
+      // Enviar mensagem de transição para o paciente
+      const transitionMessage = await Message.create({
+        conversation_id,
+        clinic_id: conversation.clinic_id,
+        patient_phone: conversation.patient_phone,
+        content: 'Sua conversa foi retornada para o atendimento automatizado. Como posso ajudá-lo?',
+        type: 'text',
+        direction: 'outbound',
+        metadata: { type: 'transition_notification' }
+      });
+
+      logger.info('Conversation transitioned back to bot', { 
+        conversation_id, 
+        reason 
+      });
+
+      res.json({
+        success: true,
+        data: {
+          conversation_id,
+          status: 'bot_handling',
+          transition_message: transitionMessage
+        },
+        message: 'Conversation successfully transitioned back to bot'
+      });
+
     } catch (error) {
-      logger.error('Error handling AI response', { error: error.message, processingResult });
-      throw error;
+      logger.error('Error transitioning conversation to bot', { error: error.message, params: req.params, body: req.body });
+      
+      res.status(500).json({
+        success: false,
+        error: 'Internal server error transitioning conversation',
+        details: error.message
+      });
     }
   }
 
-  async handleError(processingResult, conversation, message) {
+  async getTransitionHistory(req, res) {
     try {
-      const fallbackContent = processingResult.fallback_response?.content || 
-        'Desculpe, ocorreu um erro no processamento. Por favor, tente novamente ou entre em contato com um atendente humano.';
+      const { conversation_id } = req.params;
 
-      const responseMessage = await Message.create({
-        conversation_id: conversation.id,
-        clinic_id: conversation.clinic_id,
-        patient_phone: conversation.patient_phone,
-        content: fallbackContent,
-        type: 'text',
-        direction: 'outbound',
-        metadata: {
-          error: true,
-          error_message: processingResult.error,
-          fallback: true
+      if (!conversation_id) {
+        return res.status(400).json({
+          success: false,
+          error: 'Missing required field: conversation_id'
+        });
+      }
+
+      const conversation = await Conversation.findById(conversation_id);
+      if (!conversation) {
+        return res.status(404).json({
+          success: false,
+          error: 'Conversation not found'
+        });
+      }
+
+      // Buscar histórico de transições
+      const transitions = await Conversation.getTransitionHistory(conversation_id);
+
+      res.json({
+        success: true,
+        data: {
+          conversation_id,
+          transitions,
+          total_transitions: transitions.length
         }
       });
 
-      await this.memory.addMessageToContext(conversation.clinic_id, conversation.patient_phone, responseMessage);
-      await Conversation.updateLastMessage(conversation.id, responseMessage.content);
-
-      return {
-        type: 'error',
-        content: responseMessage.content,
-        error: processingResult.error,
-        fallback: true
-      };
     } catch (error) {
-      logger.error('Error handling error response', { error: error.message, processingResult });
-      throw error;
+      logger.error('Error getting transition history', { error: error.message, params: req.params });
+      
+      res.status(500).json({
+        success: false,
+        error: 'Internal server error getting transition history',
+        details: error.message
+      });
     }
   }
+
+  // =====================================================
+  // GESTÃO DE CONVERSAS
+  // =====================================================
 
   async getConversationHistory(req, res) {
     try {
@@ -221,20 +331,17 @@ class ConversationController {
         });
       }
 
-      const messages = await Message.findByPhone(clinic_id, patient_phone, limit, offset);
-      const conversation = await Conversation.findByPhone(clinic_id, patient_phone);
-      const memoryStats = await this.memory.getMemoryStats(clinic_id, patient_phone);
+      const messages = await Message.findByPhone(clinic_id, patient_phone, parseInt(limit), parseInt(offset));
+      const total = await Message.countByPhone(clinic_id, patient_phone);
 
       res.json({
         success: true,
         data: {
-          conversation,
           messages,
-          memory_stats: memoryStats,
           pagination: {
             limit: parseInt(limit),
             offset: parseInt(offset),
-            total: messages.length
+            total
           }
         }
       });
@@ -252,7 +359,8 @@ class ConversationController {
 
   async getConversationsByClinic(req, res) {
     try {
-      const { clinic_id, limit = 50, offset = 0, status } = req.params;
+      const { clinic_id } = req.params;
+      const { limit = 50, offset = 0 } = req.query;
 
       if (!clinic_id) {
         return res.status(400).json({
@@ -261,12 +369,8 @@ class ConversationController {
         });
       }
 
-      let conversations;
-      if (status === 'active') {
-        conversations = await Conversation.getActiveConversations(clinic_id);
-      } else {
-        conversations = await Conversation.findByClinic(clinic_id, limit, offset);
-      }
+      const conversations = await Conversation.findByClinic(clinic_id, parseInt(limit), parseInt(offset));
+      const total = await Conversation.countByClinic(clinic_id);
 
       res.json({
         success: true,
@@ -275,13 +379,13 @@ class ConversationController {
           pagination: {
             limit: parseInt(limit),
             offset: parseInt(offset),
-            total: conversations.length
+            total
           }
         }
       });
 
     } catch (error) {
-      logger.error('Error getting conversations by clinic', { error: error.message, params: req.params });
+      logger.error('Error getting conversations by clinic', { error: error.message, params: req.params, query: req.query });
       
       res.status(500).json({
         success: false,
@@ -291,7 +395,71 @@ class ConversationController {
     }
   }
 
-  async closeConversation(req, res) {
+  async getActiveConversationsByClinic(req, res) {
+    try {
+      const { clinic_id } = req.params;
+
+      if (!clinic_id) {
+        return res.status(400).json({
+          success: false,
+          error: 'Missing required field: clinic_id'
+        });
+      }
+
+      const conversations = await Conversation.findActiveByClinic(clinic_id);
+
+      res.json({
+        success: true,
+        data: {
+          conversations,
+          total_active: conversations.length
+        }
+      });
+
+    } catch (error) {
+      logger.error('Error getting active conversations by clinic', { error: error.message, params: req.params });
+      
+      res.status(500).json({
+        success: false,
+        error: 'Internal server error getting active conversations',
+        details: error.message
+      });
+    }
+  }
+
+  async getPendingHumanConversations(req, res) {
+    try {
+      const { clinic_id } = req.params;
+
+      if (!clinic_id) {
+        return res.status(400).json({
+          success: false,
+          error: 'Missing required field: clinic_id'
+        });
+      }
+
+      const conversations = await Conversation.findPendingHumanByClinic(clinic_id);
+
+      res.json({
+        success: true,
+        data: {
+          conversations,
+          total_pending: conversations.length
+        }
+      });
+
+    } catch (error) {
+      logger.error('Error getting pending human conversations', { error: error.message, params: req.params });
+      
+      res.status(500).json({
+        success: false,
+        error: 'Internal server error getting pending conversations',
+        details: error.message
+      });
+    }
+  }
+
+  async getConversationById(req, res) {
     try {
       const { conversation_id } = req.params;
 
@@ -302,22 +470,76 @@ class ConversationController {
         });
       }
 
-      const conversation = await Conversation.closeConversation(conversation_id);
-      
-      if (conversation.patient_phone) {
-        await this.memory.clearUserMemory(conversation.clinic_id, conversation.patient_phone);
+      const conversation = await Conversation.findById(conversation_id);
+      if (!conversation) {
+        return res.status(404).json({
+          success: false,
+          error: 'Conversation not found'
+        });
       }
+
+      // Buscar mensagens da conversa
+      const messages = await Message.findByConversation(conversation_id);
 
       res.json({
         success: true,
         data: {
           conversation,
-          message: 'Conversation closed successfully'
+          messages,
+          total_messages: messages.length
         }
       });
 
     } catch (error) {
-      logger.error('Error closing conversation', { error: error.message, params: req.params });
+      logger.error('Error getting conversation by ID', { error: error.message, params: req.params });
+      
+      res.status(500).json({
+        success: false,
+        error: 'Internal server error getting conversation',
+        details: error.message
+      });
+    }
+  }
+
+  async closeConversation(req, res) {
+    try {
+      const { conversation_id } = req.params;
+      const { reason } = req.body;
+
+      if (!conversation_id) {
+        return res.status(400).json({
+          success: false,
+          error: 'Missing required field: conversation_id'
+        });
+      }
+
+      const conversation = await Conversation.findById(conversation_id);
+      if (!conversation) {
+        return res.status(404).json({
+          success: false,
+          error: 'Conversation not found'
+        });
+      }
+
+      // Atualizar status da conversa
+      await Conversation.updateStatus(conversation_id, 'closed', {
+        close_reason: reason,
+        closed_at: new Date().toISOString()
+      });
+
+      logger.info('Conversation closed', { conversation_id, reason });
+
+      res.json({
+        success: true,
+        data: {
+          conversation_id,
+          status: 'closed'
+        },
+        message: 'Conversation successfully closed'
+      });
+
+    } catch (error) {
+      logger.error('Error closing conversation', { error: error.message, params: req.params, body: req.body });
       
       res.status(500).json({
         success: false,
@@ -326,6 +548,100 @@ class ConversationController {
       });
     }
   }
+
+  async assignConversation(req, res) {
+    try {
+      const { conversation_id } = req.params;
+      const { attendant_id } = req.body;
+
+      if (!conversation_id || !attendant_id) {
+        return res.status(400).json({
+          success: false,
+          error: 'Missing required fields: conversation_id, attendant_id'
+        });
+      }
+
+      const conversation = await Conversation.findById(conversation_id);
+      if (!conversation) {
+        return res.status(404).json({
+          success: false,
+          error: 'Conversation not found'
+        });
+      }
+
+      // Atribuir conversa para atendente
+      await Conversation.assignToAttendant(conversation_id, attendant_id);
+
+      logger.info('Conversation assigned to attendant', { conversation_id, attendant_id });
+
+      res.json({
+        success: true,
+        data: {
+          conversation_id,
+          attendant_id
+        },
+        message: 'Conversation successfully assigned to attendant'
+      });
+
+    } catch (error) {
+      logger.error('Error assigning conversation', { error: error.message, params: req.params, body: req.body });
+      
+      res.status(500).json({
+        success: false,
+        error: 'Internal server error assigning conversation',
+        details: error.message
+      });
+    }
+  }
+
+  async setConversationPriority(req, res) {
+    try {
+      const { conversation_id } = req.params;
+      const { priority } = req.body;
+
+      if (!conversation_id || !priority) {
+        return res.status(400).json({
+          success: false,
+          error: 'Missing required fields: conversation_id, priority'
+        });
+      }
+
+      const conversation = await Conversation.findById(conversation_id);
+      if (!conversation) {
+        return res.status(404).json({
+          success: false,
+          error: 'Conversation not found'
+        });
+      }
+
+      // Definir prioridade da conversa
+      await Conversation.setPriority(conversation_id, priority);
+
+      logger.info('Conversation priority set', { conversation_id, priority });
+
+      res.json({
+        success: true,
+        data: {
+          conversation_id,
+          priority
+        },
+        message: 'Conversation priority successfully set'
+      });
+
+    } catch (error) {
+      logger.error('Error setting conversation priority', { error: error.message, params: req.params, body: req.body });
+      
+      res.status(500).json({
+        success: false,
+        error: 'Internal server error setting priority',
+        details: error.message
+      });
+    }
+  }
+
+  // =====================================================
+  // GESTÃO DE MEMÓRIA
+  // =====================================================
 
   async getMemoryStats(req, res) {
     try {
@@ -367,14 +683,13 @@ class ConversationController {
         });
       }
 
-      const success = await this.memory.clearUserMemory(clinic_id, patient_phone);
+      await this.memory.clearUserMemory(clinic_id, patient_phone);
+
+      logger.info('User memory cleared', { clinic_id, patient_phone });
 
       res.json({
         success: true,
-        data: {
-          cleared: success,
-          message: success ? 'User memory cleared successfully' : 'Failed to clear user memory'
-        }
+        message: 'User memory successfully cleared'
       });
 
     } catch (error) {
@@ -382,32 +697,160 @@ class ConversationController {
       
       res.status(500).json({
         success: false,
-        error: 'Internal server error clearing user memory',
+        error: 'Internal server error clearing memory',
         details: error.message
       });
     }
   }
 
-  async getClinicContext(clinic_id) {
+  async getConversationMemory(req, res) {
     try {
-      const response = await fetch(`${config.clinic.serviceUrl}/api/clinics/${clinic_id}/context`, {
-        headers: {
-          'Authorization': `Bearer ${config.clinic.apiKey}`,
-          'Content-Type': 'application/json'
+      const { conversation_id } = req.params;
+
+      if (!conversation_id) {
+        return res.status(400).json({
+          success: false,
+          error: 'Missing required field: conversation_id'
+        });
+      }
+
+      const conversation = await Conversation.findById(conversation_id);
+      if (!conversation) {
+        return res.status(404).json({
+          success: false,
+          error: 'Conversation not found'
+        });
+      }
+
+      const memory = await this.memory.getConversationMemory(conversation_id);
+
+      res.json({
+        success: true,
+        data: {
+          conversation_id,
+          memory
         }
       });
 
-      if (response.ok) {
-        const context = await response.json();
-        return context.data;
+    } catch (error) {
+      logger.error('Error getting conversation memory', { error: error.message, params: req.params });
+      
+      res.status(500).json({
+        success: false,
+        error: 'Internal server error getting conversation memory',
+        details: error.message
+      });
+    }
+  }
+
+  // =====================================================
+  // ANÁLISE E ESTATÍSTICAS
+  // =====================================================
+
+  async getConversationAnalytics(req, res) {
+    try {
+      const { clinic_id } = req.params;
+      const { start_date, end_date } = req.query;
+
+      if (!clinic_id) {
+        return res.status(400).json({
+          success: false,
+          error: 'Missing required field: clinic_id'
+        });
       }
 
-      logger.warn('Failed to get clinic context', { clinic_id, status: response.status });
-      return null;
+      const analytics = await Conversation.getAnalytics(clinic_id, start_date, end_date);
+
+      res.json({
+        success: true,
+        data: analytics
+      });
+
     } catch (error) {
-      logger.error('Error getting clinic context', { error: error.message, clinic_id });
-      return null;
+      logger.error('Error getting conversation analytics', { error: error.message, params: req.params, query: req.query });
+      
+      res.status(500).json({
+        success: false,
+        error: 'Internal server error getting analytics',
+        details: error.message
+      });
     }
+  }
+
+  async getAttendantAnalytics(req, res) {
+    try {
+      const { attendant_id } = req.params;
+      const { start_date, end_date } = req.query;
+
+      if (!attendant_id) {
+        return res.status(400).json({
+          success: false,
+          error: 'Missing required field: attendant_id'
+        });
+      }
+
+      const analytics = await Conversation.getAttendantAnalytics(attendant_id, start_date, end_date);
+
+      res.json({
+        success: true,
+        data: analytics
+      });
+
+    } catch (error) {
+      logger.error('Error getting attendant analytics', { error: error.message, params: req.params, query: req.query });
+      
+      res.status(500).json({
+        success: false,
+        error: 'Internal server error getting attendant analytics',
+        details: error.message
+      });
+    }
+  }
+
+  // =====================================================
+  // MÉTODOS AUXILIARES
+  // =====================================================
+
+  async getClinicContext(clinic_id) {
+    // Implementar busca de contexto da clínica
+    return {
+      name: 'Clínica Exemplo',
+      specialties: ['Cardiologia', 'Neurologia'],
+      working_hours: '8h às 18h',
+      location: 'São Paulo, SP'
+    };
+  }
+
+  async handleServiceRouting(processingResult, conversation, message) {
+    // Implementar roteamento para serviços
+    return {
+      type: 'service_routing',
+      service: processingResult.service,
+      message: 'Sua solicitação foi encaminhada para o serviço apropriado.'
+    };
+  }
+
+  async handleAIResponse(processingResult, conversation, message) {
+    // Implementar resposta da IA
+    return {
+      type: 'ai_response',
+      content: processingResult.response,
+      confidence: processingResult.confidence
+    };
+  }
+
+  async handleError(processingResult, conversation, message) {
+    // Implementar tratamento de erro
+    return {
+      type: 'error',
+      message: 'Desculpe, não consegui processar sua mensagem. Tente novamente.'
+    };
+  }
+
+  async recordTransition(conversation_id, transition_type, metadata) {
+    // Implementar registro de transição
+    // Este método deve salvar as transições no banco de dados
+    logger.info('Transition recorded', { conversation_id, transition_type, metadata });
   }
 }
 

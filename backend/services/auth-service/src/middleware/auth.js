@@ -9,7 +9,7 @@ const logger = require('../utils/logger');
 
 // =====================================================
 // MIDDLEWARE DE AUTENTICAÇÃO JWT
-# =====================================================
+// =====================================================
 const authenticateJWT = (req, res, next) => {
   try {
     // Extrair token do header Authorization
@@ -246,7 +246,7 @@ const authenticateJWT = (req, res, next) => {
 
 // =====================================================
 // MIDDLEWARE DE VERIFICAÇÃO DE PERMISSÕES
-# =====================================================
+// =====================================================
 const requirePermission = (permission) => {
   return (req, res, next) => {
     try {
@@ -285,7 +285,7 @@ const requirePermission = (permission) => {
 
 // =====================================================
 // MIDDLEWARE DE VERIFICAÇÃO DE ROLES
-# =====================================================
+// =====================================================
 const requireRole = (role) => {
   return (req, res, next) => {
     try {
@@ -340,7 +340,7 @@ const requireRole = (role) => {
 
 // =====================================================
 // MIDDLEWARE DE VERIFICAÇÃO DE CLÍNICA
-# =====================================================
+// =====================================================
 const requireClinicAccess = (req, res, next) => {
   try {
     if (!req.user) {
@@ -392,7 +392,7 @@ const requireClinicAccess = (req, res, next) => {
 
 // =====================================================
 // MIDDLEWARE DE RATE LIMITING ESPECÍFICO
-# =====================================================
+// =====================================================
 const rateLimitByUser = (windowMs = 15 * 60 * 1000, max = 100) => {
   const requests = new Map();
   
@@ -450,7 +450,7 @@ const rateLimitByUser = (windowMs = 15 * 60 * 1000, max = 100) => {
 
 // =====================================================
 // MIDDLEWARE DE LOGGING DE REQUESTS AUTENTICADOS
-# =====================================================
+// =====================================================
 const logAuthenticatedRequest = (req, res, next) => {
   try {
     if (req.user) {
@@ -476,7 +476,7 @@ const logAuthenticatedRequest = (req, res, next) => {
 
 // =====================================================
 // EXPORTAR
-# =====================================================
+// =====================================================
 module.exports = {
   authenticateJWT,
   requirePermission,

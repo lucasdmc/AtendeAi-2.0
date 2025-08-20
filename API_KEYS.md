@@ -25,7 +25,18 @@ SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhY
 
 ### **Conexão do Banco**
 ```bash
-DATABASE_URL=postgresql://postgres:supabase@1234@db.kytphnasmdvebmdvvwtx.supabase.co:5432/postgres
+# Connection String Principal
+DATABASE_URL=postgresql://postgres:Supa201294base@db.kytphnasmdvebmdvvwtx.supabase.co:5432/postgres
+
+# Session Pooler (Recomendado)
+DATABASE_URL_POOLER=postgresql://postgres.kytphnasmdvebmdvvwtx:Lify.2025!.@aws-1-us-east-2.pooler.supabase.com:5432/postgres
+
+# Configurações Separadas
+SUPABASE_DB_HOST=aws-1-us-east-2.pooler.supabase.com
+SUPABASE_DB_PORT=5432
+SUPABASE_DB_USER=postgres.kytphnasmdvebmdvvwtx
+SUPABASE_DB_PASSWORD=Lify.2025!.
+SUPABASE_DB_NAME=postgres
 ```
 
 ---
@@ -171,7 +182,14 @@ Crie um arquivo `.env` na raiz do projeto com o seguinte conteúdo:
 SUPABASE_URL=https://kytphnasmdvebmdvvwtx.supabase.co
 SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt5dHBobmFzbWR2ZWJtZHZ2d3R4Iiwicm9lIjoiYW5vbiIsImlhdCI6MTc1NTYyMjgxMCwiZXhwIjoyMDcxMTk4ODEwfQ.gfH3VNqxLZWAbjlrlk44VrBdyF1QKv7CyOSLmhFwbqA
 SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt5dHBobmFzbWR2ZWJtZHZ2d3R4Iiwicm9lIjoic2VydmljZV9yb2xlIiwiaWF0IjoxNzU1NjIyODEwLCJleHAiOjIwNzExOTg4MTB9LjM2SXA5Tld2cWg2YWVGUXVvd1Y3OXI1NEMyWVFQYzVOLU1uX2RuMlFENzA
-DATABASE_URL=postgresql://postgres:supabase@1234@db.kytphnasmdvebmdvvwtx.supabase.co:5432/postgres
+
+# CONFIGURAÇÃO CORRIGIDA DO BANCO
+DATABASE_URL=postgresql://postgres:Supa201294base@db.kytphnasmdvebmdvvwtx.supabase.co:5432/postgres
+SUPABASE_DB_HOST=db.kytphnasmdvebmdvvwtx.supabase.co
+SUPABASE_DB_PORT=5432
+SUPABASE_DB_USER=postgres
+SUPABASE_DB_PASSWORD=Supa201294base
+SUPABASE_DB_NAME=postgres
 
 # =====================================================
 # CONFIGURAÇÕES JWT

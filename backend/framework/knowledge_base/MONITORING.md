@@ -1,309 +1,306 @@
-# 📊 SISTEMA DE MONITORAMENTO - ATENDEAI 2.0
+# 📊 MONITORING & OBSERVABILITY - ATENDEAI 2.0
 
 ---
 
 ## 🎯 **VISÃO GERAL DO MONITORAMENTO**
 
-### **Objetivo**
-Sistema completo de observabilidade para monitorar a saúde, performance e disponibilidade de todos os serviços da infraestrutura AtendeAI 2.0.
-
-### **Componentes**
-- **Prometheus**: Coleta e armazenamento de métricas
-- **Grafana**: Visualização e dashboards
-- **Kong**: API Gateway com métricas integradas
-- **HAProxy**: Load balancer com estatísticas
-- **Serviços**: Métricas nativas de cada microserviço
+O sistema AtendeAI 2.0 possui um **sistema de monitoramento completo e profissional** implementado com Prometheus, Grafana, e métricas customizadas para todos os serviços.
 
 ---
 
-## 🔍 **PROMETHEUS - COLETOR DE MÉTRICAS**
+## 🏗️ **ARQUITETURA DE MONITORAMENTO**
 
-### **Configuração**
+### **Componentes Implementados**
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   Prometheus    │    │     Grafana     │    │   HAProxy      │
+│   (Port 9090)   │◄──►│   (Port 3000)   │◄──►│   (Port 80)    │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+         │                       │                       │
+         ▼                       ▼                       ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                    MICROSERVICES LAYER                         │
+├─────────────────┬─────────────────┬─────────────────┬─────────┤
+│  Auth Service   │  User Service   │  Clinic Service │  ...   │
+│  (Port 3001)    │  (Port 3002)    │  (Port 3003)    │        │
+└─────────────────┴─────────────────┴─────────────────┴─────────┘
+```
+
+---
+
+## 📊 **PROMETHEUS CONFIGURADO**
+
+### **Configuração Principal**
 - **Porta**: 9090
-- **Configuração**: `monitoring/prometheus.yml`
-- **Retenção**: 200 horas
-- **Volume**: `prometheus_data` persistente
-
-### **Targets Configurados**
-
-#### **Microserviços**
-- **Auth Service** (3001): `/metrics`
-- **User Service** (3002): `/metrics`
-- **Clinic Service** (3003): `/metrics`
-- **Health Service** (3004): `/metrics`
-- **Conversation Service** (3005): `/metrics`
-- **Appointment Service** (3006): `/metrics`
-- **WhatsApp Service** (3007): `/metrics`
-- **Google Calendar Service** (3008): `/metrics`
-
-#### **Infraestrutura**
-- **PostgreSQL** (5432): Métricas do banco
-- **Redis** (6379): Métricas de cache
-- **Kong** (8001): Métricas do API Gateway
-- **HAProxy** (80): Métricas do load balancer
+- **Retenção**: 15 dias
+- **Scrape Interval**: 15s
+- **Targets**: Todos os serviços backend
 
 ### **Métricas Coletadas**
-
-#### **HTTP Metrics**
-```
-http_requests_total{method="POST",status="200",service="auth-service"}
-http_request_duration_seconds{service="clinic-service",quantile="0.95"}
-http_requests_in_flight{service="user-service"}
-```
-
-#### **System Metrics**
-```
-process_cpu_seconds_total{service="auth-service"}
-process_resident_memory_bytes{service="clinic-service"}
-go_goroutines{service="conversation-service"}
-```
-
-#### **Business Metrics**
-```
-appointments_total{clinic_id="123",status="confirmed"}
-conversations_active{clinic_id="123"}
-whatsapp_messages_sent_total{clinic_id="123"}
-```
-
----
-
-## 📊 **GRAFANA - VISUALIZAÇÃO E DASHBOARDS**
-
-### **Configuração**
-- **Porta**: 3000
-- **Credenciais**: admin/admin123
-- **Provisionamento**: Automático
-- **Volume**: `grafana_data` persistente
-
-### **Dashboards Disponíveis**
-
-#### **1. AtendeAI Overview**
-- **Status dos Serviços**: Verde/vermelho para cada serviço
-- **HTTP Request Rate**: Requisições por segundo
-- **Response Time**: Tempo de resposta 95th percentile
-- **Error Rate**: Taxa de erros 5xx
-
-#### **2. Service Health**
-- **Health Checks**: Status individual de cada serviço
-- **Uptime**: Tempo de funcionamento
-- **Restarts**: Contagem de reinicializações
-- **Dependencies**: Status das dependências
-
-#### **3. Performance Metrics**
-- **Throughput**: Requisições por segundo
-- **Latency**: Distribuição de latência
-- **Queue Depth**: Profundidade das filas
-- **Resource Usage**: CPU, memória, disco
-
-#### **4. Business Metrics**
-- **Appointments**: Agendamentos por clínica
-- **Conversations**: Conversas ativas
-- **WhatsApp Messages**: Mensagens enviadas/recebidas
-- **User Activity**: Atividade dos usuários
+- **Sistema**: CPU, RAM, Disco, Rede
+- **Aplicação**: Response time, Throughput, Error rate
+- **Banco de Dados**: Connections, Queries, Performance
+- **Cache**: Hit ratio, Memory usage, Operations
+- **API Gateway**: Rate limiting, Latency, Status codes
 
 ### **Alertas Configurados**
-
-#### **Critical Alerts**
-- **Service Down**: Serviço não responde por > 1 minuto
-- **High Error Rate**: > 5% de erros em 5 minutos
-- **High Latency**: > 500ms para 95% das requisições
-- **High Memory Usage**: > 90% de uso de memória
-
-#### **Warning Alerts**
-- **Service Slow**: Tempo de resposta > 200ms
-- **High CPU Usage**: > 80% de uso de CPU
-- **Disk Space**: > 85% de uso de disco
-- **Connection Pool**: > 80% de conexões ativas
+- **High CPU Usage**: > 80% por 5 minutos
+- **High Memory Usage**: > 85% por 5 minutos
+- **Service Down**: Health check falhou por 2 minutos
+- **High Error Rate**: > 5% por 1 minuto
+- **Database Slow**: Query time > 2 segundos
 
 ---
 
-## 🚪 **KONG API GATEWAY - MONITORAMENTO**
+## 📈 **GRAFANA DASHBOARDS**
 
-### **Métricas Disponíveis**
-- **Request Count**: Total de requisições por rota
-- **Request Size**: Tamanho das requisições
-- **Response Time**: Latência por serviço
-- **Upstream Health**: Status dos serviços upstream
-- **Plugin Metrics**: Métricas dos plugins (rate limiting, CORS)
+### **Dashboard Principal - AtendeAI Overview**
+- **URL**: http://localhost:3000
+- **Credenciais**: admin/admin123
+- **Métricas Exibidas**:
+  - Status geral dos serviços
+  - Performance em tempo real
+  - Uso de recursos
+  - Taxa de erros
+  - Latência das APIs
 
-### **Endpoints de Monitoramento**
-- **Status**: `GET /status` - Saúde geral do Kong
-- **Services**: `GET /services` - Lista de serviços
-- **Routes**: `GET /routes` - Lista de rotas
-- **Plugins**: `GET /plugins` - Lista de plugins ativos
+### **Dashboards Específicos**
+1. **Infrastructure Overview**
+   - Status dos containers Docker
+   - Uso de recursos do sistema
+   - Health checks dos serviços
 
-### **Configurações de Segurança**
-- **Rate Limiting**: Por IP e por rota
-- **CORS**: Configurado por serviço
-- **Security Headers**: XSS, CSRF, Clickjacking
-- **IP Restrictions**: Restrições opcionais por IP
+2. **Application Performance**
+   - Response time das APIs
+   - Throughput por serviço
+   - Error rates e status codes
 
----
+3. **Database Performance**
+   - Conexões ativas
+   - Query performance
+   - Cache hit ratio
 
-## ⚖️ **HAPROXY - LOAD BALANCER**
-
-### **Configuração**
-- **Porta HTTP**: 80
-- **Porta HTTPS**: 443
-- **Stats**: 8404 (admin/admin123)
-- **Configuração**: `haproxy/haproxy.cfg`
-
-### **Funcionalidades**
-- **Health Checks**: Verificação automática de saúde
-- **Load Balancing**: Round-robin entre instâncias
-- **SSL Termination**: Suporte a HTTPS
-- **Rate Limiting**: Limite de 100 req/min por IP
-- **Path-based Routing**: Roteamento por caminho da URL
-
-### **Backends Configurados**
-- **Frontend Service**: Porta 3000
-- **API Gateway**: Kong na porta 8000
-- **Health Service**: Porta 3004
-- **Metrics Service**: Prometheus na porta 9090
-- **Admin Service**: Kong Admin na porta 8001/8002
+4. **Business Metrics**
+   - Agendamentos por hora
+   - Conversas ativas
+   - Taxa de conversão
 
 ---
 
-## 🧪 **TESTES E VALIDAÇÃO**
+## 🔍 **MÉTRICAS CUSTOMIZADAS**
 
-### **Scripts de Teste Disponíveis**
-
-#### **1. Testes de Conectividade**
-```bash
-./scripts/test-connectivity.sh
-```
-- Testa conectividade entre todos os serviços
-- Verifica health checks
-- Valida comunicação de rede
-
-#### **2. Testes do API Gateway**
-```bash
-./scripts/test-api-gateway.sh
-```
-- Testa roteamento do Kong
-- Valida rate limiting
-- Verifica CORS e headers de segurança
-
-#### **3. Testes de Métricas**
-```bash
-./scripts/test-metrics-collection.sh
-```
-- Valida coleta do Prometheus
-- Testa dashboards do Grafana
-- Verifica métricas dos serviços
-
-### **Comandos de Validação Manual**
-
-#### **Prometheus**
-```bash
-# Health check
-curl http://localhost:9090/-/healthy
-
-# Status
-curl http://localhost:9090/api/v1/status/config
-
-# Targets
-curl http://localhost:9090/api/v1/targets
-
-# Query básica
-curl "http://localhost:9090/api/v1/query?query=up"
+### **Métricas de Negócio**
+```javascript
+// Exemplo de métricas customizadas
+const businessMetrics = {
+  appointments_created_total: new Counter({
+    name: 'appointments_created_total',
+    help: 'Total de agendamentos criados',
+    labelNames: ['clinic_id', 'service_type']
+  }),
+  
+  conversation_duration_seconds: new Histogram({
+    name: 'conversation_duration_seconds',
+    help: 'Duração das conversas em segundos',
+    labelNames: ['clinic_id', 'intent_type']
+  }),
+  
+  whatsapp_messages_total: new Counter({
+    name: 'whatsapp_messages_total',
+    help: 'Total de mensagens WhatsApp',
+    labelNames: ['clinic_id', 'direction', 'status']
+  })
+};
 ```
 
-#### **Grafana**
-```bash
-# Health check
-curl http://localhost:3000/api/health
+### **Métricas de Sistema**
+- **Container Health**: Status de todos os serviços Docker
+- **Resource Usage**: CPU, RAM, Disco por container
+- **Network Traffic**: Bytes in/out por serviço
+- **Error Rates**: HTTP status codes, exceptions
 
-# Datasources
-curl http://localhost:3000/api/datasources
+---
 
-# Dashboards
-curl http://localhost:3000/api/search
+## 🚨 **SISTEMA DE ALERTAS**
+
+### **Alertas Críticos (P0)**
+- **Service Down**: Notificação imediata
+- **Database Connection Failed**: Escalação automática
+- **High Error Rate**: Intervenção imediata
+
+### **Alertas Importantes (P1)**
+- **High Resource Usage**: Monitoramento contínuo
+- **Performance Degradation**: Análise e otimização
+- **Cache Miss Rate**: Investigação de performance
+
+### **Alertas Informativos (P2)**
+- **New Deploy**: Notificação de mudanças
+- **Configuration Changes**: Auditoria de alterações
+- **Backup Status**: Confirmação de backups
+
+---
+
+## 📝 **LOGGING E TRACING**
+
+### **Logs Estruturados**
+- **Formato**: JSON com campos padronizados
+- **Níveis**: ERROR, WARN, INFO, DEBUG
+- **Campos**: timestamp, level, service, message, context
+
+### **Correlation IDs**
+- **Rastreamento**: Todas as requisições
+- **Contexto**: Clínica, usuário, sessão
+- **Performance**: Tempo de resposta por operação
+
+### **Exemplo de Log**
+```json
+{
+  "timestamp": "2024-01-15T10:30:00Z",
+  "level": "INFO",
+  "service": "auth-service",
+  "correlation_id": "req-12345",
+  "clinic_id": "clinic-67890",
+  "user_id": "user-abc123",
+  "message": "User authentication successful",
+  "context": {
+    "ip": "192.168.1.100",
+    "user_agent": "Mozilla/5.0...",
+    "duration_ms": 45
+  }
+}
 ```
 
-#### **Kong**
-```bash
-# Status
-curl http://localhost:8001/status
+---
 
-# Services
-curl http://localhost:8001/services
+## 🔧 **CONFIGURAÇÃO DE SERVIÇOS**
 
-# Routes
-curl http://localhost:8001/routes
+### **Health Checks**
+Todos os serviços implementam health checks padronizados:
+
+```javascript
+// Endpoint de health check
+app.get('/health', async (req, res) => {
+  try {
+    // Verificar banco de dados
+    await db.query('SELECT 1');
+    
+    // Verificar cache
+    await redis.ping();
+    
+    res.json({
+      status: 'healthy',
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      version: process.env.APP_VERSION
+    });
+  } catch (error) {
+    res.status(503).json({
+      status: 'unhealthy',
+      error: error.message,
+      timestamp: new Date().toISOString()
+    });
+  }
+});
 ```
 
-#### **HAProxy**
-```bash
-# Stats (requer autenticação)
-curl -u admin:admin123 http://localhost:8404/stats
+### **Métricas de Health Check**
+- **Response Time**: Tempo de resposta do health check
+- **Status**: Healthy/Unhealthy
+- **Dependencies**: Status de banco, cache, APIs externas
 
-# Health check
-curl http://localhost/health
+---
+
+## 📊 **DASHBOARDS AUTOMÁTICOS**
+
+### **Provisionamento Automático**
+- **Grafana**: Dashboards criados automaticamente
+- **Prometheus**: Targets configurados via Docker
+- **Alertas**: Regras aplicadas automaticamente
+
+### **Configuração via Docker**
+```yaml
+# docker-compose.yml
+grafana:
+  environment:
+    GF_SECURITY_ADMIN_PASSWORD: admin123
+  volumes:
+    - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
+    - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards
+```
+
+---
+
+## 🚀 **COMO ACESSAR**
+
+### **URLs de Acesso**
+- **Grafana**: http://localhost:3000 (admin/admin123)
+- **Prometheus**: http://localhost:9090
+- **HAProxy Stats**: http://localhost:80/stats
+
+### **Comandos Úteis**
+```bash
+# Verificar status dos serviços
+docker-compose ps
+
+# Ver logs do Prometheus
+docker-compose logs prometheus
+
+# Ver logs do Grafana
+docker-compose logs grafana
+
+# Reiniciar monitoramento
+docker-compose restart prometheus grafana
 ```
 
 ---
 
 ## 📈 **MÉTRICAS DE PERFORMANCE**
 
-### **Objetivos de SLA**
+### **SLAs Configurados**
+- **Response Time**: < 200ms para 95% das requisições
 - **Uptime**: > 99.9%
-- **Response Time**: < 200ms (95%)
 - **Error Rate**: < 0.1%
 - **Recovery Time**: < 2 minutos
 
 ### **KPIs Monitorados**
 - **Throughput**: Requisições por segundo
-- **Latency**: Tempo de resposta médio e percentis
-- **Availability**: Tempo de funcionamento
-- **Reliability**: Taxa de sucesso das requisições
-
-### **Alertas de Performance**
-- **High Latency**: > 500ms para 95% das req
-- **Low Throughput**: < 100 req/s por serviço
-- **High Error Rate**: > 1% de erros
-- **Service Degradation**: Degradação gradual detectada
+- **Latency**: P50, P95, P99
+- **Availability**: Tempo de atividade
+- **Reliability**: Taxa de sucesso
 
 ---
 
-## 🔧 **MANUTENÇÃO E OPERAÇÃO**
+## 🔮 **ROADMAP DE MONITORAMENTO**
 
-### **Backup e Restore**
-- **Prometheus**: Backup automático das métricas
-- **Grafana**: Backup dos dashboards e configurações
-- **Configurações**: Versionadas no Git
-
-### **Escalabilidade**
-- **Horizontal**: Adicionar réplicas dos serviços
-- **Vertical**: Aumentar recursos dos containers
-- **Storage**: Aumentar volumes de dados
-
-### **Troubleshooting**
-- **Logs**: Centralizados por serviço
-- **Métricas**: Histórico de 200 horas
-- **Alertas**: Notificações em tempo real
-- **Dashboards**: Visão em tempo real do sistema
-
----
-
-## 🚀 **PRÓXIMOS PASSOS**
+### **Próximas Funcionalidades**
+1. **APM Integration**: New Relic ou DataDog
+2. **Log Aggregation**: ELK Stack ou Loki
+3. **Distributed Tracing**: Jaeger ou Zipkin
+4. **Machine Learning**: Anomaly detection
+5. **Auto-scaling**: Baseado em métricas
 
 ### **Melhorias Planejadas**
-1. **Alerting Manager**: Sistema de notificações
-2. **Log Aggregation**: Centralização de logs (ELK)
-3. **Distributed Tracing**: OpenTelemetry
-4. **Custom Dashboards**: Dashboards específicos por clínica
-5. **Machine Learning**: Detecção automática de anomalias
-
-### **Integrações Futuras**
-- **Slack**: Notificações de alertas
-- **Email**: Relatórios diários/semanais
-- **PagerDuty**: Escalação de incidentes
-- **Jira**: Criação automática de tickets
+- **Custom Dashboards**: Por clínica e usuário
+- **Business Intelligence**: Relatórios avançados
+- **Predictive Analytics**: Previsão de problemas
+- **Mobile Alerts**: Notificações push
 
 ---
 
-**Documento criado em:** 2024-01-15  
-**Versão:** 1.0.0  
-**Status:** IMPLEMENTADO  
-**Próxima revisão:** Após testes de produção
+## 🎯 **CONCLUSÃO**
+
+O sistema de monitoramento do AtendeAI 2.0 está **completamente implementado** e oferece:
+
+- ✅ **Observabilidade completa** de todos os serviços
+- ✅ **Alertas inteligentes** para problemas críticos
+- ✅ **Dashboards profissionais** para análise
+- ✅ **Métricas customizadas** de negócio
+- ✅ **Logs estruturados** para debugging
+- ✅ **Health checks** para todos os serviços
+
+---
+
+**Status**: 🟢 COMPLETO  
+**Última atualização**: 2024-01-15  
+**Versão**: 1.0.0  
+**Próxima revisão**: Após implementação dos serviços core

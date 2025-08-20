@@ -436,7 +436,7 @@ router.post('/logout', validateLogout, async (req, res) => {
 // =====================================================
 // ROTA DE VALIDAÇÃO DE TOKEN
 // =====================================================
-router.get('/validate', authMiddleware, async (req, res) => {
+router.get('/validate', authMiddleware.authenticateJWT, async (req, res) => {
   try {
     const { user } = req;
 
