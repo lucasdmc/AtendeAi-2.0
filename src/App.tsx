@@ -24,20 +24,27 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
-          <Layout>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/auth" element={<Auth />} />
-              <Route path="/clinics" element={<Clinics />} />
-              <Route path="/users" element={<Users />} />
-              <Route path="/appointments" element={<Appointments />} />
-              <Route path="/calendar" element={<Calendar />} />
-              <Route path="/context" element={<Context />} />
-              <Route path="/conversations" element={<Conversations />} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </Layout>
+          <Routes>
+            {/* Auth route outside Layout */}
+            <Route path="/auth" element={<Auth />} />
+            
+            {/* All other routes wrapped in Layout */}
+            <Route path="/*" element={
+              <Layout>
+                <Routes>
+                  <Route path="/" element={<Index />} />
+                  <Route path="/clinics" element={<Clinics />} />
+                  <Route path="/users" element={<Users />} />
+                  <Route path="/appointments" element={<Appointments />} />
+                  <Route path="/calendar" element={<Calendar />} />
+                  <Route path="/context" element={<Context />} />
+                  <Route path="/conversations" element={<Conversations />} />
+                  {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </Layout>
+            } />
+          </Routes>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
