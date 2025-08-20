@@ -124,6 +124,20 @@ SMTP_PASS=sua_senha_de_app_do_gmail
    docker-compose ps
    ```
 
+5. **Inicie o frontend:**
+   ```bash
+   ./scripts/start-frontend.sh
+   ```
+
+---
+
+## 📚 **DOCUMENTAÇÃO ORGANIZADA**
+
+Para informações detalhadas sobre o projeto, consulte:
+- **`docs/README.md`** - Ponto de entrada da documentação
+- **`docs/STATUS_ATUAL_CONSOLIDADO.md`** - Status completo do projeto
+- **`docs/SETUP_GUIDES.md`** - Guias de configuração consolidados
+
 ---
 
 ## 🧪 **6. TESTAR AS CONFIGURAÇÕES**
