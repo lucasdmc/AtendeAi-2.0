@@ -4,7 +4,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { AppSidebar } from "./AppSidebar"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useLocation, useNavigate } from "react-router-dom"
 import { useAuth } from "@/hooks/useAuth"
 import { LogOut, User } from "lucide-react"
@@ -20,10 +20,11 @@ export function Layout({ children }: LayoutProps) {
   const { user, signOut, loading } = useAuth()
 
   // Redirect to auth if not authenticated
-  if (!loading && !user) {
-    navigate("/auth")
-    return null
-  }
+  useEffect(() => {
+    if (!loading && !user) {
+      navigate("/auth")
+    }
+  }, [loading, user, navigate])
 
   // Show loading while checking auth
   if (loading) {
@@ -35,6 +36,11 @@ export function Layout({ children }: LayoutProps) {
         </div>
       </div>
     )
+  }
+
+  // Don't render anything if not authenticated (will redirect)
+  if (!user) {
+    return null
   }
 
   const handleLogout = async () => {
