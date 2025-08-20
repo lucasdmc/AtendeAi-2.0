@@ -1,0 +1,25 @@
+{
+  "projectName": "AtendeAí 2.0",
+  "description": "Sistema de IA para WhatsApp com multi-tenancy e integrações avançadas",
+  "version": "2.0.0",
+  "framework": "React + Node.js + Docker",
+  "database": "PostgreSQL + Redis",
+  "aiAgents": {
+    "enabled": true,
+    "defaultAgent": "expert_developer",
+    "specializedAgents": [
+      "database_architect",
+      "api_architect", 
+      "expert_developer",
+      "delivery_reviewer",
+      "context_manager"
+    ]
+  },
+  "workspace": {
+    "root": ".",
+    "backend": "backend/",
+    "frontend": "src/",
+    "services": "backend/services/",
+    "framework": "backend/framework/"
+  }
+}

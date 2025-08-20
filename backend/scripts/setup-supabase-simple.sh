@@ -29,12 +29,12 @@ echo "🔍 Verificando conectividade com Supabase..."
 # Testar diferentes formatos de host
 HOSTS=(
     "db.kytphnasmdvebmdvvwtx.supabase.co"
+    "db.kytphnasmdvebmdvvwtx.supabase.co:5432"
     "kytphnasmdvebmdvvwtx.supabase.co"
-    "kytphnasmdvebmdvvwtx.supabase.co:5432"
 )
 
 SUPABASE_DB_USER="postgres"
-SUPABASE_DB_PASSWORD="supabase@1234"
+SUPABASE_DB_PASSWORD="Supa201294base"
 SUPABASE_DB_NAME="postgres"
 
 echo "🧪 Testando diferentes configurações de host..."
@@ -89,7 +89,7 @@ echo "   User: $SUPABASE_DB_USER"
 # Executar migração base
 echo ""
 echo "🗄️ Executando migração base..."
-psql -h "$WORKING_HOST" -p "$WORKING_PORT" -U "$SUPABASE_DB_USER" -d "$SUPABASE_DB_NAME" -f framework/deliverables/01-foundation/database-migration.sql
+psql -h "$WORKING_HOST" -p "$WORKING_PORT" -U "$SUPABASE_DB_USER" -d "$SUPABASE_DB_NAME" -f backend/framework/deliverables/01-foundation/database-migration.sql
 
 if [ $? -eq 0 ]; then
     echo "✅ Migração base executada com sucesso!"

@@ -7,6 +7,187 @@ class GoogleCalendarController {
     this.googleCalendarService = new GoogleCalendarService();
   }
 
+  // =====================================================
+  // ROTAS DE OAUTH2
+  // =====================================================
+
+  // GET /api/v1/calendar/oauth/authorize
+  // Inicia o fluxo de autorização OAuth2
+  async authorize(req, res) {
+    try {
+      const { clinic_id, redirect_uri } = req.query;
+
+      if (!clinic_id) {
+        return res.status(400).json({
+          success: false,
+          error: 'Missing required field: clinic_id'
+        });
+      }
+
+      const authUrl = await this.googleCalendarService.getAuthorizationUrl(clinic_id, redirect_uri);
+
+      res.json({
+        success: true,
+        data: {
+          auth_url: authUrl,
+          clinic_id
+        }
+      });
+
+    } catch (error) {
+      logger.error('Error getting authorization URL', { error: error.message, query: req.query });
+      
+      res.status(500).json({
+        success: false,
+        error: 'Internal server error getting authorization URL',
+        details: error.message
+      });
+    }
+  }
+
+  // GET /api/v1/calendar/oauth/callback
+  // Callback do OAuth2
+  async oauthCallback(req, res) {
+    try {
+      const { code, state, error } = req.query;
+
+      if (error) {
+        return res.status(400).json({
+          success: false,
+          error: 'OAuth authorization failed',
+          details: error
+        });
+      }
+
+      if (!code || !state) {
+        return res.status(400).json({
+          success: false,
+          error: 'Missing required OAuth parameters'
+        });
+      }
+
+      const result = await this.googleCalendarService.handleOAuthCallback(code, state);
+
+      res.json({
+        success: true,
+        data: result,
+        message: 'OAuth authorization completed successfully'
+      });
+
+    } catch (error) {
+      logger.error('Error handling OAuth callback', { error: error.message, query: req.query });
+      
+      res.status(500).json({
+        success: false,
+        error: 'Internal server error handling OAuth callback',
+        details: error.message
+      });
+    }
+  }
+
+  // =====================================================
+  // CONFIGURAÇÃO DE CLÍNICAS
+  // =====================================================
+
+  // GET /api/v1/calendar/clinics/:clinic_id/config
+  // Obtém configuração do Google Calendar de uma clínica
+  async getClinicConfig(req, res) {
+    try {
+      const { clinic_id } = req.params;
+
+      if (!clinic_id) {
+        return res.status(400).json({
+          success: false,
+          error: 'Missing required parameter: clinic_id'
+        });
+      }
+
+      const config = await this.googleCalendarService.getClinicConfig(clinic_id);
+
+      res.json({
+        success: true,
+        data: config
+      });
+
+    } catch (error) {
+      logger.error('Error getting clinic config', { error: error.message, params: req.params });
+      
+      res.status(500).json({
+        success: false,
+        error: 'Internal server error getting clinic config',
+        details: error.message
+      });
+    }
+  }
+
+  // PUT /api/v1/calendar/clinics/:clinic_id/config
+  // Atualiza configuração do Google Calendar de uma clínica
+  async updateClinicConfig(req, res) {
+    try {
+      const { clinic_id } = req.params;
+      const configData = req.body;
+
+      if (!clinic_id) {
+        return res.status(400).json({
+          success: false,
+          error: 'Missing required parameter: clinic_id'
+        });
+      }
+
+      const config = await this.googleCalendarService.updateClinicConfig(clinic_id, configData);
+
+      res.json({
+        success: true,
+        data: config,
+        message: 'Clinic configuration updated successfully'
+      });
+
+    } catch (error) {
+      logger.error('Error updating clinic config', { error: error.message, params: req.params, body: req.body });
+      
+      res.status(500).json({
+        success: false,
+        error: 'Internal server error updating clinic config',
+        details: error.message
+      });
+    }
+  }
+
+  // DELETE /api/v1/calendar/clinics/:clinic_id/config
+  // Remove configuração do Google Calendar de uma clínica
+  async deleteClinicConfig(req, res) {
+    try {
+      const { clinic_id } = req.params;
+
+      if (!clinic_id) {
+        return res.status(400).json({
+          success: false,
+          error: 'Missing required parameter: clinic_id'
+        });
+      }
+
+      await this.googleCalendarService.deleteClinicConfig(clinic_id);
+
+      res.json({
+        success: true,
+        message: 'Clinic configuration deleted successfully'
+      });
+
+    } catch (error) {
+      logger.error('Error deleting clinic config', { error: error.message, params: req.params });
+      
+      res.status(500).json({
+        success: false,
+        error: 'Internal server error deleting clinic config',
+        details: error.message
+      });
+    }
+  }
+
+  // =====================================================
+  // GESTÃO DE EVENTOS
+  // =====================================================
+
   async createEvent(req, res) {
     try {
       const { 

@@ -1,0 +1,509 @@
+openapi: 3.1.0
+info:
+  title: Auth Service API
+  description: |
+    API de autenticação e autorização para o sistema AtendeAI 2.0.
+    
+    Este serviço gerencia:
+    - Autenticação de usuários
+    - Geração e validação de tokens JWT
+    - Controle de acesso baseado em roles
+    - Refresh de tokens
+    - Logout e blacklist de tokens
+    
+    ## Autenticação
+    A API usa JWT (JSON Web Tokens) para autenticação. Inclua o token no header:
+    ```
+    Authorization: Bearer <your-jwt-token>
+    ```
+    
+    ## Roles e Permissões
+    - **admin_lify**: Acesso total ao sistema
+    - **admin_clinic**: Acesso à clínica específica
+    - **attendant**: Acesso limitado à clínica específica
+    
+  version: 1.0.0
+  contact:
+    name: AtendeAI Team
+    email: dev@atendeai.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:3001
+    description: Servidor de desenvolvimento
+  - url: https://api.atendeai.com/auth
+    description: Servidor de produção
+
+security:
+  - BearerAuth: []
+
+paths:
+  /health:
+    get:
+      summary: Health Check
+      description: Verifica o status de saúde do serviço
+      tags:
+        - Health
+      responses:
+        '200':
+          description: Serviço saudável
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+        '503':
+          description: Serviço não saudável
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/login:
+    post:
+      summary: Login de usuário
+      description: Autentica um usuário e retorna tokens JWT
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+            examples:
+              admin_user:
+                summary: Login de administrador
+                value:
+                  email: "admin@lify.com"
+                  password: "AdminPass123!"
+              clinic_user:
+                summary: Login de usuário da clínica
+                value:
+                  email: "user@clinica.com"
+                  password: "UserPass123!"
+      responses:
+        '200':
+          description: Login bem-sucedido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '400':
+          description: Dados inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
+        '401':
+          description: Credenciais inválidas
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Muitas tentativas de login
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Erro interno do servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/refresh:
+    post:
+      summary: Refresh de token
+      description: Gera novos tokens usando um refresh token válido
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshRequest'
+      responses:
+        '200':
+          description: Tokens renovados com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RefreshResponse'
+        '400':
+          description: Dados inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
+        '401':
+          description: Refresh token inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Erro interno do servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/validate:
+    get:
+      summary: Validação de token
+      description: Valida um token JWT e retorna informações do usuário
+      tags:
+        - Authentication
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Token válido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationResponse'
+        '401':
+          description: Token inválido ou expirado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Erro interno do servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/logout:
+    post:
+      summary: Logout de usuário
+      description: Invalida um refresh token e o adiciona à blacklist
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LogoutRequest'
+      responses:
+        '200':
+          description: Logout realizado com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LogoutResponse'
+        '400':
+          description: Dados inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
+        '500':
+          description: Erro interno do servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        JWT token obtido através do endpoint de login.
+        Formato: `Bearer <token>`
+
+  schemas:
+    # Request Schemas
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          description: Email do usuário
+          example: "user@example.com"
+        password:
+          type: string
+          minLength: 8
+          description: Senha do usuário (mínimo 8 caracteres)
+          example: "SecurePass123!"
+      additionalProperties: false
+
+    RefreshRequest:
+      type: object
+      required:
+        - refreshToken
+      properties:
+        refreshToken:
+          type: string
+          description: Refresh token válido
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+      additionalProperties: false
+
+    LogoutRequest:
+      type: object
+      required:
+        - refreshToken
+      properties:
+        refreshToken:
+          type: string
+          description: Refresh token a ser invalidado
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+      additionalProperties: false
+
+    # Response Schemas
+    HealthResponse:
+      type: object
+      properties:
+        service:
+          type: string
+          description: Nome do serviço
+          example: "auth-service"
+        status:
+          type: string
+          enum: [healthy, unhealthy]
+          description: Status de saúde do serviço
+          example: "healthy"
+        timestamp:
+          type: string
+          format: date-time
+          description: Timestamp da verificação
+          example: "2024-01-15T10:30:00.000Z"
+        uptime:
+          type: string
+          description: Tempo de atividade do serviço
+          example: "2h 15m 30s"
+        version:
+          type: string
+          description: Versão do serviço
+          example: "1.0.0"
+        environment:
+          type: string
+          description: Ambiente de execução
+          example: "development"
+
+    LoginResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: Indica se o login foi bem-sucedido
+          example: true
+        message:
+          type: string
+          description: Mensagem de sucesso
+          example: "Login realizado com sucesso"
+        accessToken:
+          type: string
+          description: JWT access token
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        refreshToken:
+          type: string
+          description: JWT refresh token
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        expiresIn:
+          type: integer
+          description: Tempo de expiração em segundos
+          example: 900
+        user:
+          $ref: '#/components/schemas/User'
+
+    RefreshResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: Indica se o refresh foi bem-sucedido
+          example: true
+        message:
+          type: string
+          description: Mensagem de sucesso
+          example: "Tokens renovados com sucesso"
+        accessToken:
+          type: string
+          description: Novo JWT access token
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        refreshToken:
+          type: string
+          description: Novo JWT refresh token
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        expiresIn:
+          type: integer
+          description: Tempo de expiração em segundos
+          example: 900
+
+    ValidationResponse:
+      type: object
+      properties:
+        valid:
+          type: boolean
+          description: Indica se o token é válido
+          example: true
+        user:
+          $ref: '#/components/schemas/User'
+        tokenInfo:
+          type: object
+          properties:
+            issuedAt:
+              type: string
+              format: date-time
+              description: Data de emissão do token
+              example: "2024-01-15T10:00:00.000Z"
+            expiresAt:
+              type: string
+              format: date-time
+              description: Data de expiração do token
+              example: "2024-01-15T10:15:00.000Z"
+
+    LogoutResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: Indica se o logout foi bem-sucedido
+          example: true
+        message:
+          type: string
+          description: Mensagem de sucesso
+          example: "Logout realizado com sucesso"
+
+    # Data Schemas
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ID único do usuário
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        email:
+          type: string
+          format: email
+          description: Email do usuário
+          example: "user@example.com"
+        firstName:
+          type: string
+          description: Primeiro nome do usuário
+          example: "João"
+        lastName:
+          type: string
+          description: Sobrenome do usuário
+          example: "Silva"
+        role:
+          type: string
+          enum: [admin_lify, admin_clinic, attendant]
+          description: Role do usuário no sistema
+          example: "admin_clinic"
+        clinicId:
+          type: string
+          format: uuid
+          description: ID da clínica associada ao usuário
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        isActive:
+          type: boolean
+          description: Indica se o usuário está ativo
+          example: true
+        lastLogin:
+          type: string
+          format: date-time
+          description: Data do último login
+          example: "2024-01-15T10:00:00.000Z"
+        createdAt:
+          type: string
+          format: date-time
+          description: Data de criação da conta
+          example: "2024-01-01T00:00:00.000Z"
+        updatedAt:
+          type: string
+          format: date-time
+          description: Data da última atualização
+          example: "2024-01-15T10:00:00.000Z"
+
+    # Error Schemas
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: Indica se a operação foi bem-sucedida
+          example: false
+        error:
+          type: string
+          description: Mensagem de erro
+          example: "Credenciais inválidas"
+        code:
+          type: string
+          description: Código de erro
+          example: "AUTH_001"
+        timestamp:
+          type: string
+          format: date-time
+          description: Timestamp do erro
+          example: "2024-01-15T10:30:00.000Z"
+        requestId:
+          type: string
+          description: ID único da requisição para rastreamento
+          example: "req_1705312200000_abc123def"
+
+    ValidationErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: Indica se a operação foi bem-sucedida
+          example: false
+        error:
+          type: string
+          description: Mensagem de erro geral
+          example: "Dados de entrada inválidos"
+        errors:
+          type: array
+          description: Lista de erros de validação
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+                description: Campo com erro
+                example: "email"
+              message:
+                type: string
+                description: Mensagem de erro para o campo
+                example: "Formato de email inválido"
+              value:
+                type: string
+                description: Valor fornecido para o campo
+                example: "invalid-email"
+        timestamp:
+          type: string
+          format: date-time
+          description: Timestamp do erro
+          example: "2024-01-15T10:30:00.000Z"
+        requestId:
+          type: string
+          description: ID único da requisição para rastreamento
+          example: "req_1705312200000_abc123def"
+
+tags:
+  - name: Health
+    description: Endpoints de verificação de saúde do serviço
+  - name: Authentication
+    description: Endpoints de autenticação e autorização
+
+externalDocs:
+  description: Documentação completa do sistema AtendeAI 2.0
+  url: https://docs.atendeai.com

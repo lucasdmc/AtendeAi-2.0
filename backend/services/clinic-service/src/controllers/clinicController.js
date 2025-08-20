@@ -9,11 +9,20 @@ class ClinicController {
     try {
       const clinicData = req.body;
       
+      // Verificar se o usuário tem permissão para criar clínicas
+      if (!req.user.roles.includes('admin_lify')) {
+        return res.status(403).json({
+          success: false,
+          message: 'Insufficient permissions to create clinics'
+        });
+      }
+      
       const clinic = await Clinic.create(clinicData);
       
       logger.info('Clinic created successfully', { 
         clinicId: clinic.id,
-        clinicName: clinic.name
+        clinicName: clinic.name,
+        createdBy: req.user.id
       });
       
       res.status(201).json({
@@ -35,18 +44,43 @@ class ClinicController {
     try {
       const { id } = req.params;
       
-      const clinic = await Clinic.findById(id);
-      if (!clinic) {
-        return res.status(404).json({
-          success: false,
-          message: 'Clinic not found'
+      // Verificar isolamento multi-tenant
+      if (req.user.roles.includes('admin_lify')) {
+        // Admin Lify pode acessar qualquer clínica
+        const clinic = await Clinic.findById(id);
+        if (!clinic) {
+          return res.status(404).json({
+            success: false,
+            message: 'Clinic not found'
+          });
+        }
+        
+        res.status(200).json({
+          success: true,
+          data: clinic.toJSON()
+        });
+      } else {
+        // Usuários normais só podem acessar sua própria clínica
+        if (id !== req.user.clinicId) {
+          return res.status(403).json({
+            success: false,
+            message: 'Access denied to clinic'
+          });
+        }
+        
+        const clinic = await Clinic.findById(id);
+        if (!clinic) {
+          return res.status(404).json({
+            success: false,
+            message: 'Clinic not found'
+          });
+        }
+        
+        res.status(200).json({
+          success: true,
+          data: clinic.toJSON()
         });
       }
-      
-      res.status(200).json({
-        success: true,
-        data: clinic.toJSON()
-      });
     } catch (error) {
       logger.error('Error getting clinic:', error);
       res.status(500).json({
@@ -61,17 +95,40 @@ class ClinicController {
     try {
       const { limit = 100, offset = 0 } = req.query;
       
-      const clinics = await Clinic.findAll(parseInt(limit), parseInt(offset));
-      
-      res.status(200).json({
-        success: true,
-        data: clinics.map(clinic => clinic.toJSON()),
-        pagination: {
-          limit: parseInt(limit),
-          offset: parseInt(offset),
-          total: clinics.length
+      // Verificar isolamento multi-tenant
+      if (req.user.roles.includes('admin_lify')) {
+        // Admin Lify pode ver todas as clínicas
+        const clinics = await Clinic.findAll(parseInt(limit), parseInt(offset));
+        
+        res.status(200).json({
+          success: true,
+          data: clinics.map(clinic => clinic.toJSON()),
+          pagination: {
+            limit: parseInt(limit),
+            offset: parseInt(offset),
+            total: clinics.length
+          }
+        });
+      } else {
+        // Usuários normais só podem ver sua própria clínica
+        const clinic = await Clinic.findById(req.user.clinicId);
+        if (!clinic) {
+          return res.status(404).json({
+            success: false,
+            message: 'Clinic not found'
+          });
         }
-      });
+        
+        res.status(200).json({
+          success: true,
+          data: [clinic.toJSON()],
+          pagination: {
+            limit: 1,
+            offset: 0,
+            total: 1
+          }
+        });
+      }
     } catch (error) {
       logger.error('Error getting all clinics:', error);
       res.status(500).json({
@@ -87,18 +144,53 @@ class ClinicController {
       const { id } = req.params;
       const updateData = req.body;
       
-      const clinic = await Clinic.update(id, updateData);
-      
-      logger.info('Clinic updated successfully', { 
-        clinicId: id,
-        updatedFields: Object.keys(updateData)
-      });
-      
-      res.status(200).json({
-        success: true,
-        message: 'Clinic updated successfully',
-        data: clinic.toJSON()
-      });
+      // Verificar isolamento multi-tenant
+      if (req.user.roles.includes('admin_lify')) {
+        // Admin Lify pode atualizar qualquer clínica
+        const clinic = await Clinic.update(id, updateData);
+        
+        logger.info('Clinic updated successfully', { 
+          clinicId: id,
+          updatedFields: Object.keys(updateData),
+          updatedBy: req.user.id
+        });
+        
+        res.status(200).json({
+          success: true,
+          message: 'Clinic updated successfully',
+          data: clinic.toJSON()
+        });
+      } else {
+        // Usuários normais só podem atualizar sua própria clínica
+        if (id !== req.user.clinicId) {
+          return res.status(403).json({
+            success: false,
+            message: 'Access denied to clinic'
+          });
+        }
+        
+        // Verificar se o usuário tem permissão para atualizar
+        if (!req.user.roles.includes('admin_clinic')) {
+          return res.status(403).json({
+            success: false,
+            message: 'Insufficient permissions to update clinic'
+          });
+        }
+        
+        const clinic = await Clinic.update(id, updateData);
+        
+        logger.info('Clinic updated successfully', { 
+          clinicId: id,
+          updatedFields: Object.keys(updateData),
+          updatedBy: req.user.id
+        });
+        
+        res.status(200).json({
+          success: true,
+          message: 'Clinic updated successfully',
+          data: clinic.toJSON()
+        });
+      }
     } catch (error) {
       logger.error('Error updating clinic:', error);
       
@@ -121,15 +213,28 @@ class ClinicController {
     try {
       const { id } = req.params;
       
-      const clinic = await Clinic.delete(id);
-      
-      logger.info('Clinic deleted successfully', { clinicId: id });
-      
-      res.status(200).json({
-        success: true,
-        message: 'Clinic deleted successfully',
-        data: clinic.toJSON()
-      });
+      // Verificar isolamento multi-tenant
+      if (req.user.roles.includes('admin_lify')) {
+        // Admin Lify pode deletar qualquer clínica
+        const clinic = await Clinic.delete(id);
+        
+        logger.info('Clinic deleted successfully', { 
+          clinicId: id,
+          deletedBy: req.user.id
+        });
+        
+        res.status(200).json({
+          success: true,
+          message: 'Clinic deleted successfully',
+          data: clinic.toJSON()
+        });
+      } else {
+        // Usuários normais não podem deletar clínicas
+        return res.status(403).json({
+          success: false,
+          message: 'Insufficient permissions to delete clinic'
+        });
+      }
     } catch (error) {
       logger.error('Error deleting clinic:', error);
       
@@ -152,18 +257,44 @@ class ClinicController {
     try {
       const { phone } = req.params;
       
-      const clinic = await Clinic.findByWhatsAppPhone(phone);
-      if (!clinic) {
-        return res.status(404).json({
-          success: false,
-          message: 'Clinic not found for this WhatsApp number'
+      // Verificar isolamento multi-tenant
+      if (req.user.roles.includes('admin_lify')) {
+        // Admin Lify pode buscar por qualquer telefone
+        const clinic = await Clinic.findByWhatsAppPhone(phone);
+        if (!clinic) {
+          return res.status(404).json({
+            success: false,
+            message: 'Clinic not found for this WhatsApp number'
+          });
+        }
+        
+        res.status(200).json({
+          success: true,
+          data: clinic.toJSON()
+        });
+      } else {
+        // Usuários normais só podem buscar na sua própria clínica
+        const clinic = await Clinic.findById(req.user.clinicId);
+        if (!clinic) {
+          return res.status(404).json({
+            success: false,
+            message: 'Clinic not found'
+          });
+        }
+        
+        // Verificar se o telefone corresponde à clínica do usuário
+        if (clinic.whatsapp_id_number !== phone) {
+          return res.status(404).json({
+            success: false,
+            message: 'Clinic not found for this WhatsApp number'
+          });
+        }
+        
+        res.status(200).json({
+          success: true,
+          data: clinic.toJSON()
         });
       }
-      
-      res.status(200).json({
-        success: true,
-        data: clinic.toJSON()
-      });
     } catch (error) {
       logger.error('Error getting clinic by WhatsApp phone:', error);
       res.status(500).json({
@@ -178,6 +309,14 @@ class ClinicController {
     try {
       const { id } = req.params;
       const { forceRefresh = false } = req.query;
+      
+      // Verificar isolamento multi-tenant
+      if (!req.user.roles.includes('admin_lify') && id !== req.user.clinicId) {
+        return res.status(403).json({
+          success: false,
+          message: 'Access denied to clinic'
+        });
+      }
       
       const contextualization = await ContextualizationService.getClinicContextualization(
         id, 
@@ -210,26 +349,36 @@ class ClinicController {
       const { id } = req.params;
       const contextualizationData = req.body;
       
-      const validation = await ContextualizationService.validateContextualization(contextualizationData);
-      if (!validation.valid) {
-        return res.status(400).json({
+      // Verificar isolamento multi-tenant
+      if (!req.user.roles.includes('admin_lify') && id !== req.user.clinicId) {
+        return res.status(403).json({
           success: false,
-          message: 'Invalid contextualization data',
-          errors: validation.missingFields
+          message: 'Access denied to clinic'
         });
       }
       
-      const updated = await ContextualizationService.updateClinicContextualization(
+      // Verificar permissões
+      if (!req.user.roles.includes('admin_lify') && !req.user.roles.includes('admin_clinic')) {
+        return res.status(403).json({
+          success: false,
+          message: 'Insufficient permissions to update contextualization'
+        });
+      }
+      
+      const contextualization = await ContextualizationService.updateClinicContextualization(
         id, 
         contextualizationData
       );
       
-      logger.info('Clinic contextualization updated successfully', { clinicId: id });
+      logger.info('Clinic contextualization updated successfully', { 
+        clinicId: id,
+        updatedBy: req.user.id
+      });
       
       res.status(200).json({
         success: true,
         message: 'Contextualization updated successfully',
-        data: updated
+        data: contextualization
       });
     } catch (error) {
       logger.error('Error updating clinic contextualization:', error);
@@ -245,23 +394,19 @@ class ClinicController {
     try {
       const { id } = req.params;
       
-      const contextualization = await ContextualizationService.getClinicContextualization(id);
-      if (!contextualization) {
-        return res.status(404).json({
+      // Verificar isolamento multi-tenant
+      if (!req.user.roles.includes('admin_lify') && id !== req.user.clinicId) {
+        return res.status(403).json({
           success: false,
-          message: 'Contextualization not found for this clinic'
+          message: 'Access denied to clinic'
         });
       }
       
-      const intentions = await ContextualizationService.extractIntentions(contextualization);
+      const intentions = await ContextualizationService.getClinicIntentions(id);
       
       res.status(200).json({
         success: true,
-        data: {
-          clinicId: id,
-          intentions: intentions,
-          totalIntentions: intentions.length
-        }
+        data: intentions
       });
     } catch (error) {
       logger.error('Error getting clinic intentions:', error);
@@ -276,6 +421,14 @@ class ClinicController {
   async getClinicPersonality(req, res) {
     try {
       const { id } = req.params;
+      
+      // Verificar isolamento multi-tenant
+      if (!req.user.roles.includes('admin_lify') && id !== req.user.clinicId) {
+        return res.status(403).json({
+          success: false,
+          message: 'Access denied to clinic'
+        });
+      }
       
       const personality = await ContextualizationService.getClinicPersonality(id);
       
@@ -297,6 +450,14 @@ class ClinicController {
     try {
       const { id } = req.params;
       
+      // Verificar isolamento multi-tenant
+      if (!req.user.roles.includes('admin_lify') && id !== req.user.clinicId) {
+        return res.status(403).json({
+          success: false,
+          message: 'Access denied to clinic'
+        });
+      }
+      
       const behavior = await ContextualizationService.getClinicBehavior(id);
       
       res.status(200).json({
@@ -317,7 +478,15 @@ class ClinicController {
     try {
       const { id } = req.params;
       
-      const workingHours = await ContextualizationService.getWorkingHours(id);
+      // Verificar isolamento multi-tenant
+      if (!req.user.roles.includes('admin_lify') && id !== req.user.clinicId) {
+        return res.status(403).json({
+          success: false,
+          message: 'Access denied to clinic'
+        });
+      }
+      
+      const workingHours = await Clinic.getWorkingHours(id);
       
       res.status(200).json({
         success: true,
@@ -337,7 +506,15 @@ class ClinicController {
     try {
       const { id } = req.params;
       
-      const policies = await ContextualizationService.getAppointmentPolicies(id);
+      // Verificar isolamento multi-tenant
+      if (!req.user.roles.includes('admin_lify') && id !== req.user.clinicId) {
+        return res.status(403).json({
+          success: false,
+          message: 'Access denied to clinic'
+        });
+      }
+      
+      const policies = await Clinic.getAppointmentPolicies(id);
       
       res.status(200).json({
         success: true,
@@ -357,7 +534,15 @@ class ClinicController {
     try {
       const { id } = req.params;
       
-      const mappings = await ContextualizationService.getCalendarMappings(id);
+      // Verificar isolamento multi-tenant
+      if (!req.user.roles.includes('admin_lify') && id !== req.user.clinicId) {
+        return res.status(403).json({
+          success: false,
+          message: 'Access denied to clinic'
+        });
+      }
+      
+      const mappings = await Clinic.getCalendarMappings(id);
       
       res.status(200).json({
         success: true,
@@ -377,11 +562,19 @@ class ClinicController {
     try {
       const { id } = req.params;
       
-      const services = await ContextualizationService.getClinicServices(id);
+      // Verificar isolamento multi-tenant
+      if (!req.user.roles.includes('admin_lify') && id !== req.user.clinicId) {
+        return res.status(403).json({
+          success: false,
+          message: 'Access denied to clinic'
+        });
+      }
+      
+      const services = await Service.findByClinicId(id);
       
       res.status(200).json({
         success: true,
-        data: services
+        data: services.map(service => service.toJSON())
       });
     } catch (error) {
       logger.error('Error getting clinic services:', error);
@@ -397,11 +590,19 @@ class ClinicController {
     try {
       const { id } = req.params;
       
-      const professionals = await ContextualizationService.getClinicProfessionals(id);
+      // Verificar isolamento multi-tenant
+      if (!req.user.roles.includes('admin_lify') && id !== req.user.clinicId) {
+        return res.status(403).json({
+          success: false,
+          message: 'Access denied to clinic'
+        });
+      }
+      
+      const professionals = await Professional.findByClinicId(id);
       
       res.status(200).json({
         success: true,
-        data: professionals
+        data: professionals.map(professional => professional.toJSON())
       });
     } catch (error) {
       logger.error('Error getting clinic professionals:', error);
@@ -417,20 +618,33 @@ class ClinicController {
     try {
       const { id } = req.params;
       
-      const cleared = await ContextualizationService.clearCache(id);
-      
-      if (cleared) {
-        logger.info('Contextualization cache cleared successfully', { clinicId: id });
-        res.status(200).json({
-          success: true,
-          message: 'Cache cleared successfully'
-        });
-      } else {
-        res.status(500).json({
+      // Verificar isolamento multi-tenant
+      if (!req.user.roles.includes('admin_lify') && id !== req.user.clinicId) {
+        return res.status(403).json({
           success: false,
-          message: 'Failed to clear cache'
+          message: 'Access denied to clinic'
         });
       }
+      
+      // Verificar permissões
+      if (!req.user.roles.includes('admin_lify') && !req.user.roles.includes('admin_clinic')) {
+        return res.status(403).json({
+          success: false,
+          message: 'Insufficient permissions to clear cache'
+        });
+      }
+      
+      await ContextualizationService.clearCache(id);
+      
+      logger.info('Contextualization cache cleared successfully', { 
+        clinicId: id,
+        clearedBy: req.user.id
+      });
+      
+      res.status(200).json({
+        success: true,
+        message: 'Cache cleared successfully'
+      });
     } catch (error) {
       logger.error('Error clearing contextualization cache:', error);
       res.status(500).json({
@@ -443,6 +657,14 @@ class ClinicController {
 
   async getContextualizationCacheStats(req, res) {
     try {
+      // Verificar permissões
+      if (!req.user.roles.includes('admin_lify')) {
+        return res.status(403).json({
+          success: false,
+          message: 'Insufficient permissions to view cache stats'
+        });
+      }
+      
       const stats = await ContextualizationService.getCacheStats();
       
       res.status(200).json({
@@ -450,7 +672,7 @@ class ClinicController {
         data: stats
       });
     } catch (error) {
-      logger.error('Error getting cache stats:', error);
+      logger.error('Error getting contextualization cache stats:', error);
       res.status(500).json({
         success: false,
         message: 'Error getting cache stats',

@@ -85,7 +85,7 @@ services:
     environment:
       NODE_ENV: development
       PORT: 3001
-      DATABASE_URL: postgresql://postgres:supabase@1234@db.kytphnasmdvebmdvvwtx.supabase.co:5432/postgres
+      DATABASE_URL: postgresql://postgres:Supa201294base@db.kytphnasmdvebmdvvwtx.supabase.co:5432/postgres
       REDIS_URL: redis://:redis123@redis:6379
       JWT_SECRET: your-super-secret-jwt-key-change-in-production
       JWT_ACCESS_TOKEN_EXPIRY: 15m
@@ -123,7 +123,7 @@ services:
     environment:
       NODE_ENV: development
       PORT: 3002
-      DATABASE_URL: postgresql://postgres:supabase@1234@db.kytphnasmdvebmdvvwtx.supabase.co:5432/postgres
+      DATABASE_URL: postgresql://postgres:Supa201294base@db.kytphnasmdvebmdvvwtx.supabase.co:5432/postgres
       REDIS_URL: redis://:redis123@redis:6379
       JWT_SECRET: your-super-secret-jwt-key-change-in-production
       SUPABASE_URL: https://kytphnasmdvebmdvvwtx.supabase.co
@@ -158,7 +158,7 @@ services:
     environment:
       NODE_ENV: development
       PORT: 3003
-      DATABASE_URL: postgresql://postgres:supabase@1234@db.kytphnasmdvebmdvvwtx.supabase.co:5432/postgres
+      DATABASE_URL: postgresql://postgres:Supa201294base@db.kytphnasmdvebmdvvwtx.supabase.co:5432/postgres
       REDIS_URL: redis://:redis123@redis:6379
       JWT_SECRET: your-super-secret-jwt-key-change-in-production
       SUPABASE_URL: https://kytphnasmdvebmdvvwtx.supabase.co
@@ -299,6 +299,21 @@ services:
       SUPABASE_URL: https://kytphnasmdvebmdvvwtx.supabase.co
       SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt5dHBobmFzbWR2ZWJtZHZ2d3R4Iiwicm9lIjoiYW5vbiIsImlhdCI6MTc1NTYyMjgxMCwiZXhwIjoyMDcxMTk4ODEwfQ.gfH3VNqxLZWAbjlrlk44VrBdyF1QKv7CyOSLmhFwbqA
       SUPABASE_SERVICE_ROLE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt5dHBobmFzbWR2ZWJtZHZ2d3R4Iiwicm9lIjoic2VydmljZV9yb2xlIiwiaWF0IjoxNzU1NjIyODEwLCJleHAiOjIwNzExOTg4MTB9LjM2SXA5Tld2cWg2YWVGUXVvd1Y3OXI1NEMyWVFQYzVOLU1uX2RuMlFENzA
+      # WhatsApp Business API Configuration
+      WHATSAPP_BUSINESS_ACCOUNT_ID: 698766983327246
+      WHATSAPP_PHONE_NUMBER_ID: 698766983327246
+      WHATSAPP_ACCESS_TOKEN: EAASAuWYr9JgBPIK7v7aqrbiprhBWXJHZBt24BQbjDZAclTltVEXhHBM2lhOmwAsTcA2p0ZCEqLySZBkA4dhiGLv1EBtlFwA3ApL6FY8aIWzxChnGxrqaeJmIkHytXgkvr9veEU9jUcHKNGt6kzbZALHV3XZBOeOGhJGpeZBLZB0DOi7qI41YzdOGlkSOBZASrZBgZDZD
+      WHATSAPP_WEBHOOK_VERIFY_TOKEN: atendeai_webhook_verify_2024
+      WHATSAPP_API_VERSION: v18.0
+      WHATSAPP_BASE_URL: https://graph.facebook.com
+      WHATSAPP_WEBHOOK_PATH: /webhook/whatsapp
+      WHATSAPP_MAX_RETRIES: 3
+      WHATSAPP_RETRY_DELAY: 1000
+      WEBHOOK_SIGNATURE_SECRET: atendeai_webhook_signature_secret_2024
+      # Service URLs
+      CLINIC_SERVICE_URL: http://clinic-service:3001
+      CONVERSATION_SERVICE_URL: http://conversation-service:3003
+      APPOINTMENT_SERVICE_URL: http://appointment-service:3002
     ports:
       - "3007:3007"
     volumes:
@@ -334,6 +349,31 @@ services:
       SUPABASE_URL: https://kytphnasmdvebmdvvwtx.supabase.co
       SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt5dHBobmFzbWR2ZWJtZHZ2d3R4Iiwicm9lIjoiYW5vbiIsImlhdCI6MTc1NTYyMjgxMCwiZXhwIjoyMDcxMTk4ODEwfQ.gfH3VNqxLZWAbjlrlk44VrBdyF1QKv7CyOSLmhFwbqA
       SUPABASE_SERVICE_ROLE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt5dHBobmFzbWR2ZWJtZHZ2d3R4Iiwicm9lIjoic2VydmljZV9yb2xlIiwiaWF0IjoxNzU1NjIyODEwLCJleHAiOjIwNzExOTg4MTB9LjM2SXA5Tld2cWg2YWVGUXVvd1Y3OXI1NEMyWVFQYzVOLU1uX2RuMlFENzA
+      # Google Calendar API Configuration
+      GOOGLE_CLIENT_ID: 367439444210-phr1e6oiu8hnh5vm57lpoud5lhrdda2o.apps.googleusercontent.com
+      GOOGLE_CLIENT_SECRET: GOCSPX-your_client_secret_here
+      GOOGLE_REDIRECT_URI: http://localhost:3008/auth/google/callback
+      GOOGLE_API_KEY: your_google_api_key_here
+      GOOGLE_CALENDAR_ID: primary
+      GOOGLE_TIMEZONE: America/Sao_Paulo
+      # Calendar Settings
+      DEFAULT_APPOINTMENT_DURATION: 30
+      BUFFER_TIME: 15
+      WORKING_HOURS_START: 08:00
+      WORKING_HOURS_END: 18:00
+      WORKING_DAYS: monday,tuesday,wednesday,thursday,friday
+      MAX_ADVANCE_BOOKING: 90
+      MIN_ADVANCE_BOOKING: 1
+      # Synchronization Settings
+      BIDIRECTIONAL_SYNC: true
+      AUTO_SYNC: true
+      SYNC_ON_CREATE: true
+      SYNC_ON_UPDATE: true
+      SYNC_ON_DELETE: true
+      CONFLICT_RESOLUTION: local
+      # Service URLs
+      CLINIC_SERVICE_URL: http://clinic-service:3001
+      APPOINTMENT_SERVICE_URL: http://appointment-service:3002
     ports:
       - "3008:3008"
     volumes:
