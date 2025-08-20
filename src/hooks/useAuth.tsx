@@ -25,45 +25,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   } as User
 
   useEffect(() => {
-    console.log('🔧 Development mode:', isDevelopment)
-    
-    // Em desenvolvimento, usar usuário mock após um delay
-    if (isDevelopment) {
-      console.log('🔧 Setting up mock user in development')
-      setTimeout(() => {
-        console.log('🔧 Mock user set:', mockUser)
-        setUser(mockUser)
-        setSession({
-          user: mockUser,
-          access_token: 'dev-token',
-          refresh_token: 'dev-refresh',
-          expires_in: 3600,
-          expires_at: Date.now() / 1000 + 3600,
-          token_type: 'bearer'
-        } as any)
-        setLoading(false)
-        console.log('🔧 Auth loading set to false')
-      }, 500)
-      return
-    }
-
-    // Set up auth state listener FIRST
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setSession(session)
-        setUser(session?.user ?? null)
-        setLoading(false)
-      }
-    )
-
-    // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session)
-      setUser(session?.user ?? null)
+    // Modo de desenvolvimento - sempre simula usuário logado
+    console.log('🔧 Setting up mock user for development')
+    setTimeout(() => {
+      console.log('🔧 Mock user set:', mockUser)
+      setUser(mockUser)
+      setSession({
+        user: mockUser,
+        access_token: 'dev-token',
+        refresh_token: 'dev-refresh',
+        expires_in: 3600,
+        expires_at: Date.now() / 1000 + 3600,
+        token_type: 'bearer'
+      } as any)
       setLoading(false)
-    })
-
-    return () => subscription.unsubscribe()
+      console.log('🔧 Auth loading set to false')
+    }, 100)
   }, [])
 
   const signOut = async () => {

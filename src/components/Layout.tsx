@@ -19,14 +19,14 @@ export function Layout({ children }: LayoutProps) {
   const navigate = useNavigate()
   const { user, signOut, loading } = useAuth()
 
-  // Redirect to auth if not authenticated
-  useEffect(() => {
-    console.log('🔧 Layout useEffect - loading:', loading, 'user:', user)
-    if (!loading && !user) {
-      console.log('🔧 Redirecting to /auth')
-      navigate("/auth")
-    }
-  }, [loading, user, navigate])
+  // Desabilitado durante desenvolvimento
+  // useEffect(() => {
+  //   console.log('🔧 Layout useEffect - loading:', loading, 'user:', user)
+  //   if (!loading && !user) {
+  //     console.log('🔧 Redirecting to /auth')
+  //     navigate("/auth")
+  //   }
+  // }, [loading, user, navigate])
 
   // Show loading while checking auth
   if (loading) {
