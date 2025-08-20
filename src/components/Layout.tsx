@@ -21,7 +21,9 @@ export function Layout({ children }: LayoutProps) {
 
   // Redirect to auth if not authenticated
   useEffect(() => {
+    console.log('🔧 Layout useEffect - loading:', loading, 'user:', user)
     if (!loading && !user) {
+      console.log('🔧 Redirecting to /auth')
       navigate("/auth")
     }
   }, [loading, user, navigate])

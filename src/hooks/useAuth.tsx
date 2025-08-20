@@ -25,9 +25,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   } as User
 
   useEffect(() => {
+    console.log('🔧 Development mode:', isDevelopment)
+    
     // Em desenvolvimento, usar usuário mock após um delay
     if (isDevelopment) {
+      console.log('🔧 Setting up mock user in development')
       setTimeout(() => {
+        console.log('🔧 Mock user set:', mockUser)
         setUser(mockUser)
         setSession({
           user: mockUser,
@@ -38,6 +42,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           token_type: 'bearer'
         } as any)
         setLoading(false)
+        console.log('🔧 Auth loading set to false')
       }, 500)
       return
     }
