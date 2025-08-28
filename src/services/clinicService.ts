@@ -2,7 +2,7 @@
 // SERVIÇO DE GESTÃO DE CLÍNICAS - ATENDEAÍ 2.0
 // =====================================================
 
-import { supabase } from '@/integrations/supabase/client';
+import { get, post, put, del } from '@/lib/http';
 
 export interface Clinic {
   id: string;
@@ -82,163 +82,91 @@ const BASE_URL = import.meta.env.VITE_CLINIC_API_BASE_URL || 'http://localhost:3
 class ClinicService {
   private baseURL = BASE_URL;
 
-  private async getAuthHeaders(): Promise<HeadersInit> {
-    const { data } = await supabase.auth.getSession();
-    const token = data.session?.access_token;
-    return {
-      'Content-Type': 'application/json',
-      ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-    };
-  }
-
   async getClinics(limit: number = 100, offset: number = 0): Promise<Clinic[]> {
-    const headers = await this.getAuthHeaders();
-    const response = await fetch(`${this.baseURL}/clinics?limit=${limit}&offset=${offset}`, {
-      method: 'GET',
-      headers,
-    });
-    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-    const data = await response.json();
+    const data = await get<{ data: Clinic[] }>(`${this.baseURL}/clinics?limit=${limit}&offset=${offset}`);
     return data.data || [];
   }
 
   async getClinic(id: string): Promise<Clinic> {
-    const headers = await this.getAuthHeaders();
-    const response = await fetch(`${this.baseURL}/clinics/${id}`, { method: 'GET', headers });
-    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-    const data = await response.json();
+    const data = await get<{ data: Clinic }>(`${this.baseURL}/clinics/${id}`);
     return data.data;
   }
 
   async createClinic(clinicData: Partial<Clinic>): Promise<Clinic> {
-    const headers = await this.getAuthHeaders();
-    const response = await fetch(`${this.baseURL}/clinics`, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify(clinicData),
-    });
-    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-    const data = await response.json();
+    const data = await post<{ data: Clinic }>(`${this.baseURL}/clinics`, clinicData);
     return data.data;
   }
 
   async updateClinic(id: string, clinicData: Partial<Clinic>): Promise<Clinic> {
-    const headers = await this.getAuthHeaders();
-    const response = await fetch(`${this.baseURL}/clinics/${id}`, {
-      method: 'PUT',
-      headers,
-      body: JSON.stringify(clinicData),
-    });
-    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-    const data = await response.json();
+    const data = await put<{ data: Clinic }>(`${this.baseURL}/clinics/${id}`, clinicData);
     return data.data;
   }
 
   async deleteClinic(id: string): Promise<void> {
-    const headers = await this.getAuthHeaders();
-    const response = await fetch(`${this.baseURL}/clinics/${id}`, { method: 'DELETE', headers });
-    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+    await del(`${this.baseURL}/clinics/${id}`);
   }
 
   async getClinicContextualization(id: string, forceRefresh: boolean = false): Promise<ClinicContextualization> {
-    const headers = await this.getAuthHeaders();
-    const response = await fetch(`${this.baseURL}/clinics/${id}/contextualization?forceRefresh=${forceRefresh}`, { method: 'GET', headers });
-    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-    const data = await response.json();
+    const data = await get<{ data: ClinicContextualization }>(`${this.baseURL}/clinics/${id}/contextualization?forceRefresh=${forceRefresh}`);
     return data.data;
   }
 
   async updateClinicContextualization(id: string, contextualizationData: Partial<ClinicContextualization>): Promise<ClinicContextualization> {
-    const headers = await this.getAuthHeaders();
-    const response = await fetch(`${this.baseURL}/clinics/${id}/contextualization`, { method: 'PUT', headers, body: JSON.stringify(contextualizationData) });
-    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-    const data = await response.json();
+    const data = await put<{ data: ClinicContextualization }>(`${this.baseURL}/clinics/${id}/contextualization`, contextualizationData);
     return data.data;
   }
 
   async getClinicIntentions(id: string): Promise<string[]> {
-    const headers = await this.getAuthHeaders();
-    const response = await fetch(`${this.baseURL}/clinics/${id}/intentions`, { method: 'GET', headers });
-    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-    const data = await response.json();
+    const data = await get<{ data: string[] }>(`${this.baseURL}/clinics/${id}/intentions`);
     return data.data || [];
   }
 
   async getClinicPersonality(id: string): Promise<AIPersonality> {
-    const headers = await this.getAuthHeaders();
-    const response = await fetch(`${this.baseURL}/clinics/${id}/personality`, { method: 'GET', headers });
-    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-    const data = await response.json();
+    const data = await get<{ data: AIPersonality }>(`${this.baseURL}/clinics/${id}/personality`);
     return data.data;
   }
 
   async getClinicBehavior(id: string): Promise<AIBehavior> {
-    const headers = await this.getAuthHeaders();
-    const response = await fetch(`${this.baseURL}/clinics/${id}/behavior`, { method: 'GET', headers });
-    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-    const data = await response.json();
+    const data = await get<{ data: AIBehavior }>(`${this.baseURL}/clinics/${id}/behavior`);
     return data.data;
   }
 
   async getClinicWorkingHours(id: string): Promise<WorkingHours> {
-    const headers = await this.getAuthHeaders();
-    const response = await fetch(`${this.baseURL}/clinics/${id}/working-hours`, { method: 'GET', headers });
-    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-    const data = await response.json();
+    const data = await get<{ data: WorkingHours }>(`${this.baseURL}/clinics/${id}/working-hours`);
     return data.data;
   }
 
   async getClinicAppointmentPolicies(id: string): Promise<AppointmentPolicy[]> {
-    const headers = await this.getAuthHeaders();
-    const response = await fetch(`${this.baseURL}/clinics/${id}/appointment-policies`, { method: 'GET', headers });
-    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-    const data = await response.json();
+    const data = await get<{ data: AppointmentPolicy[] }>(`${this.baseURL}/clinics/${id}/appointment-policies`);
     return data.data || [];
   }
 
   async getClinicCalendarMappings(id: string): Promise<any[]> {
-    const headers = await this.getAuthHeaders();
-    const response = await fetch(`${this.baseURL}/clinics/${id}/calendar-mappings`, { method: 'GET', headers });
-    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-    const data = await response.json();
+    const data = await get<{ data: any[] }>(`${this.baseURL}/clinics/${id}/calendar-mappings`);
     return data.data || [];
   }
 
   async getClinicServices(id: string): Promise<any[]> {
-    const headers = await this.getAuthHeaders();
-    const response = await fetch(`${this.baseURL}/clinics/${id}/services`, { method: 'GET', headers });
-    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-    const data = await response.json();
+    const data = await get<{ data: any[] }>(`${this.baseURL}/clinics/${id}/services`);
     return data.data || [];
   }
 
   async getClinicProfessionals(id: string): Promise<any[]> {
-    const headers = await this.getAuthHeaders();
-    const response = await fetch(`${this.baseURL}/clinics/${id}/professionals`, { method: 'GET', headers });
-    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-    const data = await response.json();
+    const data = await get<{ data: any[] }>(`${this.baseURL}/clinics/${id}/professionals`);
     return data.data || [];
   }
 
   async clearContextualizationCache(id: string): Promise<void> {
-    const headers = await this.getAuthHeaders();
-    const response = await fetch(`${this.baseURL}/clinics/${id}/contextualization/cache`, { method: 'DELETE', headers });
-    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+    await del(`${this.baseURL}/clinics/${id}/contextualization/cache`);
   }
 
   async getContextualizationCacheStats(): Promise<any> {
-    const headers = await this.getAuthHeaders();
-    const response = await fetch(`${this.baseURL}/clinics/contextualization/cache/stats`, { method: 'GET', headers });
-    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-    const data = await response.json();
+    const data = await get<{ data: any }>(`${this.baseURL}/clinics/contextualization/cache/stats`);
     return data.data;
   }
 
   async getClinicByWhatsAppPhone(phone: string): Promise<Clinic> {
-    const headers = await this.getAuthHeaders();
-    const response = await fetch(`${this.baseURL}/clinics/whatsapp/${phone}`, { method: 'GET', headers });
-    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-    const data = await response.json();
+    const data = await get<{ data: Clinic }>(`${this.baseURL}/clinics/whatsapp/${phone}`);
     return data.data;
   }
 }

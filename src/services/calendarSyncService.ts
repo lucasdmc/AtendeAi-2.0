@@ -1,3 +1,5 @@
+import { get } from '@/lib/http';
+
 export type CalendarEvent = {
   id: string;
   title?: string;
@@ -9,18 +11,9 @@ export type CalendarEvent = {
 
 const API_BASE = import.meta.env.VITE_CALENDAR_API_BASE_URL || '';
 
-async function http<T>(path: string): Promise<T> {
-  const res = await fetch(`${API_BASE}${path}`);
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`HTTP ${res.status}: ${text}`);
-  }
-  return (await res.json()) as T;
-}
-
 export const calendarSyncService = {
   async getUpcoming(clinicId: string, hours = 24): Promise<CalendarEvent[]> {
-    const data = await http<{ events: CalendarEvent[] }>(`/api/v1/calendar/events/upcoming?clinic_id=${clinicId}&hours=${hours}`);
+    const data = await get<{ events: CalendarEvent[] }>(`${API_BASE}/api/v1/calendar/events/upcoming?clinic_id=${clinicId}&hours=${hours}`);
     return data.events || [];
   },
 };

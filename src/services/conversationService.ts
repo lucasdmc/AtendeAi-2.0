@@ -1,3 +1,5 @@
+import { get, post } from '@/lib/http';
+
 export type ConversationSummary = {
   id: string;
   clinic_id: string;
@@ -17,43 +19,22 @@ export type ProcessMessagePayload = {
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
 
-async function http<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(`${API_BASE}${path}`, {
-    headers: { 'Content-Type': 'application/json', ...(init?.headers || {}) },
-    ...init,
-  });
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`HTTP ${res.status}: ${text}`);
-  }
-  return (await res.json()) as T;
-}
-
 export const conversationService = {
   async health(): Promise<any> {
-    return http('/api/conversation/health');
+    return get(`${API_BASE}/api/conversation/health`);
   },
   async listByClinic(clinicId: string): Promise<ConversationSummary[]> {
-    const data = await http<{ data: ConversationSummary[] }>(`/api/conversation/clinic/${clinicId}`);
+    const data = await get<{ data: ConversationSummary[] }>(`${API_BASE}/api/conversation/clinic/${clinicId}`);
     return data.data || [];
   },
   async processMessage(payload: ProcessMessagePayload): Promise<any> {
-    return http('/api/conversation/process', {
-      method: 'POST',
-      body: JSON.stringify(payload),
-    });
+    return post(`${API_BASE}/api/conversation/process`, payload);
   },
   async transitionToHuman(conversationId: string, attendantId: string, reason?: string): Promise<any> {
-    return http(`/api/conversation/${conversationId}/transition/human`, {
-      method: 'POST',
-      body: JSON.stringify({ attendant_id: attendantId, reason }),
-    });
+    return post(`${API_BASE}/api/conversation/${conversationId}/transition/human`, { attendant_id: attendantId, reason });
   },
   async transitionToBot(conversationId: string, reason?: string): Promise<any> {
-    return http(`/api/conversation/${conversationId}/transition/bot`, {
-      method: 'POST',
-      body: JSON.stringify({ reason }),
-    });
+    return post(`${API_BASE}/api/conversation/${conversationId}/transition/bot`, { reason });
   },
 };
 
