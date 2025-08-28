@@ -17,7 +17,7 @@ export function Layout({ children }: LayoutProps) {
   const [selectedClinic, setSelectedClinic] = useState("cardioprime_blumenau_2024")
   const location = useLocation()
   const navigate = useNavigate()
-  const { user, signOut, loading } = useAuth()
+  const { user, logout, isLoading } = useAuth()
 
   // Desabilitado durante desenvolvimento
   // useEffect(() => {
@@ -29,7 +29,7 @@ export function Layout({ children }: LayoutProps) {
   // }, [loading, user, navigate])
 
   // Show loading while checking auth
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -46,7 +46,7 @@ export function Layout({ children }: LayoutProps) {
   }
 
   const handleLogout = async () => {
-    await signOut()
+    await logout()
     navigate("/auth")
   }
 
@@ -90,7 +90,7 @@ export function Layout({ children }: LayoutProps) {
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                     <Avatar className="h-8 w-8">
-                      <AvatarImage src={user?.user_metadata?.avatar_url} />
+                      <AvatarImage src="" />
                       <AvatarFallback>
                         <User className="h-4 w-4" />
                       </AvatarFallback>
