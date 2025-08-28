@@ -1,0 +1,237 @@
+openapi: 3.1.0
+info:
+  title: AtendeAI 2.0 API
+  version: 1.0.0
+  description: |
+    API do AtendeAI 2.0 (MVP). Foco em Conversas WhatsApp, controle do Chatbot e contexto por clínica.
+servers:
+  - url: http://localhost:8000
+    description: Kong API Gateway (local)
+  - url: https://api.atendeai.local
+    description: Produção (placeholder)
+paths:
+  /webhook/whatsapp:
+    post:
+      summary: Recebe eventos do WhatsApp (Meta Webhook)
+      operationId: PostWhatsAppWebhook
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WhatsAppWebhookEvent'
+            examples:
+              example:
+                $ref: '#/components/examples/WebhookIncoming'
+      responses:
+        '200':
+          description: Evento processado
+        '400':
+          description: Requisição inválida
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '401':
+          description: Não autorizado
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+  /conversations:
+    get:
+      summary: Lista conversas por clínica e filtros
+      operationId: ListConversations
+      parameters:
+        - in: query
+          name: clinic_id
+          schema:
+            type: string
+          required: true
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [open, closed]
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 20
+        - in: query
+          name: cursor
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Conversas
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Conversation'
+                  next_cursor:
+                    type: string
+        '401':
+          description: Não autorizado
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+  /conversations/{conversationId}/messages:
+    get:
+      summary: Mensagens de uma conversa
+      operationId: ListConversationMessages
+      parameters:
+        - in: path
+          name: conversationId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Mensagens
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Message'
+        '401':
+          description: Não autorizado
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+  /conversations/{conversationId}/toggle-bot:
+    post:
+      summary: Alterna modo Chatbot ON/OFF para a conversa
+      operationId: ToggleChatbot
+      parameters:
+        - in: path
+          name: conversationId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [mode]
+              properties:
+                mode:
+                  type: string
+                  enum: [on, off]
+            examples:
+              example:
+                value:
+                  mode: on
+      responses:
+        '200':
+          description: Estado atualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Conversation'
+        '400':
+          description: Requisição inválida
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '401':
+          description: Não autorizado
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+components:
+  schemas:
+    Conversation:
+      type: object
+      properties:
+        id:
+          type: string
+        clinic_id:
+          type: string
+        wa_contact_id:
+          type: string
+        status:
+          type: string
+          enum: [open, closed]
+        mode:
+          type: string
+          enum: [on, off]
+        last_message_at:
+          type: string
+          format: date-time
+    Message:
+      type: object
+      properties:
+        id:
+          type: string
+        conversation_id:
+          type: string
+        direction:
+          type: string
+          enum: [inbound, outbound]
+        type:
+          type: string
+          enum: [text, media]
+        payload_json:
+          type: object
+          additionalProperties: true
+        status:
+          type: string
+          enum: [queued, sent, delivered, read, failed]
+        created_at:
+          type: string
+          format: date-time
+    WhatsAppWebhookEvent:
+      type: object
+      additionalProperties: true
+      description: Payload conforme WhatsApp Business API (Meta)
+    Problem:
+      type: object
+      description: RFC 7807 Problem Details
+      properties:
+        type:
+          type: string
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        instance:
+          type: string
+      required: [title, status]
+  examples:
+    WebhookIncoming:
+      value:
+        object: "whatsapp_business_account"
+        entry:
+          - id: "123"
+            changes:
+              - value:
+                  messaging_product: "whatsapp"
+                  metadata:
+                    display_phone_number: "5511999999999"
+                    phone_number_id: "698766983327246"
+                  contacts:
+                    - profile: { name: "Test" }
+                      wa_id: "5511900000000"
+                  messages:
+                    - from: "5511900000000"
+                      id: "wamid.123"
+                      timestamp: "1234567890"
+                      text: { body: "Hello" }
