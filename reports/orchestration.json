@@ -2,7 +2,14 @@
   "task_id": "T-20250828-001",
   "agent": "context_manager",
   "status": "done",
-  "summary": "Fluxo MVP iniciado: limpeza AuthService concluída; tech stack consolidada; specs e fases criadas; compose/monitoring/HAProxy atualizados.",
+  "summary": "MVP orquestrado: Fases 1-5 implementadas; lint/build/test verdes no frontend; artefatos atualizados.",
+  "phases": [
+    { "name": "Fase 1 - Core WhatsApp + Chatbot + FE↔BE", "status": "done", "validated_by": ["expert_developer", "test_engineer"] },
+    { "name": "Fase 2 - Segurança e RBAC", "status": "done", "validated_by": ["expert_developer", "test_engineer"] },
+    { "name": "Fase 3 - Google Calendar e Agendamentos", "status": "done", "validated_by": ["expert_developer", "test_engineer"] },
+    { "name": "Fase 4 - CRUDs e remoção de mocks", "status": "done", "validated_by": ["expert_developer", "test_engineer"] },
+    { "name": "Fase 5 - Observabilidade, testes e hardening", "status": "done", "validated_by": ["test_engineer", "delivery_reviewer"] }
+  ],
   "artifacts": [
     {"path": ".tech_stack.yaml", "type": "config", "summary": "Stack unificada (Supabase Auth)"},
     {"path": "docs/system_spec.md", "type": "spec", "summary": "Especificação MVP"},
@@ -11,12 +18,37 @@
     {"path": "docs/FASES_DESENVOLVIMENTO.md", "type": "plan", "summary": "Fases de desenvolvimento (Core primeiro)"},
     {"path": "docker-compose.yml", "type": "infra", "summary": "AuthService removido; HAProxy ajustado"},
     {"path": "monitoring/prometheus.yml", "type": "monitoring", "summary": "Targets do AuthService removidos"},
-    {"path": "backend/haproxy/haproxy.cfg", "type": "infra", "summary": "Backend auth removido"}
+    {"path": "backend/haproxy/haproxy.cfg", "type": "infra", "summary": "Backend auth removido"},
+    {"path": "api/openapi.yaml", "type": "api", "summary": "OpenAPI MVP (webhook, conversas, toggle)"},
+    {"path": "api/error-catalog.md", "type": "api", "summary": "Catálogo de erros RFC7807"},
+    {"path": "api/examples/whatsapp-webhook.json", "type": "api", "summary": "Exemplo de payload"},
+    {"path": "src/services/conversationService.ts", "type": "code", "summary": "FE integrado ao conversation-service"},
+    {"path": "src/pages/Conversations.tsx", "type": "code", "summary": "Tela integrada (lista/envio/transições)"},
+    {"path": "src/pages/Calendar.tsx", "type": "code", "summary": "Iframe Google Calendar"},
+    {"path": "src/services/calendarSyncService.ts", "type": "code", "summary": "Próximos eventos via API"},
+    {"path": "src/pages/Appointments.tsx", "type": "code", "summary": "Lista eventos do calendário"},
+    {"path": "src/pages/Clinics.tsx", "type": "code", "summary": "CRUD real de clínicas"},
+    {"path": "src/services/clinicService.ts", "type": "code", "summary": "API real + Supabase token"},
+    {"path": "src/pages/Users.tsx", "type": "code", "summary": "CRUD real de usuários"},
+    {"path": "src/services/userService.ts", "type": "code", "summary": "API de usuários por clínica"},
+    {"path": "src/lib/http.ts", "type": "code", "summary": "HTTP wrapper com x-correlation-id"},
+    {"path": "reports/review.json", "type": "report", "summary": "Delivery Reviewer: APPROVED"},
+    {"path": "CHANGELOG.md", "type": "doc", "summary": "Entradas v1.2.0"}
   ],
+  "validations": {
+    "test_engineer": {
+      "lint": "ok (warnings apenas)",
+      "build": "ok",
+      "tests": "ok (frontend); testes legados do auth-service ignorados"
+    },
+    "delivery_reviewer": {
+      "status": "APPROVED",
+      "notes": "Fluxo MVP entregue; pendências de credenciais reais serão aplicadas no E2E"
+    }
+  },
   "questions": [],
   "next_actions": [
-    "handoff: expert_developer",
-    "handoff: test_engineer",
-    "handoff: delivery_reviewer"
+    "handoff: release_manager",
+    "handoff: repository_manager"
   ]
 }
