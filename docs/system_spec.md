@@ -43,21 +43,40 @@ Status: Draft (MVP) | Owner: context_manager | Quality Profile: v1.0
 7. Fases de Desenvolvimento (Planejamento)
 
 - Fase 1 (MVP Core):
-  - Conexão com WhatsApp (envio texto via whatsapp-service)
-  - Chatbot funcional consumindo contextualização por clínica
-  - Contextualização JSON (CRUD) via clinic-service
-  - Integração FE↔BE via SDKs mínimos
+  - Itens:
+    - Conexão com WhatsApp (envio texto via whatsapp-service)
+    - Chatbot funcional consumindo contextualização por clínica (via clinic-service)
+    - Contextualização JSON (CRUD)
+    - Integração FE↔BE via SDKs mínimos
+  - Entregáveis:
+    - `src/sdk/whatsapp.ts`, `src/sdk/context.ts`
+    - `docs/frontend_integration.md`
+  - Critérios de Aceitação:
+    - RF-CTX-01/02 e RF-WA-01 atendidos
+    - Build/lint/typecheck verdes
+
 - Fase 2: Autenticação Unificada
-  - Migrar `useAuth` para Supabase ou implementar bridge JWT↔Supabase
-  - Proteger rotas e roles (RBAC no FE) e remover `authService` custom
+  - Itens: migrar `useAuth` para Supabase (ou bridge), proteger rotas, RBAC, remover `authService` custom
+  - Entregáveis: contexto de Auth único, rotas protegidas, documentação
+  - Critérios: login/logout/refresh funcionais; roles respeitadas no FE
+
 - Fase 3: Conversas Reais
-  - Listagem de conversas, histórico e status via conversation-service
-  - Modo manual/automático persistente por conversa
+  - Itens: listagem/histórico/status via conversation-service; persistir modo manual/automático
+  - Entregáveis: serviços/SDK e integração na tela; doc
+  - Critérios: carregamento real de conversas e troca de mensagens persistidas
+
 - Fase 4: Combobox de Clínicas e Multi-tenant
-  - Combobox dinâmico por perfil; persistência da seleção
-  - Isolamento completo por clínica
+  - Itens: combobox dinâmico por perfil; persistência da seleção; isolamento por clínica
+  - Entregáveis: integração com clinic-service; políticas de exibição por role
+  - Critérios: RBAC em combobox; alteração de contexto efetiva
+
 - Fase 5: Google Calendar
-  - OAuth + iframe embed + sincronização de eventos
+  - Itens: OAuth + iframe embed + sincronização de eventos
+  - Entregáveis: integração e doc
+  - Critérios: calendário visível; sync básico ok
+
 - Fase 6: Qualidade e Observabilidade
-  - Testes, métricas leves, auditoria de dependências e lint/type 100% verde
+  - Itens: testes (unit/integration/smoke FE), métricas leves, auditoria deps
+  - Entregáveis: `reports/coverage.xml` (meta a definir), configuração CI local
+  - Critérios: testes verdes; alertas básicos operacionais
 
