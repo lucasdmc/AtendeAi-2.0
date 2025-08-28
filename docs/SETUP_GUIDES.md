@@ -113,7 +113,7 @@ docker-compose up -d redis kong
 
 ### **2. Inicie os serviços:**
 ```bash
-docker-compose up -d auth-service clinic-service conversation-service appointment-service
+docker-compose up -d clinic-service conversation-service appointment-service
 ```
 
 ### **3. Inicie os serviços de integração:**
@@ -142,9 +142,6 @@ curl http://localhost:3007/health
 
 # Google Calendar Service
 curl http://localhost:3008/health
-
-# Auth Service
-curl http://localhost:3001/health
 
 # Clinic Service
 curl http://localhost:3003/health

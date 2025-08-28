@@ -18,7 +18,7 @@ O projeto AtendeAI 2.0 está **75% implementado** com uma base sólida de infrae
 - ✅ Health checks para todos os serviços
 
 ### **2. Serviços Backend** 🟢 IMPLEMENTADOS (100%)
-- ✅ **Auth Service** - Sistema de autenticação JWT com refresh tokens
+- ✅ **Auth** - Unificado via Supabase (AuthService removido)
 - ✅ **User Service** - Gestão de usuários multi-tenant
 - ✅ **Clinic Service** - Gestão de clínicas com isolamento
 - ✅ **Conversation Service** - Sistema de IA e conversação
@@ -304,7 +304,7 @@ openssl rand -base64 64
 
 2. **Inicie os serviços:**
    ```bash
-   docker-compose up -d auth-service clinic-service conversation-service appointment-service
+   docker-compose up -d clinic-service conversation-service appointment-service
    ```
 
 3. **Inicie os serviços de integração:**
@@ -333,9 +333,6 @@ curl http://localhost:3007/health
 
 # Google Calendar Service
 curl http://localhost:3008/health
-
-# Auth Service
-curl http://localhost:3001/health
 
 # Clinic Service
 curl http://localhost:3002/health

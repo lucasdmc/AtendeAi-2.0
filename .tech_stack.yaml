@@ -1,0 +1,45 @@
+mode: mvp
+quality_profile: v1.0
+application:
+  name: AtendeAI 2.0
+  domain: healthcare/clinics
+  multi_tenant: true
+frontend:
+  framework: React 18
+  language: TypeScript
+  bundler: Vite 5
+  ui_library: shadcn/ui + Tailwind CSS
+  router: React Router v6
+  state: React Context
+  dev_server_port: 8080
+backend:
+  style: microservices
+  language: Node.js (LTS)
+  framework: Express
+  services:
+    - clinic-service
+    - conversation-service
+    - appointment-service
+    - whatsapp-service
+    - google-calendar-service
+    - health-service
+  gateway: Kong (DB-less)
+  load_balancer: HAProxy
+  cache: Redis 7
+  metrics: Prometheus + Grafana
+  auth: Supabase Auth (unified)
+database:
+  engine: PostgreSQL (Supabase hosted)
+  rls: true
+  migrations: Supabase SQL
+security:
+  secrets_in_repo: false
+  pii_masking_logs: true
+  input_validation: true
+  dependencies_audit: true
+observability:
+  logging: structured (JSON, correlation_id)
+  metrics: basic (latency, error_rate) + business
+release:
+  versioning: semver
+  changelog: framework/CHANGELOG.md

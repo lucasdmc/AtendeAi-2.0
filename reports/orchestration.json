@@ -1,0 +1,22 @@
+{
+  "task_id": "T-20250828-001",
+  "agent": "context_manager",
+  "status": "done",
+  "summary": "Fluxo MVP iniciado: limpeza AuthService concluída; tech stack consolidada; specs e fases criadas; compose/monitoring/HAProxy atualizados.",
+  "artifacts": [
+    {"path": ".tech_stack.yaml", "type": "config", "summary": "Stack unificada (Supabase Auth)"},
+    {"path": "docs/system_spec.md", "type": "spec", "summary": "Especificação MVP"},
+    {"path": "docs/assumptions.md", "type": "spec", "summary": "Suposições MVP"},
+    {"path": "docs/traceability.csv", "type": "traceability", "summary": "Rastreabilidade requisitos↔implementação"},
+    {"path": "docs/FASES_DESENVOLVIMENTO.md", "type": "plan", "summary": "Fases de desenvolvimento (Core primeiro)"},
+    {"path": "docker-compose.yml", "type": "infra", "summary": "AuthService removido; HAProxy ajustado"},
+    {"path": "monitoring/prometheus.yml", "type": "monitoring", "summary": "Targets do AuthService removidos"},
+    {"path": "backend/haproxy/haproxy.cfg", "type": "infra", "summary": "Backend auth removido"}
+  ],
+  "questions": [],
+  "next_actions": [
+    "handoff: expert_developer",
+    "handoff: test_engineer",
+    "handoff: delivery_reviewer"
+  ]
+}

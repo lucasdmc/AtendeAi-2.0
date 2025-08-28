@@ -28,19 +28,7 @@ scrape_configs:
     metrics_path: /metrics
     scrape_interval: 15s
 
-  # Auth Service
-  - job_name: 'auth-service'
-    static_configs:
-      - targets: ['auth-service:3001']
-    metrics_path: /metrics
-    scrape_interval: 15s
-    scrape_timeout: 10s
-    honor_labels: true
-    relabel_configs:
-      - source_labels: [__address__]
-        target_label: instance
-        regex: '([^:]+)(?::\d+)?'
-        replacement: '${1}'
+  # (removido) auth-service - autenticação via Supabase
 
   # Clinic Service
   - job_name: 'clinic-service'
@@ -144,7 +132,6 @@ scrape_configs:
   - job_name: 'health-checks'
     static_configs:
       - targets: 
-        - 'auth-service:3001'
         - 'clinic-service:3003'
         - 'whatsapp-service:3007'
         - 'google-calendar-service:3008'

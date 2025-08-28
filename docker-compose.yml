@@ -73,43 +73,7 @@ services:
       retries: 3
       start_period: 40s
 
-  # =====================================================
-  # AUTH SERVICE
-  # =====================================================
-  auth-service:
-    build:
-      context: ./services/auth-service
-      dockerfile: Dockerfile
-    container_name: atendeai-auth-service
-    restart: unless-stopped
-    environment:
-      NODE_ENV: development
-      PORT: 3001
-      DATABASE_URL: postgresql://postgres:Supa201294base@db.kytphnasmdvebmdvvwtx.supabase.co:5432/postgres
-      REDIS_URL: redis://:redis123@redis:6379
-      JWT_SECRET: your-super-secret-jwt-key-change-in-production
-      JWT_ACCESS_TOKEN_EXPIRY: 15m
-      JWT_REFRESH_TOKEN_EXPIRY: 7d
-      BCRYPT_ROUNDS: 12
-      SUPABASE_URL: https://kytphnasmdvebmdvvwtx.supabase.co
-      SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt5dHBobmFzbWR2ZWJtZHZ2d3R4Iiwicm9lIjoiYW5vbiIsImlhdCI6MTc1NTYyMjgxMCwiZXhwIjoyMDcxMTk4ODEwfQ.gfH3VNqxLZWAbjlrlk44VrBdyF1QKv7CyOSLmhFwbqA
-      SUPABASE_SERVICE_ROLE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt5dHBobmFzbWR2ZWJtZHZ2d3R4Iiwicm9lIjoic2VydmljZV9yb2xlIiwiaWF0IjoxNzU1NjIyODEwLCJleHAiOjIwNzExOTg4MTB9LjM2SXA5Tld2cWg2YWVGUXVvd1Y3OXI1NEMyWVFQYzVOLU1uX2RuMlFENzA
-    ports:
-      - "3001:3001"
-    volumes:
-      - ./services/auth-service:/app
-      - /app/node_modules
-    networks:
-      - atendeai-network
-    depends_on:
-      redis:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
+  # (removido) AUTH SERVICE - Autenticação unificada via Supabase
 
   # =====================================================
   # USER SERVICE
@@ -402,12 +366,11 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - ./haproxy/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
+      - ./backend/haproxy/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
     networks:
       - atendeai-network
     depends_on:
       - kong
-      - auth-service
       - user-service
       - clinic-service
       - health-service
