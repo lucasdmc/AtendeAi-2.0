@@ -1,10 +1,11 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Calendar, Clock, User, Building2 } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import calendarSyncService, { CalendarEvent } from "@/services/calendarSyncService"
 
 interface Appointment {
   id: string
@@ -47,9 +48,33 @@ const mockAppointments: Appointment[] = [
 ]
 
 export default function Appointments() {
-  const [appointments] = useState<Appointment[]>(mockAppointments)
+  const [appointments, setAppointments] = useState<Appointment[]>(mockAppointments)
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
+
+  useEffect(() => {
+    const loadUpcoming = async () => {
+      try {
+        const clinicId = import.meta.env.VITE_DEFAULT_CLINIC_ID as string
+        const events: CalendarEvent[] = await calendarSyncService.getUpcoming(clinicId, 24)
+        if (events && events.length) {
+          const mapped: Appointment[] = events.map((e, idx) => ({
+            id: e.id || String(idx),
+            patientName: e.title || "Evento",
+            clinic: clinicId,
+            date: new Date(e.start_time).toISOString().split('T')[0],
+            time: new Date(e.start_time).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+            status: "scheduled",
+            specialty: e.location || ""
+          }))
+          setAppointments(mapped)
+        }
+      } catch {
+        // fallback mock
+      }
+    }
+    loadUpcoming()
+  }, [])
 
   const getStatusLabel = (status: string) => {
     const statuses: Record<string, string> = {

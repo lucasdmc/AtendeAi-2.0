@@ -5,13 +5,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { supabase } from "@/integrations/supabase/client"
 import { useToast } from "@/hooks/use-toast"
 
+const IFRAME_SRC = import.meta.env.VITE_GOOGLE_CALENDAR_IFRAME_SRC as string | undefined
+
 export default function Calendar() {
-  const [user, setUser] = useState(null)
+  const [user, setUser] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(false)
   const { toast } = useToast()
 
   useEffect(() => {
-    // Verificar se já existe uma sessão ativa
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession()
       if (session?.user) {
@@ -21,7 +22,6 @@ export default function Calendar() {
 
     checkSession()
 
-    // Listener para mudanças de autenticação
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         if (session?.user) {
@@ -53,18 +53,10 @@ export default function Calendar() {
       })
 
       if (error) {
-        toast({
-          title: "Erro ao fazer login",
-          description: error.message,
-          variant: "destructive"
-        })
+        toast({ title: "Erro no login", description: error.message, variant: "destructive" })
       }
     } catch (error) {
-      toast({
-        title: "Erro inesperado",
-        description: "Ocorreu um erro ao tentar fazer login com Google.",
-        variant: "destructive"
-      })
+      toast({ title: "Erro inesperado", description: "Falha ao conectar com Google.", variant: "destructive" })
     } finally {
       setIsLoading(false)
     }
@@ -73,16 +65,9 @@ export default function Calendar() {
   const handleLogout = async () => {
     const { error } = await supabase.auth.signOut()
     if (error) {
-      toast({
-        title: "Erro ao fazer logout",
-        description: error.message,
-        variant: "destructive"
-      })
+      toast({ title: "Erro ao fazer logout", description: error.message, variant: "destructive" })
     } else {
-      toast({
-        title: "Logout realizado",
-        description: "Você foi desconectado com sucesso.",
-      })
+      toast({ title: "Logout realizado", description: "Você foi desconectado com sucesso." })
     }
   }
 
@@ -108,21 +93,30 @@ export default function Calendar() {
               Google Calendar
             </CardTitle>
             <CardDescription>
-              Visualização do Google Calendar será implementada aqui
+              {IFRAME_SRC ? 'Seu calendário integrado' : 'Defina VITE_GOOGLE_CALENDAR_IFRAME_SRC para exibir o calendário'}
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="h-96 border-2 border-dashed border-muted-foreground/25 rounded-lg flex items-center justify-center">
-              <div className="text-center">
-                <CalendarIcon className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <p className="text-muted-foreground">
-                  Integração com Google Calendar em desenvolvimento
-                </p>
-                <p className="text-sm text-muted-foreground mt-2">
-                  A visualização do calendário será exibida nesta área
-                </p>
+            {IFRAME_SRC ? (
+              <iframe
+                src={IFRAME_SRC}
+                className="w-full h-[80vh] border rounded-md"
+                style={{ border: 0 }}
+                loading="lazy"
+              />
+            ) : (
+              <div className="h-96 border-2 border-dashed border-muted-foreground/25 rounded-lg flex items-center justify-center">
+                <div className="text-center">
+                  <CalendarIcon className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-muted-foreground">
+                    Variável VITE_GOOGLE_CALENDAR_IFRAME_SRC não definida.
+                  </p>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Adicione uma URL de embed do Google Calendar para visualizar aqui.
+                  </p>
+                </div>
               </div>
-            </div>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -142,24 +136,10 @@ export default function Calendar() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Button 
-            onClick={handleGoogleLogin} 
-            disabled={isLoading}
-            className="w-full gap-2"
-          >
+          <Button onClick={handleGoogleLogin} disabled={isLoading} className="w-full gap-2">
             <LogIn className="h-4 w-4" />
             {isLoading ? "Conectando..." : "Conectar com Google"}
           </Button>
-          
-          <div className="mt-4 p-3 bg-muted/50 rounded-lg">
-            <p className="text-xs text-muted-foreground">
-              <strong>Permissões solicitadas:</strong>
-              <br />
-              • Visualização de eventos do calendário
-              <br />
-              • Acesso às informações básicas do perfil
-            </p>
-          </div>
         </CardContent>
       </Card>
     </div>
