@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Plus, Edit, Trash2, Phone, Building2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
@@ -7,31 +7,10 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
-
-interface Clinic {
-  id: string
-  name: string
-  whatsapp: string
-  context: string
-}
-
-const mockClinics: Clinic[] = [
-  {
-    id: "1",
-    name: "Clínica São José",
-    whatsapp: "+55 11 99999-9999",
-    context: '{"specialties": ["cardiologia", "dermatologia"], "schedule": "8h-18h"}'
-  },
-  {
-    id: "2", 
-    name: "Centro Médico Saúde+",
-    whatsapp: "+55 11 88888-8888",
-    context: '{"specialties": ["pediatria", "ginecologia"], "schedule": "7h-19h"}'
-  }
-]
+import clinicService, { Clinic } from "@/services/clinicService"
 
 export default function Clinics() {
-  const [clinics, setClinics] = useState<Clinic[]>(mockClinics)
+  const [clinics, setClinics] = useState<Clinic[]>([])
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [editingClinic, setEditingClinic] = useState<Clinic | null>(null)
   const [formData, setFormData] = useState({
@@ -39,14 +18,30 @@ export default function Clinics() {
     whatsapp: "",
     context: ""
   })
+  const [loading, setLoading] = useState(false)
 
-  const handleOpenDialog = (clinic?: Clinic) => {
+  const loadClinics = async () => {
+    try {
+      const list = await clinicService.getClinics(100, 0)
+      // map minimal fields for UI fallback
+      const mapped: Clinic[] = list
+      setClinics(mapped)
+    } catch {
+      // keep empty
+    }
+  }
+
+  useEffect(() => {
+    loadClinics()
+  }, [])
+
+  const handleOpenDialog = (clinic?: any) => {
     if (clinic) {
       setEditingClinic(clinic)
       setFormData({
-        name: clinic.name,
-        whatsapp: clinic.whatsapp,
-        context: clinic.context
+        name: (clinic as any).name || "",
+        whatsapp: (clinic as any).whatsapp_id_number || "",
+        context: ""
       })
     } else {
       setEditingClinic(null)
@@ -55,25 +50,31 @@ export default function Clinics() {
     setIsDialogOpen(true)
   }
 
-  const handleSave = () => {
-    if (editingClinic) {
-      setClinics(clinics.map(c => 
-        c.id === editingClinic.id 
-          ? { ...editingClinic, ...formData }
-          : c
-      ))
-    } else {
-      const newClinic: Clinic = {
-        id: Date.now().toString(),
-        ...formData
+  const handleSave = async () => {
+    try {
+      setLoading(true)
+      if (editingClinic) {
+        const updated = await clinicService.updateClinic(editingClinic.id, { name: formData.name })
+        setClinics(prev => prev.map(c => c.id === editingClinic.id ? updated : c))
+      } else {
+        const created = await clinicService.createClinic({ name: formData.name, whatsapp_id_number: formData.whatsapp })
+        setClinics(prev => [created, ...prev])
       }
-      setClinics([...clinics, newClinic])
+      setIsDialogOpen(false)
+    } catch {
+      // ignore visual
+    } finally {
+      setLoading(false)
     }
-    setIsDialogOpen(false)
   }
 
-  const handleDelete = (id: string) => {
-    setClinics(clinics.filter(c => c.id !== id))
+  const handleDelete = async (id: string) => {
+    try {
+      await clinicService.deleteClinic(id)
+      setClinics(clinics.filter(c => c.id !== id))
+    } catch {
+      // ignore
+    }
   }
 
   return (
@@ -81,7 +82,7 @@ export default function Clinics() {
       <div className="flex items-center justify-end">
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button onClick={() => handleOpenDialog()} className="gap-2">
+            <Button onClick={() => handleOpenDialog()} className="gap-2" disabled={loading}>
               <Plus className="h-4 w-4" />
               Nova Clínica
             </Button>
@@ -114,12 +115,12 @@ export default function Clinics() {
                   id="whatsapp"
                   value={formData.whatsapp}
                   onChange={(e) => setFormData({...formData, whatsapp: e.target.value})}
-                  placeholder="+55 11 99999-9999"
+                  placeholder="698766983327246"
                 />
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="context">JSON de Contextualização</Label>
+                <Label htmlFor="context">JSON de Contextualização (opcional)</Label>
                 <Textarea
                   id="context"
                   value={formData.context}
@@ -131,10 +132,10 @@ export default function Clinics() {
             </div>
             
             <DialogFooter>
-              <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+              <Button variant="outline" onClick={() => setIsDialogOpen(false)} disabled={loading}>
                 Cancelar
               </Button>
-              <Button onClick={handleSave}>
+              <Button onClick={handleSave} disabled={loading}>
                 Salvar
               </Button>
             </DialogFooter>
@@ -155,7 +156,7 @@ export default function Clinics() {
               <TableHead>
                 <div className="flex items-center gap-2">
                   <Phone className="h-4 w-4" />
-                  WhatsApp
+                  WhatsApp ID
                 </div>
               </TableHead>
               <TableHead>Contexto</TableHead>
@@ -170,7 +171,7 @@ export default function Clinics() {
                 </TableCell>
               </TableRow>
             ) : (
-              clinics.map((clinic) => (
+              clinics.map((clinic: any) => (
                 <TableRow key={clinic.id} className="hover:bg-muted/50">
                   <TableCell className="font-medium">
                     <div className="flex items-center gap-2">
@@ -182,30 +183,22 @@ export default function Clinics() {
                   </TableCell>
                   <TableCell>
                     <Badge variant="outline" className="font-mono">
-                      {clinic.whatsapp}
+                      {clinic.whatsapp_id_number || ''}
                     </Badge>
                   </TableCell>
                   <TableCell>
                     <div className="max-w-xs">
                       <pre className="text-xs bg-muted/50 p-2 rounded overflow-x-auto">
-                        {clinic.context}
+                        {JSON.stringify({ mission: clinic.mission, specialties: clinic.specialties }, null, 2)}
                       </pre>
                     </div>
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex gap-2 justify-end">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleOpenDialog(clinic)}
-                      >
+                      <Button size="sm" variant="outline" onClick={() => handleOpenDialog(clinic)}>
                         <Edit className="h-4 w-4" />
                       </Button>
-                      <Button
-                        size="sm"
-                        variant="destructive"
-                        onClick={() => handleDelete(clinic.id)}
-                      >
+                      <Button size="sm" variant="destructive" onClick={() => handleDelete(clinic.id)}>
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
