@@ -48,6 +48,7 @@ interface Conversation {
   assignedAgent?: string
 }
 
+// TODO: substituir mocks por dados reais da API
 const mockConversations: Conversation[] = [
   {
     id: "1",
@@ -261,12 +262,16 @@ const mockConversations: Conversation[] = [
   }
 ]
 
+import { listActiveConversations, transitionToBot, transitionToHuman } from "@/services/conversationService";
+import { sendTextMessage } from "@/services/whatsappService";
+
 export default function Conversations() {
   const [conversations, setConversations] = useState<Conversation[]>(mockConversations)
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null)
   const [newMessage, setNewMessage] = useState("")
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const defaultClinicId = (import.meta as any).env?.VITE_DEFAULT_CLINIC_ID || "00000000-0000-0000-0000-000000000000"
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -275,6 +280,34 @@ export default function Conversations() {
   useEffect(() => {
     scrollToBottom()
   }, [selectedConversation?.messages])
+
+  // Carregar conversas reais quando montar
+  useEffect(() => {
+    (async () => {
+      try {
+        const data = await listActiveConversations(defaultClinicId)
+        // Mapear formato mínimo esperado nesta tela
+        const mapped: Conversation[] = (data as any[]).map((c) => ({
+          id: c.id || c.conversation_id || crypto.randomUUID(),
+          customerName: c.patient_name || c.customerName || "Paciente",
+          customerPhone: c.patient_phone || c.customerPhone || "",
+          clinic: c.clinic_name || c.clinic || "",
+          status: c.status || "active",
+          lastMessage: c.last_message || c.lastMessage || "",
+          lastActivity: c.last_activity || c.lastActivity || new Date().toISOString(),
+          messageCount: c.message_count || c.messageCount || 0,
+          messages: [],
+          isManualMode: c.is_manual || c.isManualMode || false,
+          assignedAgent: c.assigned_agent || c.assignedAgent,
+        }))
+        if (mapped.length > 0) {
+          setConversations(mapped)
+        }
+      } catch (e) {
+        console.warn("Falha ao carregar conversas reais, mantendo mocks:", e)
+      }
+    })()
+  }, [])
 
   const filteredConversations = conversations.filter(conversation => 
     conversation.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -302,107 +335,50 @@ export default function Conversations() {
     }
   }
 
-  const sendMessage = () => {
+  const sendMessage = async () => {
     if (!newMessage.trim() || !selectedConversation) return
 
-    const newMsg: Message = {
-      id: Date.now().toString(),
-      sender: selectedConversation.isManualMode ? "bot" : "bot", // Em modo manual, o atendente responde
-      content: newMessage,
-      timestamp: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
-      status: "sent"
-    }
-
-    setConversations(prev => 
-      prev.map(conv => 
-        conv.id === selectedConversation.id 
-          ? { ...conv, messages: [...conv.messages, newMsg] }
-          : conv
-      )
-    )
-
-    setSelectedConversation(prev => 
-      prev ? { ...prev, messages: [...prev.messages, newMsg] } : null
-    )
-
-    setNewMessage("")
-
-    // Simular resposta automática apenas se não estiver em modo manual
-    if (!selectedConversation.isManualMode) {
-      setTimeout(() => {
-        const autoReply: Message = {
-          id: (Date.now() + 1).toString(),
-          sender: "bot",
-          content: "Esta é uma resposta automática do assistente virtual. Para atendimento personalizado, um de nossos atendentes pode assumir esta conversa.",
-          timestamp: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
-          status: "delivered"
-        }
-
-        setConversations(prev => 
-          prev.map(conv => 
-            conv.id === selectedConversation.id 
-              ? { ...conv, messages: [...conv.messages, autoReply] }
-              : conv
-          )
-        )
-
-        setSelectedConversation(prev => 
-          prev ? { ...prev, messages: [...prev.messages, autoReply] } : null
-        )
-      }, 2000)
+    // Enviar via API WhatsApp
+    try {
+      await sendTextMessage({
+        clinic_id: defaultClinicId,
+        patient_phone: selectedConversation.customerPhone,
+        message: newMessage,
+        conversation_id: selectedConversation.id,
+      })
+      const newMsg: Message = {
+        id: Date.now().toString(),
+        sender: "user",
+        content: newMessage,
+        timestamp: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+        status: "sent"
+      }
+      setConversations(prev => prev.map(conv => conv.id === selectedConversation.id ? { ...conv, messages: [...conv.messages, newMsg] } : conv))
+      setSelectedConversation(prev => prev ? { ...prev, messages: [...prev.messages, newMsg] } : null)
+      setNewMessage("")
+    } catch (e) {
+      console.error("Falha ao enviar mensagem:", e)
     }
   }
 
-  const toggleManualMode = () => {
+  const toggleManualMode = async () => {
     if (!selectedConversation) return
 
     const newManualMode = !selectedConversation.isManualMode
-    const agentName = "João Silva" // Nome do atendente logado (seria obtido do contexto de autenticação)
+    const agentName = "Atendente" // TODO: obter do contexto de auth
 
-    setConversations(prev => 
-      prev.map(conv => 
-        conv.id === selectedConversation.id 
-          ? { 
-              ...conv, 
-              isManualMode: newManualMode,
-              assignedAgent: newManualMode ? agentName : undefined
-            }
-          : conv
-      )
-    )
-
-    setSelectedConversation(prev => 
-      prev ? { 
-        ...prev, 
-        isManualMode: newManualMode,
-        assignedAgent: newManualMode ? agentName : undefined
-      } : null
-    )
-
-    // Adicionar mensagem do sistema informando a mudança
-    const systemMessage: Message = {
-      id: Date.now().toString(),
-      sender: "bot",
-      content: newManualMode 
-        ? `🧑‍💼 Atendente ${agentName} assumiu esta conversa. Agora você será atendido por uma pessoa.`
-        : `🤖 Conversa retornada para atendimento automático.`,
-      timestamp: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
-      status: "delivered"
+    try {
+      if (newManualMode) {
+        await transitionToHuman(selectedConversation.id, crypto.randomUUID(), "Assumido no frontend")
+      } else {
+        await transitionToBot(selectedConversation.id, "Retorno ao bot pelo frontend")
+      }
+    } catch (e) {
+      console.error("Falha ao alternar modo da conversa:", e)
     }
 
-    setTimeout(() => {
-      setConversations(prev => 
-        prev.map(conv => 
-          conv.id === selectedConversation.id 
-            ? { ...conv, messages: [...conv.messages, systemMessage] }
-            : conv
-        )
-      )
-
-      setSelectedConversation(prev => 
-        prev ? { ...prev, messages: [...prev.messages, systemMessage] } : null
-      )
-    }, 500)
+    setConversations(prev => prev.map(conv => conv.id === selectedConversation.id ? { ...conv, isManualMode: newManualMode, assignedAgent: newManualMode ? agentName : undefined } : conv))
+    setSelectedConversation(prev => prev ? { ...prev, isManualMode: newManualMode, assignedAgent: newManualMode ? agentName : undefined } : null)
   }
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
