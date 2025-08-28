@@ -40,3 +40,24 @@ Status: Draft (MVP) | Owner: context_manager | Quality Profile: v1.0
 - Conflito de autenticação: unificar para Supabase ou bridge tokens
 - Conversas: mapear listagem/histórico (conversation-service) em próxima iteração
 
+7. Fases de Desenvolvimento (Planejamento)
+
+- Fase 1 (MVP Core):
+  - Conexão com WhatsApp (envio texto via whatsapp-service)
+  - Chatbot funcional consumindo contextualização por clínica
+  - Contextualização JSON (CRUD) via clinic-service
+  - Integração FE↔BE via SDKs mínimos
+- Fase 2: Autenticação Unificada
+  - Migrar `useAuth` para Supabase ou implementar bridge JWT↔Supabase
+  - Proteger rotas e roles (RBAC no FE) e remover `authService` custom
+- Fase 3: Conversas Reais
+  - Listagem de conversas, histórico e status via conversation-service
+  - Modo manual/automático persistente por conversa
+- Fase 4: Combobox de Clínicas e Multi-tenant
+  - Combobox dinâmico por perfil; persistência da seleção
+  - Isolamento completo por clínica
+- Fase 5: Google Calendar
+  - OAuth + iframe embed + sincronização de eventos
+- Fase 6: Qualidade e Observabilidade
+  - Testes, métricas leves, auditoria de dependências e lint/type 100% verde
+

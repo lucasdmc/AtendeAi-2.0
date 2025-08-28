@@ -1,0 +1,15 @@
+{
+  "task_id": "T-2025-08-28-001",
+  "agent": "context_manager",
+  "mode": "mvp",
+  "quality_profile": "v1.0",
+  "transitions": [
+    {"state": "stack_selection", "status": "done", "notes": ".tech_stack.yaml criado"},
+    {"state": "spec", "status": "done", "notes": "docs/system_spec.md, assumptions.md, traceability.csv"},
+    {"state": "db/api", "status": "done", "notes": "SDKs FE criados para clinic/whatsapp"},
+    {"state": "dev", "status": "done", "notes": "SDKs e doc de integração"},
+    {"state": "test", "status": "done", "notes": "build FE verde"}
+  ],
+  "current_state": "test",
+  "next": ["review", "release", "repo_housekeeping"]
+}
