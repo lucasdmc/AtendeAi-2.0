@@ -1,0 +1,30 @@
+mode: mvp
+quality_profile: v1.0
+frontend:
+  framework: React 18 + TypeScript
+  bundler: Vite
+  ui: shadcn/ui + Tailwind CSS
+  routing: React Router v6
+  state: React Query + Context
+  auth: Supabase Auth (intended) — current code also has custom JWT
+backend:
+  style: Microservices (Node.js + Express)
+  services:
+    - auth-service (JWT custom)
+    - clinic-service
+    - appointment-service
+    - conversation-service
+    - whatsapp-service
+    - google-calendar-service
+  database: PostgreSQL (via Supabase) + Redis
+  gateway: HAProxy/Kong (configs present)
+observability:
+  monitoring: Prometheus + Grafana
+infrastructure:
+  containerization: Docker + docker-compose
+testing:
+  note: FE tests infra not configured yet
+notes:
+  - Frontend usa Supabase Auth na tela `Auth.tsx`, mas contexto global usa `authService` custom.
+  - Página `Conversations.tsx` usa dados mockados; sem integração real com whatsapp-service.
+  - Tela `Context.tsx` renderiza JSON mock; sem persistência.
