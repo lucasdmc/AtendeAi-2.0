@@ -1,0 +1,8 @@
+Requirement,Component,Endpoint/Artifact,Status
+RF1 Auth mínima,Frontend/Auth,+ Supabase plan,Planned
+RF2 Conversas WhatsApp,whatsapp-service,/api/whatsapp/webhook; /api/whatsapp/send/text,Implemented (backend)
+RF2 Listagem no frontend,Frontend/Conversations.tsx,Integrar conversation-service,Planned
+RF3 Transição chatbot/humano,conversation-service,/api/conversation/:id/transition/(human|bot),Implemented (backend)
+RF4 Contexto por clínica,conversation/whatsapp/clinic-service,clinic_id em todas as operações,Implemented (backend)
+Observabilidade,monitoring/prometheus.yml,Grafana/Prometheus configs,Implemented
+Stack source,.tech_stack.yaml,agents tech source,Implemented
