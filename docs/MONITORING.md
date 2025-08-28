@@ -21,8 +21,8 @@ O sistema AtendeAI 2.0 possui um **sistema de monitoramento completo e profissio
 ┌─────────────────────────────────────────────────────────────────┐
 │                    MICROSERVICES LAYER                         │
 ├─────────────────┬─────────────────┬─────────────────┬─────────┤
-│  Auth Service   │  User Service   │  Clinic Service │  ...   │
-│  (Port 3001)    │  (Port 3002)    │  (Port 3003)    │        │
+│     Auth via    │  User Service   │  Clinic Service │  ...   │
+│    Supabase     │  (Port 3002)    │  (Port 3003)    │        │
 └─────────────────┴─────────────────┴─────────────────┴─────────┘
 ```
 
@@ -157,7 +157,7 @@ const businessMetrics = {
 {
   "timestamp": "2024-01-15T10:30:00Z",
   "level": "INFO",
-  "service": "auth-service",
+  "service": "auth",
   "correlation_id": "req-12345",
   "clinic_id": "clinic-67890",
   "user_id": "user-abc123",

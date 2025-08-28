@@ -1,0 +1,8 @@
+Requirement,Component,Implementation,Test
+RF001 Auth Unified,Frontend/Auth+Supabase,Redirects + hooks,useAuth tests
+RF002 Route Protection,Frontend/Router,ProtectedRoute + redirects,Routing tests
+RF003 RBAC,Frontend UI + Services,Role checks + clinic isolation,Role matrix tests
+RF004 FE↔BE Integration,All services + UI,APIs replace mocks,API e2e tests
+RF005 Clinics Combobox,UI + Clinic Service,Admin Lify visibility logic,UI tests
+RF008 Google Calendar,UI + google-calendar-service,OAuth + iframe,Integration test
+RF010 WhatsApp Conversations,UI + whatsapp-service,Messages + toggle bot,End-to-end chat test
