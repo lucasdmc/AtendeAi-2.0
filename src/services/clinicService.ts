@@ -2,7 +2,7 @@
 // SERVIÇO DE GESTÃO DE CLÍNICAS - ATENDEAÍ 2.0
 // =====================================================
 
-import authService from './authService';
+import { supabase } from '@/integrations/supabase/client';
 
 export interface Clinic {
   id: string;
@@ -78,35 +78,26 @@ export interface AIBehavior {
 }
 
 class ClinicService {
-  private baseURL = 'http://localhost:3003/api/v1';
+  // Usando Supabase diretamente para operações CRUD
 
-  private async getAuthHeaders(): Promise<HeadersInit> {
-    const token = authService.getAccessToken();
-    if (!token) {
-      throw new Error('No authentication token available');
-    }
-
-    return {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`,
-    };
-  }
+  // Método getAuthHeaders removido - usando Supabase diretamente
 
   // Obter todas as clínicas (ou apenas a clínica do usuário)
   async getClinics(limit: number = 100, offset: number = 0): Promise<Clinic[]> {
     try {
-      const headers = await this.getAuthHeaders();
-      const response = await fetch(`${this.baseURL}/clinics?limit=${limit}&offset=${offset}`, {
-        method: 'GET',
-        headers,
-      });
+      const { data, error } = await supabase
+        .from('clinics')
+        .select('*')
+        .eq('status', 'active')
+        .limit(limit)
+        .range(offset, offset + limit - 1)
+        .order('name');
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      if (error) {
+        throw new Error(`Error fetching clinics: ${error.message}`);
       }
 
-      const data = await response.json();
-      return data.data || [];
+      return data || [];
     } catch (error) {
       console.error('Error fetching clinics:', error);
       throw error;
@@ -116,18 +107,18 @@ class ClinicService {
   // Obter clínica específica
   async getClinic(id: string): Promise<Clinic> {
     try {
-      const headers = await this.getAuthHeaders();
-      const response = await fetch(`${this.baseURL}/clinics/${id}`, {
-        method: 'GET',
-        headers,
-      });
+      const { data, error } = await supabase
+        .from('clinics')
+        .select('*')
+        .eq('id', id)
+        .eq('status', 'active')
+        .single();
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      if (error) {
+        throw new Error(`Error fetching clinic: ${error.message}`);
       }
 
-      const data = await response.json();
-      return data.data;
+      return data;
     } catch (error) {
       console.error('Error fetching clinic:', error);
       throw error;
@@ -137,19 +128,22 @@ class ClinicService {
   // Criar nova clínica (apenas admin_lify)
   async createClinic(clinicData: Partial<Clinic>): Promise<Clinic> {
     try {
-      const headers = await this.getAuthHeaders();
-      const response = await fetch(`${this.baseURL}/clinics`, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify(clinicData),
-      });
+      const { data, error } = await supabase
+        .from('clinics')
+        .insert({
+          ...clinicData,
+          status: 'active',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .select()
+        .single();
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      if (error) {
+        throw new Error(`Error creating clinic: ${error.message}`);
       }
 
-      const data = await response.json();
-      return data.data;
+      return data;
     } catch (error) {
       console.error('Error creating clinic:', error);
       throw error;
@@ -159,19 +153,21 @@ class ClinicService {
   // Atualizar clínica
   async updateClinic(id: string, clinicData: Partial<Clinic>): Promise<Clinic> {
     try {
-      const headers = await this.getAuthHeaders();
-      const response = await fetch(`${this.baseURL}/clinics/${id}`, {
-        method: 'PUT',
-        headers,
-        body: JSON.stringify(clinicData),
-      });
+      const { data, error } = await supabase
+        .from('clinics')
+        .update({
+          ...clinicData,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', id)
+        .select()
+        .single();
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      if (error) {
+        throw new Error(`Error updating clinic: ${error.message}`);
       }
 
-      const data = await response.json();
-      return data.data;
+      return data;
     } catch (error) {
       console.error('Error updating clinic:', error);
       throw error;

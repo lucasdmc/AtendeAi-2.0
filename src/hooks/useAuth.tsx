@@ -1,22 +1,27 @@
 // =====================================================
-// HOOK DE AUTENTICAÇÃO - ATENDEAÍ 2.0
+// HOOK DE AUTENTICAÇÃO SUPABASE - ATENDEAÍ 2.0
 // =====================================================
 
 import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
-import authService, { User, LoginCredentials } from '../services/authService';
+import { supabase } from '@/integrations/supabase/client';
+import type { User, Session } from '@supabase/supabase-js';
+import { permissionService } from '@/services/permissionService';
 
 interface AuthContextType {
   user: User | null;
+  session: Session | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (credentials: LoginCredentials) => Promise<boolean>;
-  logout: () => Promise<void>;
-  hasRole: (role: string) => boolean;
-  hasAnyRole: (roles: string[]) => boolean;
-  hasAllRoles: (roles: string[]) => boolean;
-  isAdminLify: () => boolean;
-  isAdminClinic: () => boolean;
-  isAttendant: () => boolean;
+  signIn: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  signUp: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  signOut: () => Promise<void>;
+  hasRole: (role: string) => Promise<boolean>;
+  hasAnyRole: (roles: string[]) => Promise<boolean>;
+  hasAllRoles: (roles: string[]) => Promise<boolean>;
+  isAdminLify: () => Promise<boolean>;
+  isAdminClinic: () => Promise<boolean>;
+  isAttendant: () => Promise<boolean>;
+  getUserClinics: () => Promise<string[]>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -27,100 +32,133 @@ interface AuthProviderProps {
 
 export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const initializeAuth = async () => {
+    // Verificar sessão existente
+    const getInitialSession = async () => {
       try {
-        // Verificar se há tokens salvos
-        if (authService.isAuthenticated()) {
-          // Validar token
-          const isValid = await authService.validateToken();
-          if (isValid) {
-            setUser(authService.getCurrentUser());
-          } else {
-            // Token inválido, limpar dados
-            await authService.logout();
-          }
-        }
+        const { data: { session } } = await supabase.auth.getSession();
+        setSession(session);
+        setUser(session?.user ?? null);
       } catch (error) {
-        console.error('Auth initialization error:', error);
-        await authService.logout();
+        console.error('Error getting initial session:', error);
       } finally {
         setIsLoading(false);
       }
     };
 
-    initializeAuth();
+    // Listener para mudanças de autenticação
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        console.log('Auth state changed:', event, session?.user?.email);
+        setSession(session);
+        setUser(session?.user ?? null);
+        setIsLoading(false);
+      }
+    );
+
+    getInitialSession();
+
+    return () => subscription.unsubscribe();
   }, []);
 
-  const login = async (credentials: LoginCredentials): Promise<boolean> => {
+  const signIn = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
     try {
-      setIsLoading(true);
-      const response = await authService.login(credentials);
-      
-      if (response.success) {
-        setUser(response.data.user);
-        return true;
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        return { success: false, error: error.message };
       }
-      
-      return false;
+
+      return { success: true };
     } catch (error) {
-      console.error('Login error:', error);
-      return false;
-    } finally {
-      setIsLoading(false);
+      console.error('Sign in error:', error);
+      return { success: false, error: 'Erro inesperado durante o login' };
     }
   };
 
-  const logout = async (): Promise<void> => {
+  const signUp = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
     try {
-      setIsLoading(true);
-      await authService.logout();
-      setUser(null);
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+      });
+
+      if (error) {
+        return { success: false, error: error.message };
+      }
+
+      return { success: true };
     } catch (error) {
-      console.error('Logout error:', error);
-    } finally {
-      setIsLoading(false);
+      console.error('Sign up error:', error);
+      return { success: false, error: 'Erro inesperado durante o cadastro' };
     }
   };
 
-  const hasRole = (role: string): boolean => {
-    return authService.hasRole(role);
+  const signOut = async (): Promise<void> => {
+    try {
+      await supabase.auth.signOut();
+    } catch (error) {
+      console.error('Sign out error:', error);
+    }
   };
 
-  const hasAnyRole = (roles: string[]): boolean => {
-    return authService.hasAnyRole(roles);
+  // Funções de verificação de roles usando PermissionService
+  const hasRole = async (role: string): Promise<boolean> => {
+    if (!user?.id) return false;
+    return permissionService.hasRole(user.id, role);
   };
 
-  const hasAllRoles = (roles: string[]): boolean => {
-    return authService.hasAllRoles(roles);
+  const hasAnyRole = async (roles: string[]): Promise<boolean> => {
+    if (!user?.id) return false;
+    return permissionService.hasAnyRole(user.id, roles);
   };
 
-  const isAdminLify = (): boolean => {
-    return authService.isAdminLify();
+  const hasAllRoles = async (roles: string[]): Promise<boolean> => {
+    if (!user?.id) return false;
+    return permissionService.hasAllRoles(user.id, roles);
   };
 
-  const isAdminClinic = (): boolean => {
-    return authService.isAdminClinic();
+  const isAdminLify = async (): Promise<boolean> => {
+    if (!user?.id) return false;
+    return permissionService.isAdminLify(user.id);
   };
 
-  const isAttendant = (): boolean => {
-    return authService.isAttendant();
+  const isAdminClinic = async (): Promise<boolean> => {
+    if (!user?.id) return false;
+    return permissionService.isAdminClinic(user.id);
+  };
+
+  const isAttendant = async (): Promise<boolean> => {
+    if (!user?.id) return false;
+    return permissionService.isAttendant(user.id);
+  };
+
+  const getUserClinics = async (): Promise<string[]> => {
+    if (!user?.id) return [];
+    return permissionService.getUserClinics(user.id);
   };
 
   const value: AuthContextType = {
     user,
+    session,
     isAuthenticated: !!user,
     isLoading,
-    login,
-    logout,
+    signIn,
+    signUp,
+    signOut,
     hasRole,
     hasAnyRole,
     hasAllRoles,
     isAdminLify,
     isAdminClinic,
     isAttendant,
+    getUserClinics,
   };
 
   return (

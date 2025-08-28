@@ -1,0 +1,122 @@
+# 🏗️ TECH STACK - ATENDEAI 2.0
+# Fonte única da verdade para tecnologias do projeto
+
+version: "1.0"
+project:
+  name: "AtendeAI 2.0"
+  version: "1.2.0"
+  description: "Sistema de microserviços para gestão de clínicas com IA conversacional"
+  
+frontend:
+  framework: "React 18"
+  language: "TypeScript 5.8.3"
+  build_tool: "Vite 5.4.19"
+  router: "React Router DOM 6.30.1"
+  state_management: "React Context + Local Storage"
+  ui_components: "Shadcn/ui + Radix UI"
+  styling: "Tailwind CSS 3.4.17"
+  auth: "Supabase Auth 2.56.0"
+  http_client: "TanStack React Query 5.83.0"
+  package_manager: "npm"
+  dev_server_port: 8080
+
+backend:
+  architecture: "Microservices"
+  runtime: "Node.js 18+"
+  framework: "Express.js"
+  language: "JavaScript (ES6+)"
+  
+database:
+  primary: "PostgreSQL 15+ (Supabase)"
+  url: "https://kytphnasmdvebmdvvwtx.supabase.co"
+  features:
+    - "Row Level Security (RLS)"
+    - "Multi-tenancy"
+    - "Real-time subscriptions"
+
+cache:
+  redis: "Redis 7 Alpine"
+  password: "redis123"
+  port: 6379
+
+infrastructure:
+  containerization: "Docker + Docker Compose"
+  api_gateway: "Kong 3.4"
+  load_balancer: "HAProxy 2.8"
+  monitoring: "Prometheus + Grafana"
+  reverse_proxy: "HAProxy"
+
+services:
+  auth_service:
+    port: 3001
+    description: "Autenticação JWT + refresh tokens"
+    
+  user_service:
+    port: 3002
+    description: "Gestão de usuários"
+    
+  clinic_service:
+    port: 3003
+    description: "Gestão de clínicas"
+    
+  health_service:
+    port: 3004
+    description: "Health checks do sistema"
+    
+  conversation_service:
+    port: 3005
+    description: "IA conversacional"
+    
+  appointment_service:
+    port: 3006
+    description: "Sistema de agendamentos"
+    
+  whatsapp_service:
+    port: 3007
+    description: "Integração WhatsApp Business API"
+    
+  google_calendar_service:
+    port: 3008
+    description: "Integração Google Calendar"
+
+integrations:
+  supabase:
+    auth: true
+    database: true
+    realtime: true
+    
+  whatsapp:
+    provider: "Meta WhatsApp Business API"
+    version: "v18.0"
+    
+  google:
+    calendar_api: true
+    oauth2: true
+    
+  monitoring:
+    prometheus: true
+    grafana: true
+
+networks:
+  main: "atendeai-network (172.20.0.0/16)"
+
+volumes:
+  - "redis_data"
+  - "prometheus_data" 
+  - "grafana_data"
+
+quality_profile: "v1.0"
+compliance:
+  twelve_factor: true
+  env_example: true
+  security_audit: true
+  linting: true
+  type_checking: true
+
+security:
+  jwt_secret: "Configurado via ENV"
+  supabase_keys: "Configuradas via ENV"
+  whatsapp_tokens: "Configurados via ENV"
+  google_credentials: "Configuradas via ENV"
+  rls_enabled: true
+  input_validation: true

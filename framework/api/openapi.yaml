@@ -1,0 +1,43 @@
+openapi: 3.1.0
+info:
+  title: AtendeAI 2.0 API
+  version: 1.2.0
+  description: |
+    API completa do sistema AtendeAI 2.0 - Sistema de microserviços para gestão de clínicas
+    com IA conversacional e agendamentos inteligentes.
+    
+    ## Arquitetura
+    - **Microserviços**: Cada serviço tem sua responsabilidade específica
+    - **Multi-tenant**: Isolamento completo entre clínicas via RLS
+    - **Autenticação**: JWT tokens com refresh automático
+    - **Rate Limiting**: Proteção contra abuso com retry-after
+    
+    ## Segurança
+    - **JWT Authentication**: Tokens de acesso e refresh
+    - **Row Level Security**: Isolamento automático por clínica
+    - **RBAC**: Controle de acesso baseado em roles
+    - **Input Validation**: Validação rigorosa de entradas
+    
+servers:
+  - url: http://localhost:8000
+    description: Development (Kong Gateway)
+  - url: https://api.atendeai.com.br
+    description: Production
+
+paths:
+  /auth/login:
+    post:
+      tags: [Authentication]
+      summary: Login de usuário
+      responses:
+        '200':
+          description: Login realizado com sucesso
+        '401':
+          description: Credenciais inválidas
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
