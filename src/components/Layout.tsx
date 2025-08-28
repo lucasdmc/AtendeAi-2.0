@@ -4,7 +4,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { AppSidebar } from "./AppSidebar"
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { useLocation, useNavigate } from "react-router-dom"
 import { useAuth } from "@/hooks/useAuth"
 import { LogOut, User } from "lucide-react"
@@ -17,18 +17,8 @@ export function Layout({ children }: LayoutProps) {
   const [selectedClinic, setSelectedClinic] = useState("cardioprime_blumenau_2024")
   const location = useLocation()
   const navigate = useNavigate()
-  const { user, logout, isLoading } = useAuth()
+  const { user, logout, isLoading, isAdminLify } = useAuth()
 
-  // Desabilitado durante desenvolvimento
-  // useEffect(() => {
-  //   console.log('🔧 Layout useEffect - loading:', loading, 'user:', user)
-  //   if (!loading && !user) {
-  //     console.log('🔧 Redirecting to /auth')
-  //     navigate("/auth")
-  //   }
-  // }, [loading, user, navigate])
-
-  // Show loading while checking auth
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -40,7 +30,6 @@ export function Layout({ children }: LayoutProps) {
     )
   }
 
-  // Don't render anything if not authenticated (will redirect)
   if (!user) {
     return null
   }
@@ -77,14 +66,16 @@ export function Layout({ children }: LayoutProps) {
             </div>
             
             <div className="flex items-center gap-4">
-              <Select value={selectedClinic} onValueChange={setSelectedClinic}>
-                <SelectTrigger className="w-72">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="cardioprime_blumenau_2024">CardioPrime - Blumenau</SelectItem>
-                </SelectContent>
-              </Select>
+              {isAdminLify() && (
+                <Select value={selectedClinic} onValueChange={setSelectedClinic}>
+                  <SelectTrigger className="w-72">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="cardioprime_blumenau_2024">CardioPrime - Blumenau</SelectItem>
+                  </SelectContent>
+                </Select>
+              )}
               
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>

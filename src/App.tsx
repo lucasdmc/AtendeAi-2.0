@@ -14,6 +14,7 @@ import Calendar from "./pages/Calendar";
 import Context from "./pages/Context";
 import Conversations from "./pages/Conversations";
 import NotFound from "./pages/NotFound";
+import ProtectedRoute from "@/components/ProtectedRoute";
 
 const queryClient = new QueryClient();
 
@@ -30,19 +31,29 @@ const App = () => (
             
             {/* All other routes wrapped in Layout */}
             <Route path="/*" element={
-              <Layout>
-                <Routes>
-                  <Route path="/" element={<Index />} />
-                  <Route path="/clinics" element={<Clinics />} />
-                  <Route path="/users" element={<Users />} />
-                  <Route path="/appointments" element={<Appointments />} />
-                  <Route path="/calendar" element={<Calendar />} />
-                  <Route path="/context" element={<Context />} />
-                  <Route path="/conversations" element={<Conversations />} />
-                  {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </Layout>
+              <ProtectedRoute>
+                <Layout>
+                  <Routes>
+                    <Route path="/" element={<Index />} />
+                    <Route path="/clinics" element={
+                      <ProtectedRoute roles={["admin_lify"]}>
+                        <Clinics />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/users" element={
+                      <ProtectedRoute roles={["admin_lify", "admin_clinic"]}>
+                        <Users />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/appointments" element={<Appointments />} />
+                    <Route path="/calendar" element={<Calendar />} />
+                    <Route path="/context" element={<Context />} />
+                    <Route path="/conversations" element={<Conversations />} />
+                    {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </Layout>
+              </ProtectedRoute>
             } />
           </Routes>
         </AuthProvider>

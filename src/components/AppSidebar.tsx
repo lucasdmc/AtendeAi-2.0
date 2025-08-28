@@ -14,21 +14,23 @@ import {
   SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar"
+import useAuth from "@/hooks/useAuth"
 
 const items = [
-  { title: "Dashboard", url: "/", icon: Home },
-  { title: "Gestão de Clínicas", url: "/clinics", icon: Building2 },
-  { title: "Gestão de Usuários", url: "/users", icon: Users },
-  { title: "Agendamentos", url: "/appointments", icon: CalendarIcon },
-  { title: "Calendário", url: "/calendar", icon: CalendarIcon },
-  { title: "Contexto", url: "/context", icon: FileText },
-  { title: "Conversas", url: "/conversations", icon: MessageSquare },
+  { title: "Dashboard", url: "/", icon: Home, roles: ["admin_lify", "admin_clinic", "attendant"] },
+  { title: "Gestão de Clínicas", url: "/clinics", icon: Building2, roles: ["admin_lify"] },
+  { title: "Gestão de Usuários", url: "/users", icon: Users, roles: ["admin_lify", "admin_clinic"] },
+  { title: "Agendamentos", url: "/appointments", icon: CalendarIcon, roles: ["admin_lify", "admin_clinic", "attendant"] },
+  { title: "Calendário", url: "/calendar", icon: CalendarIcon, roles: ["admin_lify", "admin_clinic", "attendant"] },
+  { title: "Contexto", url: "/context", icon: FileText, roles: ["admin_lify", "admin_clinic", "attendant"] },
+  { title: "Conversas", url: "/conversations", icon: MessageSquare, roles: ["admin_lify", "admin_clinic", "attendant"] },
 ]
 
 export function AppSidebar() {
   const { open } = useSidebar()
   const location = useLocation()
   const currentPath = location.pathname
+  const { hasAnyRole } = useAuth()
 
   const isActive = (path: string) => currentPath === path
   const isExpanded = items.some((i) => isActive(i.url))
@@ -45,7 +47,7 @@ export function AppSidebar() {
 
           <SidebarGroupContent>
             <SidebarMenu>
-              {items.map((item) => (
+              {items.filter(item => hasAnyRole(item.roles)).map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
                     <NavLink to={item.url} end className={getNavCls}>

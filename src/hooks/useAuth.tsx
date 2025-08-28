@@ -1,15 +1,22 @@
 // =====================================================
-// HOOK DE AUTENTICAÇÃO - ATENDEAÍ 2.0
+// HOOK DE AUTENTICAÇÃO (Supabase) - ATENDEAÍ 2.0
 // =====================================================
 
 import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
-import authService, { User, LoginCredentials } from '../services/authService';
+import { supabase } from '@/integrations/supabase/client';
+
+export interface AppUser {
+  id: string;
+  email: string | null;
+  roles: string[];
+  clinicId?: string | null;
+}
 
 interface AuthContextType {
-  user: User | null;
+  user: AppUser | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (credentials: LoginCredentials) => Promise<boolean>;
+  login: (credentials: { email: string; password: string }) => Promise<boolean>;
   logout: () => Promise<void>;
   hasRole: (role: string) => boolean;
   hasAnyRole: (roles: string[]) => boolean;
@@ -26,48 +33,45 @@ interface AuthProviderProps {
 }
 
 export const AuthProvider = ({ children }: AuthProviderProps) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<AppUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const initializeAuth = async () => {
+    const mapUser = (u: any | null): AppUser | null => {
+      if (!u) return null;
+      const roles = (u.app_metadata?.roles || u.user_metadata?.roles || []) as string[];
+      const clinicId = (u.app_metadata?.clinic_id || u.user_metadata?.clinic_id || null) as string | null;
+      return {
+        id: u.id,
+        email: u.email,
+        roles: Array.isArray(roles) ? roles : [],
+        clinicId,
+      };
+    };
+
+    const init = async () => {
       try {
-        // Verificar se há tokens salvos
-        if (authService.isAuthenticated()) {
-          // Validar token
-          const isValid = await authService.validateToken();
-          if (isValid) {
-            setUser(authService.getCurrentUser());
-          } else {
-            // Token inválido, limpar dados
-            await authService.logout();
-          }
-        }
-      } catch (error) {
-        console.error('Auth initialization error:', error);
-        await authService.logout();
+        const { data } = await supabase.auth.getSession();
+        const u = data.session?.user ?? null;
+        setUser(mapUser(u));
       } finally {
         setIsLoading(false);
       }
     };
 
-    initializeAuth();
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(mapUser(session?.user ?? null));
+    });
+
+    init();
+    return () => subscription?.unsubscribe();
   }, []);
 
-  const login = async (credentials: LoginCredentials): Promise<boolean> => {
+  const login = async ({ email, password }: { email: string; password: string }): Promise<boolean> => {
     try {
       setIsLoading(true);
-      const response = await authService.login(credentials);
-      
-      if (response.success) {
-        setUser(response.data.user);
-        return true;
-      }
-      
-      return false;
-    } catch (error) {
-      console.error('Login error:', error);
-      return false;
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      return !error;
     } finally {
       setIsLoading(false);
     }
@@ -76,38 +80,19 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const logout = async (): Promise<void> => {
     try {
       setIsLoading(true);
-      await authService.logout();
+      await supabase.auth.signOut();
       setUser(null);
-    } catch (error) {
-      console.error('Logout error:', error);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const hasRole = (role: string): boolean => {
-    return authService.hasRole(role);
-  };
-
-  const hasAnyRole = (roles: string[]): boolean => {
-    return authService.hasAnyRole(roles);
-  };
-
-  const hasAllRoles = (roles: string[]): boolean => {
-    return authService.hasAllRoles(roles);
-  };
-
-  const isAdminLify = (): boolean => {
-    return authService.isAdminLify();
-  };
-
-  const isAdminClinic = (): boolean => {
-    return authService.isAdminClinic();
-  };
-
-  const isAttendant = (): boolean => {
-    return authService.isAttendant();
-  };
+  const hasRole = (role: string): boolean => !!user?.roles?.includes(role);
+  const hasAnyRole = (roles: string[]): boolean => roles.some(r => hasRole(r));
+  const hasAllRoles = (roles: string[]): boolean => roles.every(r => hasRole(r));
+  const isAdminLify = (): boolean => hasRole('admin_lify');
+  const isAdminClinic = (): boolean => hasRole('admin_clinic');
+  const isAttendant = (): boolean => hasRole('attendant');
 
   const value: AuthContextType = {
     user,
