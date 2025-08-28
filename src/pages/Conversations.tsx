@@ -23,6 +23,7 @@ import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { Separator } from "@/components/ui/separator"
+import conversationService from "@/services/conversationService"
 
 interface Message {
   id: string
@@ -272,6 +273,34 @@ export default function Conversations() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }
 
+  // FASE 1: carregar conversas reais (fallback para mock)
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const clinicId = import.meta.env.VITE_DEFAULT_CLINIC_ID || "00000000-0000-0000-0000-000000000001";
+        const list = await conversationService.listByClinic(clinicId);
+        if (list && list.length) {
+          const mapped: Conversation[] = list.map((c) => ({
+            id: c.id,
+            customerName: c.wa_contact_id || "Contato",
+            customerPhone: c.wa_contact_id || "",
+            clinic: c.clinic_id,
+            status: c.status === 'open' ? 'active' : 'closed',
+            lastMessage: '',
+            lastActivity: c.last_message_at || '',
+            messageCount: 0,
+            messages: [],
+            isManualMode: c.mode === 'off' ? true : false,
+          }));
+          setConversations(mapped);
+        }
+      } catch (e) {
+        // fallback: manter mocks
+      }
+    };
+    load();
+  }, []);
+
   useEffect(() => {
     scrollToBottom()
   }, [selectedConversation?.messages])
@@ -302,17 +331,18 @@ export default function Conversations() {
     }
   }
 
-  const sendMessage = () => {
+  const sendMessage = async () => {
     if (!newMessage.trim() || !selectedConversation) return
 
     const newMsg: Message = {
       id: Date.now().toString(),
-      sender: selectedConversation.isManualMode ? "bot" : "bot", // Em modo manual, o atendente responde
+      sender: selectedConversation.isManualMode ? "bot" : "bot",
       content: newMessage,
       timestamp: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
       status: "sent"
     }
 
+    // otimismo UI
     setConversations(prev => 
       prev.map(conv => 
         conv.id === selectedConversation.id 
@@ -327,13 +357,24 @@ export default function Conversations() {
 
     setNewMessage("")
 
-    // Simular resposta automática apenas se não estiver em modo manual
+    // chamada real
+    try {
+      const clinicId = selectedConversation.clinic || (import.meta.env.VITE_DEFAULT_CLINIC_ID as string);
+      await conversationService.processMessage({
+        clinic_id: clinicId,
+        patient_phone: selectedConversation.customerPhone || "+00000000000",
+        message_content: newMsg.content,
+      });
+    } catch (e) {
+      // mantém UI; erros podem ser exibidos depois
+    }
+
     if (!selectedConversation.isManualMode) {
       setTimeout(() => {
         const autoReply: Message = {
           id: (Date.now() + 1).toString(),
           sender: "bot",
-          content: "Esta é uma resposta automática do assistente virtual. Para atendimento personalizado, um de nossos atendentes pode assumir esta conversa.",
+          content: "Esta é uma resposta automática do assistente virtual.",
           timestamp: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
           status: "delivered"
         }
@@ -349,16 +390,17 @@ export default function Conversations() {
         setSelectedConversation(prev => 
           prev ? { ...prev, messages: [...prev.messages, autoReply] } : null
         )
-      }, 2000)
+      }, 1200)
     }
   }
 
-  const toggleManualMode = () => {
+  const toggleManualMode = async () => {
     if (!selectedConversation) return
 
     const newManualMode = !selectedConversation.isManualMode
-    const agentName = "João Silva" // Nome do atendente logado (seria obtido do contexto de autenticação)
+    const agentName = "João Silva"
 
+    // otimismo UI
     setConversations(prev => 
       prev.map(conv => 
         conv.id === selectedConversation.id 
@@ -379,12 +421,21 @@ export default function Conversations() {
       } : null
     )
 
-    // Adicionar mensagem do sistema informando a mudança
+    try {
+      if (newManualMode) {
+        await conversationService.transitionToHuman(selectedConversation.id, "00000000-0000-0000-0000-0000000000AA");
+      } else {
+        await conversationService.transitionToBot(selectedConversation.id);
+      }
+    } catch (e) {
+      // ignore por ora; manteremos otimista
+    }
+
     const systemMessage: Message = {
       id: Date.now().toString(),
       sender: "bot",
       content: newManualMode 
-        ? `🧑‍💼 Atendente ${agentName} assumiu esta conversa. Agora você será atendido por uma pessoa.`
+        ? `🧑‍💼 Atendente ${agentName} assumiu esta conversa.`
         : `🤖 Conversa retornada para atendimento automático.`,
       timestamp: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
       status: "delivered"
@@ -402,7 +453,7 @@ export default function Conversations() {
       setSelectedConversation(prev => 
         prev ? { ...prev, messages: [...prev.messages, systemMessage] } : null
       )
-    }, 500)
+    }, 300)
   }
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -451,7 +502,7 @@ export default function Conversations() {
                   <div className="flex items-center justify-between">
                     <h3 className="font-medium text-sm truncate">{conversation.customerName}</h3>
                     <span className="text-xs text-muted-foreground">
-                      {formatTime(conversation.lastActivity.split(' ')[1])}
+                      {formatTime(conversation.lastActivity.split(' ')[1] || '')}
                     </span>
                   </div>
                   
