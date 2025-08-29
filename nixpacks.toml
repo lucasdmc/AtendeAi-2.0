@@ -1,0 +1,11 @@
+[start]
+cmd = "node webhook.js"
+
+[variables]
+NODE_ENV = "production"
+
+[build]
+cmds = [
+  "npm ci",
+  "npm run build"
+]
