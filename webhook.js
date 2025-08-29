@@ -97,8 +97,8 @@ const server = createServer((req, res) => {
           const response = generateResponse(messageText);
           console.log(`🤖 Resposta: ${response.substring(0, 100)}...`);
           
-          // TODO: Implementar envio via WhatsApp API
-          console.log('📤 Resposta simulada enviada com sucesso');
+          // Enviar resposta via WhatsApp API
+          await sendWhatsAppMessage(from, response);
         }
 
         res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -244,6 +244,61 @@ Para atendimento imediato:
 📞 Ligue: (47) 3091-5628
 
 Digite "menu" para ver opções!`;
+}
+
+// =====================================================
+// ENVIO VIA WHATSAPP BUSINESS API
+// =====================================================
+async function sendWhatsAppMessage(to, message) {
+  try {
+    const ACCESS_TOKEN = process.env.WHATSAPP_ACCESS_TOKEN;
+    const PHONE_NUMBER_ID = process.env.WHATSAPP_PHONE_NUMBER_ID;
+    
+    if (!ACCESS_TOKEN || !PHONE_NUMBER_ID) {
+      console.log('⚠️ Credenciais WhatsApp não configuradas, simulando envio...');
+      console.log('📤 Resposta simulada enviada com sucesso');
+      return { success: false, error: 'Missing credentials' };
+    }
+
+    const url = `https://graph.facebook.com/v18.0/${PHONE_NUMBER_ID}/messages`;
+    
+    const payload = {
+      messaging_product: 'whatsapp',
+      to: to,
+      type: 'text',
+      text: {
+        body: message
+      }
+    };
+
+    console.log(`📤 Enviando mensagem para ${to}...`);
+    
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${ACCESS_TOKEN}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await response.text();
+    
+    if (response.ok) {
+      console.log('✅ Mensagem enviada com sucesso via WhatsApp API!');
+      console.log('📊 Response:', data);
+      return { success: true, data: JSON.parse(data) };
+    } else {
+      console.error('❌ Erro ao enviar mensagem:', response.status, data);
+      console.log('📤 Fallback: Resposta simulada');
+      return { success: false, error: data };
+    }
+    
+  } catch (error) {
+    console.error('❌ Erro na WhatsApp API:', error.message);
+    console.log('📤 Fallback: Resposta simulada');
+    return { success: false, error: error.message };
+  }
 }
 
 // =====================================================
