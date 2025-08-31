@@ -1,0 +1,277 @@
+{
+  "name": "Conversations - Chatbot Control",
+  "description": "Exemplos de controle de chatbot e gestão de conversas",
+  "examples": [
+    {
+      "name": "Listar Conversas da Clínica",
+      "request": {
+        "method": "GET",
+        "url": "/conversations?page=1&limit=10&status=active",
+        "headers": {
+          "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        }
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "data": [
+            {
+              "id": "550e8400-e29b-41d4-a716-446655440030",
+              "clinic_id": "550e8400-e29b-41d4-a716-446655440000",
+              "customer_phone": "+5511888888888",
+              "conversation_type": "chatbot",
+              "status": "active",
+              "bot_active": true,
+              "assigned_user_id": null,
+              "tags": ["550e8400-e29b-41d4-a716-446655440020"],
+              "created_at": "2025-01-20T14:00:00Z",
+              "updated_at": "2025-01-20T14:15:00Z"
+            },
+            {
+              "id": "550e8400-e29b-41d4-a716-446655440031",
+              "clinic_id": "550e8400-e29b-41d4-a716-446655440000",
+              "customer_phone": "+5511777777777",
+              "conversation_type": "human",
+              "status": "active",
+              "bot_active": false,
+              "assigned_user_id": "550e8400-e29b-41d4-a716-446655440003",
+              "tags": ["550e8400-e29b-41d4-a716-446655440024"],
+              "created_at": "2025-01-20T13:30:00Z",
+              "updated_at": "2025-01-20T14:10:00Z"
+            }
+          ],
+          "pagination": {
+            "page": 1,
+            "limit": 10,
+            "total": 2,
+            "pages": 1,
+            "has_next": false,
+            "has_prev": false
+          }
+        }
+      }
+    },
+    {
+      "name": "Assumir Conversa (Desativar Chatbot)",
+      "request": {
+        "method": "PUT",
+        "url": "/conversations/550e8400-e29b-41d4-a716-446655440030/bot-control",
+        "headers": {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        },
+        "body": {
+          "bot_active": false
+        }
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "id": "550e8400-e29b-41d4-a716-446655440030",
+          "clinic_id": "550e8400-e29b-41d4-a716-446655440000",
+          "customer_phone": "+5511888888888",
+          "conversation_type": "human",
+          "status": "active",
+          "bot_active": false,
+          "assigned_user_id": "550e8400-e29b-41d4-a716-446655440003",
+          "tags": ["550e8400-e29b-41d4-a716-446655440020"],
+          "updated_at": "2025-01-20T16:30:00Z"
+        }
+      }
+    },
+    {
+      "name": "Devolver Conversa (Ativar Chatbot)",
+      "request": {
+        "method": "PUT",
+        "url": "/conversations/550e8400-e29b-41d4-a716-446655440030/bot-control",
+        "headers": {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        },
+        "body": {
+          "bot_active": true
+        }
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "id": "550e8400-e29b-41d4-a716-446655440030",
+          "conversation_type": "chatbot",
+          "bot_active": true,
+          "assigned_user_id": null,
+          "updated_at": "2025-01-20T16:45:00Z"
+        }
+      }
+    },
+    {
+      "name": "Listar Mensagens da Conversa",
+      "request": {
+        "method": "GET",
+        "url": "/conversations/550e8400-e29b-41d4-a716-446655440030/messages?page=1&limit=20",
+        "headers": {
+          "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        }
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "data": [
+            {
+              "id": "550e8400-e29b-41d4-a716-446655440040",
+              "conversation_id": "550e8400-e29b-41d4-a716-446655440030",
+              "sender_type": "customer",
+              "content": "Olá, gostaria de agendar uma consulta",
+              "message_type": "text",
+              "whatsapp_message_id": "wamid.HBgNNTUxMTg4ODg4ODg4OF...",
+              "timestamp": "2025-01-20T14:00:00Z"
+            },
+            {
+              "id": "550e8400-e29b-41d4-a716-446655440041",
+              "conversation_id": "550e8400-e29b-41d4-a716-446655440030",
+              "sender_type": "bot",
+              "content": "Olá! Sou o assistente virtual da Clínica Demo. Ficarei feliz em ajudá-lo com o agendamento. Qual tipo de consulta você precisa?",
+              "message_type": "text",
+              "whatsapp_message_id": null,
+              "timestamp": "2025-01-20T14:00:30Z"
+            },
+            {
+              "id": "550e8400-e29b-41d4-a716-446655440042",
+              "conversation_id": "550e8400-e29b-41d4-a716-446655440030",
+              "sender_type": "customer",
+              "content": "Consulta geral",
+              "message_type": "text",
+              "whatsapp_message_id": "wamid.HBgNNTUxMTg4ODg4ODg4OF...",
+              "timestamp": "2025-01-20T14:01:00Z"
+            },
+            {
+              "id": "550e8400-e29b-41d4-a716-446655440043",
+              "conversation_id": "550e8400-e29b-41d4-a716-446655440030",
+              "sender_type": "human",
+              "content": "Olá! Sou a Maria, atendente da clínica. Vou ajudá-lo com o agendamento. Qual seu nome completo?",
+              "message_type": "text",
+              "whatsapp_message_id": null,
+              "timestamp": "2025-01-20T16:30:00Z"
+            }
+          ],
+          "pagination": {
+            "page": 1,
+            "limit": 20,
+            "total": 4,
+            "pages": 1,
+            "has_next": false,
+            "has_prev": false
+          }
+        }
+      }
+    },
+    {
+      "name": "Enviar Mensagem (Atendente)",
+      "request": {
+        "method": "POST",
+        "url": "/conversations/550e8400-e29b-41d4-a716-446655440030/messages",
+        "headers": {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        },
+        "body": {
+          "content": "Perfeito! Temos horários disponíveis na próxima semana. Você prefere manhã ou tarde?",
+          "message_type": "text"
+        }
+      },
+      "response": {
+        "status": 201,
+        "body": {
+          "id": "550e8400-e29b-41d4-a716-446655440044",
+          "conversation_id": "550e8400-e29b-41d4-a716-446655440030",
+          "sender_type": "human",
+          "content": "Perfeito! Temos horários disponíveis na próxima semana. Você prefere manhã ou tarde?",
+          "message_type": "text",
+          "whatsapp_message_id": null,
+          "timestamp": "2025-01-20T16:35:00Z"
+        }
+      }
+    },
+    {
+      "name": "Gerenciar Etiquetas da Conversa",
+      "request": {
+        "method": "PUT",
+        "url": "/conversations/550e8400-e29b-41d4-a716-446655440030/tags",
+        "headers": {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        },
+        "body": {
+          "tags": [
+            "550e8400-e29b-41d4-a716-446655440020",
+            "550e8400-e29b-41d4-a716-446655440022"
+          ]
+        }
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "id": "550e8400-e29b-41d4-a716-446655440030",
+          "tags": [
+            "550e8400-e29b-41d4-a716-446655440020",
+            "550e8400-e29b-41d4-a716-446655440022"
+          ],
+          "updated_at": "2025-01-20T16:40:00Z"
+        }
+      }
+    },
+    {
+      "name": "Enviar Mensagem em Massa",
+      "request": {
+        "method": "POST",
+        "url": "/conversations/broadcast",
+        "headers": {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        },
+        "body": {
+          "content": "🏥 *Importante:* Nossa clínica estará fechada na sexta-feira (25/01) para manutenção. Agendamentos serão transferidos automaticamente. Em caso de emergência, ligue 192.",
+          "recipients": [
+            "+5511888888888",
+            "+5511777777777",
+            "+5511666666666"
+          ],
+          "message_type": "text"
+        }
+      },
+      "response": {
+        "status": 202,
+        "body": {
+          "broadcast_id": "550e8400-e29b-41d4-a716-446655440050",
+          "status": "processing",
+          "total_recipients": 3,
+          "estimated_completion": "2025-01-20T16:50:00Z"
+        }
+      }
+    },
+    {
+      "name": "Erro - Conversa Já Assumida",
+      "request": {
+        "method": "PUT",
+        "url": "/conversations/550e8400-e29b-41d4-a716-446655440031/bot-control",
+        "headers": {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        },
+        "body": {
+          "bot_active": false
+        }
+      },
+      "response": {
+        "status": 422,
+        "body": {
+          "type": "https://api.atendeai.com.br/errors/conversation-already-assigned",
+          "title": "Conversa Já Atribuída",
+          "status": 422,
+          "detail": "Esta conversa já foi assumida por outro atendente",
+          "instance": "/conversations/550e8400-e29b-41d4-a716-446655440031/bot-control",
+          "assigned_user": "João Silva"
+        }
+      }
+    }
+  ]
+}

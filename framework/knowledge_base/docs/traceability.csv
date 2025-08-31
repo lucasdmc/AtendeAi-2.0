@@ -1,2 +1,78 @@
 req_id,req_summary,test_id,test_summary,status
-R-001,User can sign up,T-001,Unit test for sign up,NOT_STARTED
+R-001,CRUD Clínicas - Admin Lify criar/editar/remover clínicas,T-001-001,Teste criação clínica com campos obrigatórios,pending
+R-001,CRUD Clínicas - Admin Lify criar/editar/remover clínicas,T-001-002,Teste listagem clínicas com filtros,pending
+R-001,CRUD Clínicas - Admin Lify criar/editar/remover clínicas,T-001-003,Teste edição dados clínica incluindo JSON,pending
+R-001,CRUD Clínicas - Admin Lify criar/editar/remover clínicas,T-001-004,Teste remoção clínica com confirmação,pending
+R-001,CRUD Clínicas - Admin Lify criar/editar/remover clínicas,T-001-005,Teste combobox seleção clínicas Admin Lify,pending
+R-001,CRUD Clínicas - Admin Lify criar/editar/remover clínicas,T-001-006,Teste toggle simulação por clínica,pending
+R-002,Contextualização Clínicas - chatbot absorve contextos JSON,T-002-001,Teste chatbot respeita configurações JSON,pending
+R-002,Contextualização Clínicas - chatbot absorve contextos JSON,T-002-002,Teste chatbot não inventa informações,pending
+R-002,Contextualização Clínicas - chatbot absorve contextos JSON,T-002-003,Teste consistência respostas independente temperatura,pending
+R-002,Contextualização Clínicas - chatbot absorve contextos JSON,T-002-004,Teste validação JSON contextualização,pending
+R-003,Simulação Conversas - toggle simulação respostas,T-003-001,Teste toggle ON conversas simuladas,pending
+R-003,Simulação Conversas - toggle simulação respostas,T-003-002,Teste toggle OFF conversas reais WhatsApp,pending
+R-003,Simulação Conversas - toggle simulação respostas,T-003-003,Teste interface clara modo simulação,pending
+R-003,Simulação Conversas - toggle simulação respostas,T-003-004,Teste persistência configuração por clínica,pending
+R-004,CRUD Usuários - gerenciar usuários sistema,T-004-001,Teste criação usuário campos obrigatórios,pending
+R-004,CRUD Usuários - gerenciar usuários sistema,T-004-002,Teste configuração perfil e clínica,pending
+R-004,CRUD Usuários - gerenciar usuários sistema,T-004-003,Teste edição dados usuário,pending
+R-004,CRUD Usuários - gerenciar usuários sistema,T-004-004,Teste remoção usuário com validações,pending
+R-004,CRUD Usuários - gerenciar usuários sistema,T-004-005,Teste senhas hasheadas bcrypt,pending
+R-004,CRUD Usuários - gerenciar usuários sistema,T-004-006,Teste isolamento usuários por clínica,pending
+R-005,Tela Conversas - visualizar interações WhatsApp,T-005-001,Teste listagem conversas clínica,pending
+R-005,Tela Conversas - visualizar interações WhatsApp,T-005-002,Teste indicador modo simulação,pending
+R-005,Tela Conversas - visualizar interações WhatsApp,T-005-003,Teste assumir/devolver controle chatbot,pending
+R-005,Tela Conversas - visualizar interações WhatsApp,T-005-004,Teste envio arquivos anexos,pending
+R-005,Tela Conversas - visualizar interações WhatsApp,T-005-005,Teste interface similar WhatsApp Web,pending
+R-005,Tela Conversas - visualizar interações WhatsApp,T-005-006,Teste sistema etiquetas conversas,pending
+R-005,Tela Conversas - visualizar interações WhatsApp,T-005-007,Teste mensagens padrão em massa,pending
+R-006,Agendamentos Tela - visualizar Google Calendar integrado,T-006-001,Teste integração OAuth múltiplos calendários,pending
+R-006,Agendamentos Tela - visualizar Google Calendar integrado,T-006-002,Teste embed Google Calendar com features,pending
+R-006,Agendamentos Tela - visualizar Google Calendar integrado,T-006-003,Teste performance navegação calendário,pending
+R-006,Agendamentos Tela - visualizar Google Calendar integrado,T-006-004,Teste múltiplos calendários por clínica,pending
+R-006,Agendamentos Tela - visualizar Google Calendar integrado,T-006-005,Teste tipos agendamento configuráveis JSON,pending
+R-007,Agendamento Chatbot - agendar via WhatsApp,T-007-001,Teste consulta espaços livres calendários,pending
+R-007,Agendamento Chatbot - agendar via WhatsApp,T-007-002,Teste coleta dados necessários cliente,pending
+R-007,Agendamento Chatbot - agendar via WhatsApp,T-007-003,Teste criação evento Google Calendar,pending
+R-007,Agendamento Chatbot - agendar via WhatsApp,T-007-004,Teste sistema priorização eventos,pending
+R-008,Priorização Agendamentos - reconhecer prioridades,T-008-001,Teste configuração prioridades tipos evento,pending
+R-008,Priorização Agendamentos - reconhecer prioridades,T-008-002,Teste lógica priorização Google Calendar,pending
+R-008,Priorização Agendamentos - reconhecer prioridades,T-008-003,Teste realocação automática eventos,pending
+R-008,Priorização Agendamentos - reconhecer prioridades,T-008-004,Teste reconhecimento tipo consulta,pending
+R-009,Confirmação Agendamentos - enviar confirmações,T-009-001,Teste envio confirmação JSON contextualização,pending
+R-009,Confirmação Agendamentos - enviar confirmações,T-009-002,Teste flag marcador sem resposta,pending
+R-009,Confirmação Agendamentos - enviar confirmações,T-009-003,Teste marcação vermelha Google Calendar,pending
+R-009,Confirmação Agendamentos - enviar confirmações,T-009-004,Teste configuração timing envio,pending
+R-010,Tela Contextualização - relatório configurações,T-010-001,Teste relatório executivo informações JSON,pending
+R-010,Tela Contextualização - relatório configurações,T-010-002,Teste visualização estruturada configurações,pending
+R-010,Tela Contextualização - relatório configurações,T-010-003,Teste acesso baseado permissões,pending
+R-011,Dashboard Métricas - visualizar métricas operacionais,T-011-001,Teste métricas conversas completas,pending
+R-011,Dashboard Métricas - visualizar métricas operacionais,T-011-002,Teste métricas agendamentos período,pending
+R-011,Dashboard Métricas - visualizar métricas operacionais,T-011-003,Teste filtros período últimos 3 meses,pending
+R-011,Dashboard Métricas - visualizar métricas operacionais,T-011-004,Teste gráficos distribuição tipos,pending
+R-011,Dashboard Métricas - visualizar métricas operacionais,T-011-005,Teste tempo médio resposta chatbot,pending
+R-011,Dashboard Métricas - visualizar métricas operacionais,T-011-006,Teste taxa resolução automática,pending
+R-012,Sistema Perfis Usuários - controlar acesso por perfil,T-012-001,Teste Admin Lify acesso total,pending
+R-012,Sistema Perfis Usuários - controlar acesso por perfil,T-012-002,Teste Suporte Lify exceto criar clínicas,pending
+R-012,Sistema Perfis Usuários - controlar acesso por perfil,T-012-003,Teste Atendente Dashboard/Conversas/Agendamentos,pending
+R-012,Sistema Perfis Usuários - controlar acesso por perfil,T-012-004,Teste Gestor + Contextualização,pending
+R-012,Sistema Perfis Usuários - controlar acesso por perfil,T-012-005,Teste Administrador + Gestão usuários,pending
+R-012,Sistema Perfis Usuários - controlar acesso por perfil,T-012-006,Teste isolamento dados por clínica,pending
+RNF-001,Performance Frontend - páginas carregam ≤ 3s,T-PERF-001,Teste load time páginas principais,pending
+RNF-001,Performance Frontend - operações busca ≤ 2s,T-PERF-002,Teste response time operações busca,pending
+RNF-001,Performance Frontend - suporte 100 usuários simultâneos,T-PERF-003,Teste load 100 usuários concorrentes,pending
+RNF-002,Segurança - senhas hasheadas,T-SEC-001,Teste hash senhas bcrypt,pending
+RNF-002,Segurança - sessões expiram 2h inatividade,T-SEC-002,Teste expiração sessões inatividade,pending
+RNF-002,Segurança - RLS isolamento clínicas,T-SEC-003,Teste Row Level Security enforcement,pending
+RNF-003,Usabilidade - compatibilidade browsers,T-UX-001,Teste Chrome/Safari/Firefox/Brave/Opera/Edge,pending
+RNF-003,Usabilidade - interface responsiva,T-UX-002,Teste desktop/tablet/mobile responsivo,pending
+RNF-005,Manutenibilidade - documentação código,T-MAINT-001,Review documentação código gerado,pending
+RNF-005,Manutenibilidade - logs debug,T-MAINT-002,Teste logs estruturados funcionalidades,pending
+INT-001,Integração WhatsApp - webhook processing,T-INT-001,Teste processamento webhooks Meta,pending
+INT-001,Integração WhatsApp - message flow,T-INT-002,Teste fluxo mensagens bidirecionais,pending
+INT-002,Integração Google Calendar - OAuth flow,T-INT-003,Teste autenticação OAuth Google,pending
+INT-002,Integração Google Calendar - event sync,T-INT-004,Teste sincronização eventos calendário,pending
+E2E-001,Jornada usuário completa - Login até Agendamento,T-E2E-001,Teste end-to-end jornada principal,pending
+E2E-002,Multi-clinic isolation - Admin Lify troca clínicas,T-E2E-002,Teste isolamento dados múltiplas clínicas,pending
+E2E-003,Chatbot flow - Simulação para Real mode,T-E2E-003,Teste fluxo completo chatbot,pending
+E2E-004,Calendar integration - OAuth até agendamento bot,T-E2E-004,Teste integração completa calendário,pending

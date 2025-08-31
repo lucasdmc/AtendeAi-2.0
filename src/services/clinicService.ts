@@ -1,469 +1,336 @@
-// =====================================================
-// SERVIÇO DE GESTÃO DE CLÍNICAS - ATENDEAÍ 2.0
-// =====================================================
-
 import { supabase } from '@/integrations/supabase/client';
 
 export interface Clinic {
   id: string;
   name: string;
-  cnpj?: string;
-  status: 'active' | 'inactive' | 'suspended';
-  whatsapp_webhook_url?: string;
-  whatsapp_id_number?: string;
-  whatsapp_verify_token?: string;
-  google_client_id?: string;
-  google_client_secret?: string;
-  google_refresh_token?: string;
-  google_access_token?: string;
-  google_token_expires_at?: string;
+  whatsapp_number: string;
+  meta_webhook_url?: string;
+  whatsapp_id?: string;
+  context_json: Record<string, any>;
+  simulation_mode: boolean;
+  status: 'active' | 'inactive';
   created_at: string;
   updated_at: string;
 }
 
-export interface ClinicContextualization {
-  id: string;
-  clinic_id: string;
-  mission: string;
-  values: string[];
-  differentials: string[];
-  specialties: string[];
-  working_hours: WorkingHours;
-  appointment_policies: AppointmentPolicy[];
-  ai_personality: AIPersonality;
-  ai_behavior: AIBehavior;
-}
-
-export interface WorkingHours {
-  monday: DaySchedule;
-  tuesday: DaySchedule;
-  wednesday: DaySchedule;
-  thursday: DaySchedule;
-  friday: DaySchedule;
-  saturday: DaySchedule;
-  sunday: DaySchedule;
-}
-
-export interface DaySchedule {
-  is_open: boolean;
-  open_time?: string;
-  close_time?: string;
-  break_start?: string;
-  break_end?: string;
-}
-
-export interface AppointmentPolicy {
-  id: string;
+export interface CreateClinicRequest {
   name: string;
-  description: string;
-  duration_minutes: number;
-  buffer_before: number;
-  buffer_after: number;
-  max_advance_days: number;
-  cancellation_hours: number;
+  whatsapp_number: string;
+  meta_webhook_url?: string;
+  whatsapp_id?: string;
+  context_json: Record<string, any>;
+  simulation_mode?: boolean;
 }
 
-export interface AIPersonality {
-  tone: 'professional' | 'friendly' | 'casual' | 'formal';
-  language: 'pt-BR' | 'en-US' | 'es-ES';
-  empathy_level: 'low' | 'medium' | 'high';
-  formality_level: 'low' | 'medium' | 'high';
+export interface UpdateClinicRequest {
+  name?: string;
+  whatsapp_number?: string;
+  meta_webhook_url?: string;
+  whatsapp_id?: string;
+  context_json?: Record<string, any>;
+  simulation_mode?: boolean;
 }
 
-export interface AIBehavior {
-  response_time: 'immediate' | 'fast' | 'normal' | 'slow';
-  follow_up_frequency: 'never' | 'rarely' | 'sometimes' | 'always';
-  proactive_suggestions: boolean;
-  emotional_intelligence: boolean;
+export interface ListClinicsResponse {
+  data: Clinic[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    pages: number;
+    has_next: boolean;
+    has_prev: boolean;
+  };
 }
 
 class ClinicService {
-  // Usando Supabase diretamente para operações CRUD
+  private readonly tableName = 'clinics';
 
-  // Método getAuthHeaders removido - usando Supabase diretamente
-
-  // Obter todas as clínicas (ou apenas a clínica do usuário)
-  async getClinics(limit: number = 100, offset: number = 0): Promise<Clinic[]> {
+  async list(params?: {
+    page?: number;
+    limit?: number;
+    status?: string;
+    search?: string;
+  }): Promise<ListClinicsResponse> {
     try {
-      const { data, error } = await supabase
-        .from('clinics')
-        .select('*')
-        .eq('status', 'active')
-        .limit(limit)
+      const { page = 1, limit = 20, status, search } = params || {};
+      const offset = (page - 1) * limit;
+
+      let query = supabase
+        .from(this.tableName)
+        .select('*', { count: 'exact' });
+
+      // Apply filters
+      if (status) {
+        query = query.eq('status', status);
+      }
+
+      if (search) {
+        query = query.or(`name.ilike.%${search}%,whatsapp_number.ilike.%${search}%`);
+      }
+
+      // Apply pagination
+      query = query
         .range(offset, offset + limit - 1)
-        .order('name');
+        .order('created_at', { ascending: false });
+
+      const { data, error, count } = await query;
 
       if (error) {
         throw new Error(`Error fetching clinics: ${error.message}`);
       }
 
-      return data || [];
+      const total = count || 0;
+      const pages = Math.ceil(total / limit);
+
+      return {
+        data: data || [],
+        pagination: {
+          page,
+          limit,
+          total,
+          pages,
+          has_next: page < pages,
+          has_prev: page > 1
+        }
+      };
     } catch (error) {
-      console.error('Error fetching clinics:', error);
+      console.error('Error in clinicService.list:', error);
       throw error;
     }
   }
 
-  // Obter clínica específica
-  async getClinic(id: string): Promise<Clinic> {
+  async getById(id: string): Promise<Clinic> {
     try {
       const { data, error } = await supabase
-        .from('clinics')
+        .from(this.tableName)
         .select('*')
         .eq('id', id)
-        .eq('status', 'active')
         .single();
 
       if (error) {
+        if (error.code === 'PGRST116') {
+          throw new Error('Clínica não encontrada');
+        }
         throw new Error(`Error fetching clinic: ${error.message}`);
       }
 
       return data;
     } catch (error) {
-      console.error('Error fetching clinic:', error);
+      console.error('Error in clinicService.getById:', error);
       throw error;
     }
   }
 
-  // Criar nova clínica (apenas admin_lify)
-  async createClinic(clinicData: Partial<Clinic>): Promise<Clinic> {
+  async create(clinicData: CreateClinicRequest): Promise<Clinic> {
     try {
+      // Validate required fields
+      if (!clinicData.name || !clinicData.whatsapp_number || !clinicData.context_json) {
+        throw new Error('Nome, número WhatsApp e JSON de contextualização são obrigatórios');
+      }
+
+      // Validate WhatsApp number format
+      const whatsappRegex = /^\+[1-9]\d{1,14}$/;
+      if (!whatsappRegex.test(clinicData.whatsapp_number)) {
+        throw new Error('Formato do número WhatsApp inválido (use +5511999999999)');
+      }
+
+      const newClinic = {
+        name: clinicData.name.trim(),
+        whatsapp_number: clinicData.whatsapp_number.trim(),
+        meta_webhook_url: clinicData.meta_webhook_url?.trim() || null,
+        whatsapp_id: clinicData.whatsapp_id?.trim() || null,
+        context_json: clinicData.context_json,
+        simulation_mode: clinicData.simulation_mode || false,
+        status: 'active' as const,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+
       const { data, error } = await supabase
-        .from('clinics')
-        .insert({
-          ...clinicData,
-          status: 'active',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        })
+        .from(this.tableName)
+        .insert([newClinic])
         .select()
         .single();
 
       if (error) {
+        if (error.code === '23505') {
+          throw new Error('Número WhatsApp já está em uso por outra clínica');
+        }
         throw new Error(`Error creating clinic: ${error.message}`);
       }
 
       return data;
     } catch (error) {
-      console.error('Error creating clinic:', error);
+      console.error('Error in clinicService.create:', error);
       throw error;
     }
   }
 
-  // Atualizar clínica
-  async updateClinic(id: string, clinicData: Partial<Clinic>): Promise<Clinic> {
+  async update(id: string, clinicData: UpdateClinicRequest): Promise<Clinic> {
     try {
+      // Validate WhatsApp number format if provided
+      if (clinicData.whatsapp_number) {
+        const whatsappRegex = /^\+[1-9]\d{1,14}$/;
+        if (!whatsappRegex.test(clinicData.whatsapp_number)) {
+          throw new Error('Formato do número WhatsApp inválido (use +5511999999999)');
+        }
+      }
+
+      const updateData = {
+        ...(clinicData.name && { name: clinicData.name.trim() }),
+        ...(clinicData.whatsapp_number && { whatsapp_number: clinicData.whatsapp_number.trim() }),
+        ...(clinicData.meta_webhook_url !== undefined && { 
+          meta_webhook_url: clinicData.meta_webhook_url?.trim() || null 
+        }),
+        ...(clinicData.whatsapp_id !== undefined && { 
+          whatsapp_id: clinicData.whatsapp_id?.trim() || null 
+        }),
+        ...(clinicData.context_json && { context_json: clinicData.context_json }),
+        ...(clinicData.simulation_mode !== undefined && { simulation_mode: clinicData.simulation_mode }),
+        updated_at: new Date().toISOString()
+      };
+
       const { data, error } = await supabase
-        .from('clinics')
-        .update({
-          ...clinicData,
-          updated_at: new Date().toISOString()
-        })
+        .from(this.tableName)
+        .update(updateData)
         .eq('id', id)
         .select()
         .single();
 
       if (error) {
+        if (error.code === 'PGRST116') {
+          throw new Error('Clínica não encontrada');
+        }
+        if (error.code === '23505') {
+          throw new Error('Número WhatsApp já está em uso por outra clínica');
+        }
         throw new Error(`Error updating clinic: ${error.message}`);
       }
 
       return data;
     } catch (error) {
-      console.error('Error updating clinic:', error);
+      console.error('Error in clinicService.update:', error);
       throw error;
     }
   }
 
-  // Deletar clínica (apenas admin_lify)
-  async deleteClinic(id: string): Promise<void> {
+  async delete(id: string): Promise<void> {
     try {
-      const headers = await this.getAuthHeaders();
-      const response = await fetch(`${this.baseURL}/clinics/${id}`, {
-        method: 'DELETE',
-        headers,
-      });
+      const { error } = await supabase
+        .from(this.tableName)
+        .delete()
+        .eq('id', id);
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      if (error) {
+        if (error.code === 'PGRST116') {
+          throw new Error('Clínica não encontrada');
+        }
+        throw new Error(`Error deleting clinic: ${error.message}`);
       }
     } catch (error) {
-      console.error('Error deleting clinic:', error);
+      console.error('Error in clinicService.delete:', error);
       throw error;
     }
   }
 
-  // Obter contextualização da clínica
-  async getClinicContextualization(id: string, forceRefresh: boolean = false): Promise<ClinicContextualization> {
+  async getContext(id: string): Promise<Record<string, any>> {
     try {
-      const headers = await this.getAuthHeaders();
-      const response = await fetch(`${this.baseURL}/clinics/${id}/contextualization?forceRefresh=${forceRefresh}`, {
-        method: 'GET',
-        headers,
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      return data.data;
+      const clinic = await this.getById(id);
+      return this.generateContextReport(clinic.context_json);
     } catch (error) {
-      console.error('Error fetching clinic contextualization:', error);
+      console.error('Error in clinicService.getContext:', error);
       throw error;
     }
   }
 
-  // Atualizar contextualização da clínica
-  async updateClinicContextualization(id: string, contextualizationData: Partial<ClinicContextualization>): Promise<ClinicContextualization> {
-    try {
-      const headers = await this.getAuthHeaders();
-      const response = await fetch(`${this.baseURL}/clinics/${id}/contextualization`, {
-        method: 'PUT',
-        headers,
-        body: JSON.stringify(contextualizationData),
-      });
+  private generateContextReport(contextJson: Record<string, any>): Record<string, any> {
+    const report: Record<string, any> = {
+      clinic_info: {},
+      ai_agent_config: {},
+      business_hours: {},
+      appointment_types: [],
+      professionals: []
+    };
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+    // Extract clinic information
+    if (contextJson.clinica?.informacoes_basicas) {
+      report.clinic_info = contextJson.clinica.informacoes_basicas;
+    }
+
+    // Extract AI agent configuration
+    if (contextJson.agente_ia) {
+      report.ai_agent_config = contextJson.agente_ia;
+    }
+
+    // Extract business hours
+    if (contextJson.horario_funcionamento) {
+      report.business_hours = contextJson.horario_funcionamento;
+    }
+
+    // Extract appointment types
+    if (contextJson.agendamento_config?.tipos_agendamento) {
+      report.appointment_types = contextJson.agendamento_config.tipos_agendamento;
+    }
+
+    // Extract professionals
+    if (contextJson.profissionais) {
+      report.professionals = contextJson.profissionais;
+    }
+
+    return report;
+  }
+
+  async validateWhatsAppNumber(whatsappNumber: string, excludeId?: string): Promise<boolean> {
+    try {
+      let query = supabase
+        .from(this.tableName)
+        .select('id')
+        .eq('whatsapp_number', whatsappNumber);
+
+      if (excludeId) {
+        query = query.neq('id', excludeId);
       }
 
-      const data = await response.json();
-      return data.data;
+      const { data, error } = await query;
+
+      if (error) {
+        throw new Error(`Error validating WhatsApp number: ${error.message}`);
+      }
+
+      return (data || []).length === 0;
     } catch (error) {
-      console.error('Error updating clinic contextualization:', error);
+      console.error('Error in clinicService.validateWhatsAppNumber:', error);
       throw error;
     }
   }
 
-  // Obter intenções da clínica
-  async getClinicIntentions(id: string): Promise<string[]> {
+  async toggleSimulationMode(id: string, simulationMode: boolean): Promise<Clinic> {
     try {
-      const headers = await this.getAuthHeaders();
-      const response = await fetch(`${this.baseURL}/clinics/${id}/intentions`, {
-        method: 'GET',
-        headers,
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      return data.data || [];
+      return await this.update(id, { simulation_mode: simulationMode });
     } catch (error) {
-      console.error('Error fetching clinic intentions:', error);
+      console.error('Error in clinicService.toggleSimulationMode:', error);
       throw error;
     }
   }
 
-  // Obter personalidade da IA da clínica
-  async getClinicPersonality(id: string): Promise<AIPersonality> {
+  async getActiveClinicCount(): Promise<number> {
     try {
-      const headers = await this.getAuthHeaders();
-      const response = await fetch(`${this.baseURL}/clinics/${id}/personality`, {
-        method: 'GET',
-        headers,
-      });
+      const { count, error } = await supabase
+        .from(this.tableName)
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'active');
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      if (error) {
+        throw new Error(`Error counting active clinics: ${error.message}`);
       }
 
-      const data = await response.json();
-      return data.data;
+      return count || 0;
     } catch (error) {
-      console.error('Error fetching clinic personality:', error);
-      throw error;
-    }
-  }
-
-  // Obter comportamento da IA da clínica
-  async getClinicBehavior(id: string): Promise<AIBehavior> {
-    try {
-      const headers = await this.getAuthHeaders();
-      const response = await fetch(`${this.baseURL}/clinics/${id}/behavior`, {
-        method: 'GET',
-        headers,
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      return data.data;
-    } catch (error) {
-      console.error('Error fetching clinic behavior:', error);
-      throw error;
-    }
-  }
-
-  // Obter horários de funcionamento
-  async getClinicWorkingHours(id: string): Promise<WorkingHours> {
-    try {
-      const headers = await this.getAuthHeaders();
-      const response = await fetch(`${this.baseURL}/clinics/${id}/working-hours`, {
-        method: 'GET',
-        headers,
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      return data.data;
-    } catch (error) {
-      console.error('Error fetching clinic working hours:', error);
-      throw error;
-    }
-  }
-
-  // Obter políticas de agendamento
-  async getClinicAppointmentPolicies(id: string): Promise<AppointmentPolicy[]> {
-    try {
-      const headers = await this.getAuthHeaders();
-      const response = await fetch(`${this.baseURL}/clinics/${id}/appointment-policies`, {
-        method: 'GET',
-        headers,
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      return data.data || [];
-    } catch (error) {
-      console.error('Error fetching clinic appointment policies:', error);
-      throw error;
-    }
-  }
-
-  // Obter mapeamentos de calendário
-  async getClinicCalendarMappings(id: string): Promise<any[]> {
-    try {
-      const headers = await this.getAuthHeaders();
-      const response = await fetch(`${this.baseURL}/clinics/${id}/calendar-mappings`, {
-        method: 'GET',
-        headers,
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      return data.data || [];
-    } catch (error) {
-      console.error('Error fetching clinic calendar mappings:', error);
-      throw error;
-    }
-  }
-
-  // Obter serviços da clínica
-  async getClinicServices(id: string): Promise<any[]> {
-    try {
-      const headers = await this.getAuthHeaders();
-      const response = await fetch(`${this.baseURL}/clinics/${id}/services`, {
-        method: 'GET',
-        headers,
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      return data.data || [];
-    } catch (error) {
-      console.error('Error fetching clinic services:', error);
-      throw error;
-    }
-  }
-
-  // Obter profissionais da clínica
-  async getClinicProfessionals(id: string): Promise<any[]> {
-    try {
-      const headers = await this.getAuthHeaders();
-      const response = await fetch(`${this.baseURL}/clinics/${id}/professionals`, {
-        method: 'GET',
-        headers,
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      return data.data || [];
-    } catch (error) {
-      console.error('Error fetching clinic professionals:', error);
-      throw error;
-    }
-  }
-
-  // Limpar cache de contextualização
-  async clearContextualizationCache(id: string): Promise<void> {
-    try {
-      const headers = await this.getAuthHeaders();
-      const response = await fetch(`${this.baseURL}/clinics/${id}/contextualization/cache`, {
-        method: 'DELETE',
-        headers,
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-    } catch (error) {
-      console.error('Error clearing contextualization cache:', error);
-      throw error;
-    }
-  }
-
-  // Obter estatísticas do cache de contextualização
-  async getContextualizationCacheStats(): Promise<any> {
-    try {
-      const headers = await this.getAuthHeaders();
-      const response = await fetch(`${this.baseURL}/clinics/contextualization/cache/stats`, {
-        method: 'GET',
-        headers,
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      return data.data;
-    } catch (error) {
-      console.error('Error fetching contextualization cache stats:', error);
-      throw error;
-    }
-  }
-
-  // Buscar clínica por número do WhatsApp
-  async getClinicByWhatsAppPhone(phone: string): Promise<Clinic> {
-    try {
-      const headers = await this.getAuthHeaders();
-      const response = await fetch(`${this.baseURL}/clinics/whatsapp/${phone}`, {
-        method: 'GET',
-        headers,
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      return data.data;
-    } catch (error) {
-      console.error('Error fetching clinic by WhatsApp phone:', error);
+      console.error('Error in clinicService.getActiveClinicCount:', error);
       throw error;
     }
   }
 }
 
-// Instância singleton
 export const clinicService = new ClinicService();
-export default clinicService;

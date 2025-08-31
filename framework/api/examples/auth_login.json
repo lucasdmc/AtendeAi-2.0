@@ -1,0 +1,74 @@
+{
+  "name": "Authentication - Login",
+  "description": "Exemplo de login de usuário no sistema",
+  "request": {
+    "method": "POST",
+    "url": "/auth/login",
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "body": {
+      "email": "admin@clinicademo.com",
+      "password": "senha123"
+    }
+  },
+  "responses": {
+    "success": {
+      "status": 200,
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1NTBlODQwMC1lMjliLTQxZDQtYTcxNi00NDY2NTU0NDAwMDIiLCJlbWFpbCI6ImFkbWluQGNsaW5pY2FkZW1vLmNvbSIsInJvbGUiOiJhZG1pbmlzdHJhZG9yIiwiY2xpbmljX2lkIjoiNTUwZTg0MDAtZTI5Yi00MWQ0LWE3MTYtNDQ2NjU1NDQwMDAwIiwiaWF0IjoxNzM3Mzg4ODAwLCJleHAiOjE3MzczOTI0MDB9.abc123def456",
+        "refresh_token": "rt_abc123def456ghi789",
+        "expires_in": 3600,
+        "user": {
+          "id": "550e8400-e29b-41d4-a716-446655440002",
+          "name": "Administrador Clínica Demo",
+          "login": "admin@clinicademo.com",
+          "role": "administrador",
+          "clinic_id": "550e8400-e29b-41d4-a716-446655440000",
+          "status": "active",
+          "created_at": "2025-01-20T10:00:00Z",
+          "updated_at": "2025-01-20T10:00:00Z"
+        }
+      }
+    },
+    "error_invalid_credentials": {
+      "status": 401,
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "type": "https://api.atendeai.com.br/errors/auth-credentials-invalid",
+        "title": "Credenciais Inválidas",
+        "status": 401,
+        "detail": "Email ou senha incorretos",
+        "instance": "/auth/login"
+      }
+    },
+    "error_validation": {
+      "status": 422,
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "type": "https://api.atendeai.com.br/errors/validation-error",
+        "title": "Erro de Validação",
+        "status": 422,
+        "detail": "Dados de entrada contêm erros de validação",
+        "instance": "/auth/login",
+        "errors": [
+          {
+            "field": "email",
+            "message": "Formato de email inválido"
+          },
+          {
+            "field": "password",
+            "message": "Senha deve ter pelo menos 6 caracteres"
+          }
+        ]
+      }
+    }
+  }
+}

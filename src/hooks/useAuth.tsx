@@ -22,6 +22,12 @@ interface AuthContextType {
   isAdminClinic: () => Promise<boolean>;
   isAttendant: () => Promise<boolean>;
   getUserClinics: () => Promise<string[]>;
+  canManageUsers: () => Promise<boolean>;
+  canManageClinics: () => Promise<boolean>;
+  canViewDashboard: () => Promise<boolean>;
+  canAccessConversations: () => Promise<boolean>;
+  canAccessCalendar: () => Promise<boolean>;
+  canAccessAppointments: () => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -66,6 +72,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const signIn = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
     try {
+      // Try Supabase auth first
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -144,6 +151,36 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     return permissionService.getUserClinics(user.id);
   };
 
+  const canManageUsers = async (): Promise<boolean> => {
+    if (!user?.id) return false;
+    return permissionService.canManageUsers(user.id);
+  };
+
+  const canManageClinics = async (): Promise<boolean> => {
+    if (!user?.id) return false;
+    return permissionService.canManageClinics(user.id);
+  };
+
+  const canViewDashboard = async (): Promise<boolean> => {
+    if (!user?.id) return false;
+    return permissionService.canViewDashboard(user.id);
+  };
+
+  const canAccessConversations = async (): Promise<boolean> => {
+    if (!user?.id) return false;
+    return permissionService.canAccessConversations(user.id);
+  };
+
+  const canAccessCalendar = async (): Promise<boolean> => {
+    if (!user?.id) return false;
+    return permissionService.canAccessCalendar(user.id);
+  };
+
+  const canAccessAppointments = async (): Promise<boolean> => {
+    if (!user?.id) return false;
+    return permissionService.canAccessAppointments(user.id);
+  };
+
   const value: AuthContextType = {
     user,
     session,
@@ -159,6 +196,12 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     isAdminClinic,
     isAttendant,
     getUserClinics,
+    canManageUsers,
+    canManageClinics,
+    canViewDashboard,
+    canAccessConversations,
+    canAccessCalendar,
+    canAccessAppointments,
   };
 
   return (
