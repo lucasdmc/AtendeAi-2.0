@@ -26,87 +26,51 @@ interface AuthProviderProps {
 }
 
 export const AuthProvider = ({ children }: AuthProviderProps) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  // Usuário simulado para desenvolvimento - sem autenticação
+  const mockUser: User = {
+    id: 'dev-user-123',
+    email: 'dev@atendeai.com',
+    firstName: 'Usuário',
+    lastName: 'Desenvolvimento',
+    roles: ['admin_lify'],
+    clinicId: 'cardioprime_blumenau_2024'
+  };
 
-  useEffect(() => {
-    const initializeAuth = async () => {
-      try {
-        // Verificar se há tokens salvos
-        if (authService.isAuthenticated()) {
-          // Validar token
-          const isValid = await authService.validateToken();
-          if (isValid) {
-            setUser(authService.getCurrentUser());
-          } else {
-            // Token inválido, limpar dados
-            await authService.logout();
-          }
-        }
-      } catch (error) {
-        console.error('Auth initialization error:', error);
-        await authService.logout();
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    initializeAuth();
-  }, []);
+  const user = mockUser;
+  const isLoading = false;
 
   const login = async (credentials: LoginCredentials): Promise<boolean> => {
-    try {
-      setIsLoading(true);
-      const response = await authService.login(credentials);
-      
-      if (response.success) {
-        setUser(response.data.user);
-        return true;
-      }
-      
-      return false;
-    } catch (error) {
-      console.error('Login error:', error);
-      return false;
-    } finally {
-      setIsLoading(false);
-    }
+    // Simular login para desenvolvimento
+    return true;
   };
 
   const logout = async (): Promise<void> => {
-    try {
-      setIsLoading(true);
-      await authService.logout();
-      setUser(null);
-    } catch (error) {
-      console.error('Logout error:', error);
-    } finally {
-      setIsLoading(false);
-    }
+    // Simular logout para desenvolvimento
+    console.log('Logout simulado');
   };
 
   const hasRole = (role: string): boolean => {
-    return authService.hasRole(role);
+    return user?.roles?.includes(role) || false;
   };
 
   const hasAnyRole = (roles: string[]): boolean => {
-    return authService.hasAnyRole(roles);
+    return roles.some(role => hasRole(role));
   };
 
   const hasAllRoles = (roles: string[]): boolean => {
-    return authService.hasAllRoles(roles);
+    return roles.every(role => hasRole(role));
   };
 
   const isAdminLify = (): boolean => {
-    return authService.isAdminLify();
+    return hasRole('admin_lify');
   };
 
   const isAdminClinic = (): boolean => {
-    return authService.isAdminClinic();
+    return hasRole('admin_clinic');
   };
 
   const isAttendant = (): boolean => {
-    return authService.isAttendant();
+    return hasRole('attendant');
   };
 
   const value: AuthContextType = {
