@@ -1,0 +1,5 @@
+id,requirement,implementation,tests,status
+RF-CTX-01,Ler contextualização JSON da clínica atual,src/sdk/context.ts (wire-up futuro),N/A,pending
+RF-CTX-02,Atualizar contextualização JSON,src/sdk/context.ts (wire-up futuro),N/A,pending
+RF-WA-01,Enviar mensagem de texto WhatsApp,src/sdk/whatsapp.ts (wire-up futuro),N/A,pending
+RF-AUTH-OBS,Registrar conflito Supabase vs JWT,docs/system_spec.md,Manual,done

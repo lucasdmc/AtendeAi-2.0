@@ -1,0 +1,9 @@
+backend/
+framework/
+docs/
+scripts/
+node_modules/
+dist/
+.tailwind/
+tailwind.config.ts
+src/components/ui/
