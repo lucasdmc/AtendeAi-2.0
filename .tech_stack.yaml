@@ -1,0 +1,57 @@
+name: AtendeAI 2.0
+mode: mvp
+languages:
+  - typescript
+  - javascript
+
+frontend:
+  framework: react
+  bundler: vite
+  ui_library: shadcn-ui
+  router: react-router-dom@6
+  state: react-query
+  dev_server_port: 8080
+
+backend:
+  style: microservices
+  runtime: nodejs@18
+  framework: express
+  services:
+    - auth-service: 3001
+    - user-service: 3002
+    - clinic-service: 3003
+    - health-service: 3004
+    - conversation-service: 3005
+    - appointment-service: 3006
+    - whatsapp-service: 3007
+    - google-calendar-service: 3008
+
+infrastructure:
+  orchestrator: docker-compose
+  api_gateway: kong@3.4
+  load_balancer: haproxy@2.8
+  cache: redis@7
+  database: supabase-postgres
+  monitoring:
+    prometheus: enabled
+    grafana: enabled
+
+authentication:
+  provider: supabase-auth
+  rls: true
+
+integrations:
+  - whatsapp_business_api
+  - google_calendar
+
+observability:
+  logs: structured
+  metrics: prometheus
+
+security:
+  secrets_in_repo: false
+  dependency_audit: planned
+
+notes:
+  - Compose canonical points to backend/services in docker-compose.improved.yml
+  - Frontend dev server must run on port 8080

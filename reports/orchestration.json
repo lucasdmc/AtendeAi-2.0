@@ -1,0 +1,18 @@
+{
+  "task_id": "T-2025-ATENDEAI-MVP-001",
+  "agent": "context_manager",
+  "status": "in_progress",
+  "summary": "Bootstrap do fluxo MVP: artifacts criados, leitura de contexto feita.",
+  "artifacts": [
+    {"path":".tech_stack.yaml","type":"config","summary":"Tech stack fonte única"},
+    {"path":"docs/system_spec.md","type":"spec","summary":"Spec MVP"},
+    {"path":"docs/assumptions.md","type":"doc","summary":"Pressupostos MVP"},
+    {"path":"docs/traceability.csv","type":"traceability","summary":"Rastreabilidade requisitos"}
+  ],
+  "next_actions": [
+    "Propor estrutura mínima e plano de limpeza",
+    "Escolher compose canonical (improved)",
+    "Integrar Conversations.tsx aos serviços reais"
+  ],
+  "timestamp": "${DATE}"
+}
