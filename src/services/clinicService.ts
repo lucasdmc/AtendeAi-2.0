@@ -100,6 +100,10 @@ class ClinicService {
     }
   }
 
+  async getClinic(id: string): Promise<Clinic> {
+    return this.getById(id);
+  }
+
   async getById(id: string): Promise<Clinic> {
     try {
       const { data, error } = await supabase
