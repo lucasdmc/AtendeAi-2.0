@@ -1,6 +1,6 @@
 # System Specification - AtendeAI 2.0
 
-**Version**: 1.3.0  
+**Version**: 1.4.0  
 **Mode**: Incremental  
 **Status**: ✅ IMPLEMENTED & TESTED  
 **Date**: 2024-01-26  
@@ -28,6 +28,7 @@ AtendeAI 2.0 é um sistema multiclínicas que automatiza o atendimento médico a
 - **Infrastructure**: Docker + Docker Compose + HAProxy + Kong Gateway
 - **Monitoring**: Prometheus + Grafana
 - **Integrations**: WhatsApp Business API v18.0 + Google Calendar API
+- **State Management**: React Context API + useReducer (AppContext)
 
 ### Microservices Architecture
 1. **Auth Service** (Port 3001) - Autenticação e autorização ✅
@@ -162,6 +163,12 @@ AtendeAI 2.0 é um sistema multiclínicas que automatiza o atendimento médico a
 - Filtros por data, status e profissional
 - Estatísticas de agendamentos
 
+#### 7. Contexto (`/context`) ✅
+- Página de contextualização do sistema
+- Configuração de contexto por clínica
+- Visualização de dados contextuais
+- Integração com AppContext global
+
 ### User Profiles & Permissions ✅
 
 #### Admin Lify (Administrador Global)
@@ -203,7 +210,7 @@ AtendeAI 2.0 é um sistema multiclínicas que automatiza o atendimento médico a
 ### Clinic Management ✅
 - `GET /clinics` - Listar clínicas
 - `POST /clinics` - Criar clínica
-- `GET /clinics/{id}` - Obter clínica
+- `GET /clinics/{id}` - Obter clínica (método getClinic adicionado)
 - `PUT /clinics/{id}` - Atualizar clínica
 - `DELETE /clinics/{id}` - Excluir clínica
 
@@ -388,6 +395,8 @@ src/tests/
 | R-010 | Modo simulação para testes | ✅ | Clinic simulation_mode |
 | R-011 | Autenticação e autorização | ✅ | Supabase Auth + RBAC |
 | R-012 | API RESTful documentada | ✅ | OpenAPI 3.1 + examples |
+| R-013 | Gerenciamento de estado global | ✅ | AppContext + useReducer |
+| R-014 | Persistência de estado local | ✅ | localStorage + AppContext |
 
 ## 📋 Non-Functional Requirements Status
 
@@ -401,16 +410,36 @@ src/tests/
 
 ---
 
+## 🆕 Novas Funcionalidades v1.4.0
+
+### AppContext Global ✅
+- **Gerenciamento de Estado Centralizado**: Implementação de contexto global usando React Context API + useReducer
+- **Persistência Local**: Estado persistido automaticamente no localStorage por usuário
+- **Sincronização Automática**: Estado sincronizado entre abas e sessões
+- **Limpeza Automática**: Estado limpo automaticamente no logout
+- **Validação de Estado**: Validação e recuperação de estado corrompido
+
+### Melhorias no ClinicService ✅
+- **Método getClinic**: Adicionado método específico para obter clínica por ID
+- **Consistência de API**: Padronização de métodos de acesso a dados
+- **Melhor Integração**: Integração aprimorada com o AppContext
+
+### Integração Frontend-Backend ✅
+- **AppProvider**: Provider global integrado ao App.tsx
+- **Hook useApp**: Hook customizado para acesso ao contexto
+- **Estado Reativo**: Estado reativo em tempo real em toda aplicação
+
 ## 🎯 Implementation Summary
 
-**Sistema AtendeAI 2.0 v1.3.0 - COMPLETAMENTE IMPLEMENTADO E TESTADO ✅**
+**Sistema AtendeAI 2.0 v1.4.0 - COMPLETAMENTE IMPLEMENTADO E TESTADO ✅**
 
-- ✅ **12/12 Requisitos Funcionais** implementados
+- ✅ **14/14 Requisitos Funcionais** implementados
 - ✅ **5/5 Requisitos Não-Funcionais** atendidos  
 - ✅ **43 Testes** com 86.3% de cobertura
 - ✅ **8 Microserviços** funcionais
-- ✅ **6 Páginas Frontend** responsivas
+- ✅ **7 Páginas Frontend** responsivas
 - ✅ **2 Integrações Externas** ativas
+- ✅ **AppContext Global** implementado
 - ✅ **Quality Profile Pack v1.0** compliance
 - ✅ **Ready for Production Deployment**
 
