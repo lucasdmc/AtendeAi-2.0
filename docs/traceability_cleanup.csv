@@ -1,0 +1,9 @@
+req_id,description,test_id,status,notes
+R-001,Remoção de Dependências Recriáveis,T-001,pending,Remover node_modules/, dist/, reports/coverage/
+R-002,Remoção de Configurações de Editor,T-001,pending,Remover .cursor/, manter tsconfig.json, package.json
+R-003,Avaliação de Framework de Orquestração,T-001,pending,Avaliar se framework/ é necessário
+R-004,Limpeza de Arquivos Arquivados,T-001,pending,Revisar archive/ antes de remover
+R-005,Limpeza de Scripts de Desenvolvimento,T-002,pending,Avaliar scripts/ para necessidade
+NFR-001,Preservação de Funcionalidade,T-001,pending,Todos os testes devem passar
+NFR-002,Redução de Tamanho,T-001,pending,Redução de pelo menos 50%
+NFR-003,Limpeza Segura,T-001,pending,Backup e limpeza incremental

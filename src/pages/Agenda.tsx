@@ -26,7 +26,7 @@ interface GoogleIntegration {
   updated_at: string;
 }
 
-const Calendar: React.FC = () => {
+const Agenda: React.FC = () => {
   const [integration, setIntegration] = useState<GoogleIntegration | null>(null);
   const [loading, setLoading] = useState(true);
   const [authLoading, setAuthLoading] = useState(false);
@@ -240,7 +240,7 @@ const Calendar: React.FC = () => {
       <div className="flex items-center space-x-3 mb-6">
         <CalendarIcon className="h-8 w-8 text-primary" />
         <div>
-          <h1 className="text-3xl font-bold">Calendário</h1>
+          <h1 className="text-3xl font-bold">Agenda</h1>
           <p className="text-muted-foreground">Integração com Google Calendar</p>
         </div>
       </div>
@@ -432,7 +432,7 @@ const Calendar: React.FC = () => {
           {calendarUrl && integration.status === 'active' && (
             <Card>
               <CardHeader>
-                <CardTitle>Seu Calendário</CardTitle>
+                <CardTitle>Sua Agenda</CardTitle>
                 <CardDescription>
                   Visualização integrada do seu Google Calendar
                 </CardDescription>
@@ -471,4 +471,4 @@ const Calendar: React.FC = () => {
   );
 };
 
-export default Calendar;
+export default Agenda;

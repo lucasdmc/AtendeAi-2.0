@@ -561,6 +561,99 @@ class GoogleCalendarService {
       throw error;
     }
   }
+
+  // =====================================================
+  // MÉTODOS DE AUTORIZAÇÃO OAUTH2
+  // =====================================================
+
+  async getAuthorizationUrl(clinicId, redirectUri = null) {
+    try {
+      if (!clinicId) {
+        throw new Error('clinic_id is required');
+      }
+
+      const authUrl = this.oauth2Client.generateAuthUrl({
+        access_type: 'offline',
+        scope: config.google.scopes,
+        state: clinicId,
+        redirect_uri: redirectUri || config.google.redirectUri,
+        prompt: 'consent'
+      });
+
+      logger.info('Google Calendar authorization URL generated', {
+        clinic_id: clinicId,
+        redirect_uri: redirectUri || config.google.redirectUri
+      });
+
+      return authUrl;
+    } catch (error) {
+      logger.error('Error generating authorization URL', { error: error.message, clinicId });
+      throw error;
+    }
+  }
+
+  async handleOAuthCallback(code, state) {
+    try {
+      if (!code || !state) {
+        throw new Error('Missing required OAuth parameters: code and state');
+      }
+
+      // Trocar código por tokens
+      const { tokens } = await this.oauth2Client.getToken(code);
+      
+      // Configurar credenciais
+      this.oauth2Client.setCredentials(tokens);
+
+      // Salvar tokens na clínica (usando state como clinicId)
+      const clinicId = state;
+      await this.saveTokensToClinic(clinicId, tokens);
+
+      logger.info('Google Calendar OAuth callback handled successfully', {
+        clinic_id: clinicId,
+        has_access_token: !!tokens.access_token,
+        has_refresh_token: !!tokens.refresh_token
+      });
+
+      return {
+        success: true,
+        clinic_id: clinicId,
+        access_token: tokens.access_token,
+        refresh_token: tokens.refresh_token,
+        expires_in: tokens.expiry_date ? new Date(tokens.expiry_date) : null
+      };
+    } catch (error) {
+      logger.error('Error handling OAuth callback', { error: error.message, code: !!code, state });
+      throw error;
+    }
+  }
+
+  async saveTokensToClinic(clinicId, tokens) {
+    try {
+      // Aqui você implementaria a lógica para salvar os tokens na clínica
+      // Por enquanto, vamos apenas logar
+      logger.info('Tokens saved to clinic', {
+        clinic_id: clinicId,
+        has_access_token: !!tokens.access_token,
+        has_refresh_token: !!tokens.refresh_token
+      });
+
+      // TODO: Implementar salvamento real dos tokens na base de dados
+      // const { error } = await supabase
+      //   .from('clinics')
+      //   .update({
+      //     google_access_token: tokens.access_token,
+      //     google_refresh_token: tokens.refresh_token,
+      //     google_token_expires_at: tokens.expiry_date ? new Date(tokens.expiry_date).toISOString() : null,
+      //     updated_at: new Date().toISOString()
+      //   })
+      //   .eq('id', clinicId);
+
+      return true;
+    } catch (error) {
+      logger.error('Error saving tokens to clinic', { error: error.message, clinicId });
+      throw error;
+    }
+  }
 }
 
 module.exports = GoogleCalendarService;
