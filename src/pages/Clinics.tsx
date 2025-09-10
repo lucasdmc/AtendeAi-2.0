@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { Building2, MapPin, Phone, Mail, Plus, Edit, Trash2, Search, Brain } from "lucide-react"
+import { Building2, MapPin, Phone, Mail, Plus, Edit, Trash2, Search, Brain, Upload } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -72,6 +72,7 @@ export default function Clinics() {
   const [isJsonDialogOpen, setIsJsonDialogOpen] = useState(false)
   const [editingClinic, setEditingClinic] = useState<Clinic | null>(null)
   const [selectedClinicForJson, setSelectedClinicForJson] = useState<Clinic | null>(null)
+  const [jsonConfig, setJsonConfig] = useState("")
 
   const filteredClinics = clinics.filter(clinic =>
     clinic.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -85,7 +86,29 @@ export default function Clinics() {
 
   const handleJsonConfig = (clinic: Clinic) => {
     setSelectedClinicForJson(clinic)
+    setJsonConfig("")
     setIsJsonDialogOpen(true)
+  }
+
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (file && file.type === "application/json") {
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        try {
+          const content = e.target?.result as string
+          const parsedJson = JSON.parse(content)
+          setJsonConfig(JSON.stringify(parsedJson, null, 2))
+        } catch (error) {
+          alert("Erro ao ler o arquivo JSON. Verifique se o formato está correto.")
+        }
+      }
+      reader.readAsText(file)
+    } else {
+      alert("Por favor, selecione um arquivo JSON válido.")
+    }
+    // Reset input value to allow selecting the same file again
+    event.target.value = ""
   }
 
   return (
@@ -353,9 +376,31 @@ export default function Clinics() {
           </DialogHeader>
           <form className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="json-config">Configuração JSON</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="json-config">Configuração JSON</Label>
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="file"
+                    accept=".json"
+                    onChange={handleFileUpload}
+                    className="hidden"
+                    id="file-upload"
+                  />
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => document.getElementById('file-upload')?.click()}
+                  >
+                    <Upload className="h-4 w-4 mr-2" />
+                    Carregar JSON
+                  </Button>
+                </div>
+              </div>
               <Textarea 
                 id="json-config"
+                value={jsonConfig}
+                onChange={(e) => setJsonConfig(e.target.value)}
                 placeholder='{"key": "value", "setting": "example"}'
                 className="min-h-[300px] font-mono text-sm"
               />
