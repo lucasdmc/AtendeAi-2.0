@@ -17,6 +17,7 @@ interface Clinic {
   phone: string
   email: string
   whatsappNumber: string
+  whatsappVerifyToken?: string
   metaWebhook?: string
   status: 'active' | 'inactive'
   usersCount: number
@@ -110,14 +111,33 @@ export default function Clinics() {
                 <Input id="name" placeholder="Digite o nome da clínica" />
               </div>
               
-              <div className="space-y-2">
-                <Label htmlFor="whatsapp">WhatsApp</Label>
-                <Input id="whatsapp" placeholder="(11) 99999-9999" />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="whatsapp">WhatsApp</Label>
+                  <Input id="whatsapp" placeholder="(11) 99999-9999" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="verify-token">WhatsApp Verify Token</Label>
+                  <Input id="verify-token" placeholder="verify_token_123" />
+                </div>
               </div>
               
               <div className="space-y-2">
                 <Label htmlFor="webhook">Meta Webhook (Opcional)</Label>
                 <Input id="webhook" placeholder="https://api.clinica.com/webhook" />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="status">Status</Label>
+                <Select defaultValue="active">
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="active">Ativa</SelectItem>
+                    <SelectItem value="inactive">Inativa</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               
               <div className="flex justify-end space-x-2">
@@ -273,14 +293,33 @@ export default function Clinics() {
                 <Input id="edit-name" defaultValue={editingClinic.name} />
               </div>
               
-              <div className="space-y-2">
-                <Label htmlFor="edit-whatsapp">WhatsApp</Label>
-                <Input id="edit-whatsapp" defaultValue={editingClinic.whatsappNumber} />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-whatsapp">WhatsApp</Label>
+                  <Input id="edit-whatsapp" defaultValue={editingClinic.whatsappNumber} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-verify-token">WhatsApp Verify Token</Label>
+                  <Input id="edit-verify-token" placeholder="verify_token_123" />
+                </div>
               </div>
               
               <div className="space-y-2">
                 <Label htmlFor="edit-webhook">Meta Webhook (Opcional)</Label>
                 <Input id="edit-webhook" defaultValue={editingClinic.metaWebhook || ""} />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit-status">Status</Label>
+                <Select defaultValue={editingClinic.status}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="active">Ativa</SelectItem>
+                    <SelectItem value="inactive">Inativa</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               
               <div className="flex justify-end space-x-2">
