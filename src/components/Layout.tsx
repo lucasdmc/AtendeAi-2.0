@@ -52,6 +52,7 @@ export function Layout({ children }: LayoutProps) {
     const pageTitles: Record<string, string> = {
       "/": "Dashboard",
       "/agenda": "Agenda",
+      "/calendar": "Agenda",
       "/context": "Contexto"
     }
     return pageTitles[location.pathname] || "Sistema de Gestão"

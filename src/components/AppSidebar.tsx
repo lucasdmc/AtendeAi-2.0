@@ -16,13 +16,8 @@ import {
 } from "@/components/ui/sidebar"
 
 const items = [
-  { title: "Dashboard", url: "/", icon: Home },
-  { title: "Gestão de Clínicas", url: "/clinics", icon: Building2 },
-  { title: "Gestão de Usuários", url: "/users", icon: Users },
-  { title: "Agendamentos", url: "/appointments", icon: CalendarIcon },
-  { title: "Agenda", url: "/calendar", icon: CalendarIcon },
+  { title: "Agenda", url: "/agenda", icon: CalendarIcon },
   { title: "Contexto", url: "/context", icon: FileText },
-  { title: "Conversas", url: "/conversations", icon: MessageSquare },
 ]
 
 export function AppSidebar() {

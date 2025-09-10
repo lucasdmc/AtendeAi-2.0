@@ -17,6 +17,11 @@ function App() {
               <Navigate to="/agenda" replace />
             </Layout>
           } />
+          <Route path="/calendar" element={
+            <Layout>
+              <Agenda />
+            </Layout>
+          } />
           <Route path="/agenda" element={
             <Layout>
               <Agenda />
