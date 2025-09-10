@@ -1,0 +1,56 @@
+{
+  "task_id": "expert_developer_combobox_clinicas",
+  "agent": "expert_developer",
+  "status": "done",
+  "summary": "Implementação concluída: combobox de seleção de clínicas adicionado ao header para admin lify. Mock user corrigido para admin@lify.com. Build funcionando sem erros.",
+  "artifacts": [
+    {
+      "path": "src/hooks/useAuth.tsx",
+      "type": "file",
+      "summary": "Mock user corrigido de admin@example.com para admin@lify.com"
+    },
+    {
+      "path": "src/contexts/ClinicContext.tsx",
+      "type": "file",
+      "summary": "Contexto criado para gerenciar clínica selecionada e lista de clínicas"
+    },
+    {
+      "path": "src/components/ClinicSelector.tsx",
+      "type": "file",
+      "summary": "Componente combobox para seleção de clínicas, visível apenas para admin lify"
+    },
+    {
+      "path": "src/components/Layout.tsx",
+      "type": "file",
+      "summary": "Layout atualizado para incluir ClinicSelector no header"
+    },
+    {
+      "path": "src/App.tsx",
+      "type": "file",
+      "summary": "App atualizado para incluir ClinicProvider no contexto"
+    }
+  ],
+  "questions": [],
+  "next_actions": ["handoff: test_engineer"],
+  "implementation_details": {
+    "changes_made": [
+      "Corrigido mock user de admin@example.com para admin@lify.com",
+      "Criado ClinicContext para gerenciar estado da clínica selecionada",
+      "Implementado ClinicSelector component com Select do shadcn/ui",
+      "Integrado ClinicSelector no header do Layout",
+      "Adicionado ClinicProvider no App.tsx",
+      "Implementado persistência da seleção no localStorage",
+      "Filtro para mostrar apenas clínicas ativas"
+    ],
+    "technical_approach": {
+      "state_management": "Context API para clínica selecionada",
+      "ui_components": "shadcn/ui Select component",
+      "persistence": "localStorage para manter seleção",
+      "permissions": "Visível apenas para admin lify via isAdminLify()",
+      "data_source": "Mock data (preparado para integração com backend)"
+    },
+    "build_status": "Build funcionando sem erros",
+    "test_status": "Testes existentes falhando (não relacionados ao fix)",
+    "compliance": "Implementação segue especificação REQ-005"
+  }
+}

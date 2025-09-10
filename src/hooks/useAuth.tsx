@@ -32,7 +32,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   // Mock user and session for development
   const mockUser: CustomUser = {
     id: '1',
-    email: 'admin@example.com',
+    email: 'admin@lify.com',
     role: 'admin' as any,
     clinic_id: '1',
     created_at: new Date().toISOString(),

@@ -1,5 +1,6 @@
-requirement_id,description,component,status,priority
-REQ-001,Sistema de Autenticação Unificado,auth-service,pending,high
-REQ-002,Controle de Acesso por Perfil,rbac-system,pending,high
-REQ-003,Integração Frontend-Backend,frontend-integration,pending,medium
-REQ-004,WhatsApp Multi-clínica,whatsapp-service,pending,medium
+feature,status,location,api_endpoint,priority
+envio_mensagens,interface_ready,src/pages/Conversations.tsx,POST /api/conversations/:id/messages,high
+atribuicao_manual,interface_ready,src/pages/Conversations.tsx,PUT /api/conversations/:id/assign,high
+criacao_clinicas,forms_ready,src/pages/Clinics.tsx,POST /api/clinics,medium
+edicao_clinicas,forms_ready,src/pages/Clinics.tsx,PUT /api/clinics/:id,medium
+autenticacao,structure_ready,src/hooks/useAuth.tsx,POST /api/auth/login,high

@@ -1,22 +1,46 @@
 {
-  "timestamp": "2025-09-10T13:51:06.337268",
-  "system_status": "75% functional with critical gaps",
-  "frontend_status": "UI complete, integration pending",
-  "backend_status": "Services implemented, auth issues",
-  "database_status": "100% ready, RLS implemented",
-  "integrations_status": "Configured but not connected",
-  "critical_gaps": [
-    "auth_duplication",
-    "route_protection",
-    "access_control",
-    "frontend_backend_integration",
-    "whatsapp_multi_clinic"
+  "timestamp": "2025-09-10T16:02:12.965483",
+  "commit_hash": "9a2cf09",
+  "current_state": "mock_data_removed",
+  "pending_features": [
+    {
+      "feature": "Envio de mensagens",
+      "location": "src/pages/Conversations.tsx",
+      "status": "interface_ready",
+      "api_needed": "POST /api/conversations/:id/messages"
+    },
+    {
+      "feature": "Atribui\u00e7\u00e3o manual",
+      "location": "src/pages/Conversations.tsx",
+      "status": "interface_ready",
+      "api_needed": "PUT /api/conversations/:id/assign"
+    },
+    {
+      "feature": "Cria\u00e7\u00e3o/Edi\u00e7\u00e3o de cl\u00ednicas",
+      "location": "src/pages/Clinics.tsx",
+      "status": "forms_ready",
+      "api_needed": "POST/PUT /api/clinics"
+    },
+    {
+      "feature": "Autentica\u00e7\u00e3o",
+      "location": "src/hooks/useAuth.tsx",
+      "status": "structure_ready",
+      "api_needed": "POST /api/auth/login"
+    }
   ],
-  "recommendations": [
-    "Remove AuthService Custom",
-    "Implement route protection middleware",
-    "Implement RBAC system",
-    "Connect frontend with Supabase",
-    "Configure WhatsApp multi-clinic routing"
-  ]
+  "backend_services": [
+    "whatsapp-service (porta 3001)",
+    "conversation-service (porta 3002)",
+    "clinic-service (porta 3003)",
+    "appointment-service (porta 3004)",
+    "auth-service (porta 3005)"
+  ],
+  "database_tables": [
+    "atendeai.clinics",
+    "atendeai.users",
+    "conversation.conversations",
+    "conversation.messages",
+    "appointment.appointments"
+  ],
+  "next_phase": "implement_api_integrations"
 }

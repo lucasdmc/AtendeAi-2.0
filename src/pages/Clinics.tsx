@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { Building2, MapPin, Phone, Mail, Plus, Edit, Trash2, Search, Brain, Upload } from "lucide-react"
+import { Building2, MapPin, Phone, Mail, Plus, Edit, Trash2, Search, Brain, Upload, Loader2, AlertTriangle } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -9,63 +9,24 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { useClinics } from "@/hooks/useApi"
 
 interface Clinic {
   id: string
   name: string
-  address: string
-  phone: string
-  email: string
-  whatsappNumber: string
-  whatsappVerifyToken?: string
-  metaWebhook?: string
+  whatsapp_number: string
+  meta_webhook_url?: string
+  whatsapp_id?: string
+  context_json: any
+  simulation_mode: boolean
   status: 'active' | 'inactive'
-  usersCount: number
-  description?: string
-  createdAt: string
+  created_at: string
+  updated_at: string
 }
 
-const mockClinics: Clinic[] = [
-  {
-    id: "1",
-    name: "Clínica Saúde Total",
-    address: "Rua das Flores, 123 - Centro, São Paulo - SP",
-    phone: "(11) 3333-4444",
-    email: "contato@saudetotal.com.br",
-    whatsappNumber: "(11) 99999-1234",
-    metaWebhook: "https://api.clinic1.com/webhook",
-    status: "active",
-    usersCount: 15,
-    description: "Clínica especializada em medicina geral e preventiva",
-    createdAt: "2024-01-15"
-  },
-  {
-    id: "2", 
-    name: "Centro Médico Bem Estar",
-    address: "Av. Paulista, 1000 - Bela Vista, São Paulo - SP",
-    phone: "(11) 2222-3333",
-    email: "recepcao@bemestar.com.br",
-    whatsappNumber: "(11) 88888-5678",
-    status: "active",
-    usersCount: 8,
-    description: "Especialidades médicas e exames diagnósticos",
-    createdAt: "2024-02-10"
-  },
-  {
-    id: "3",
-    name: "Clínica Nova Vida",
-    address: "Rua da Esperança, 456 - Vila Madalena, São Paulo - SP", 
-    phone: "(11) 1111-2222",
-    email: "info@novavida.com.br",
-    whatsappNumber: "(11) 77777-9012",
-    status: "inactive",
-    usersCount: 3,
-    createdAt: "2024-03-01"
-  }
-]
+// Mock data removed - now using real API data
 
 export default function Clinics() {
-  const [clinics, setClinics] = useState<Clinic[]>(mockClinics)
   const [searchTerm, setSearchTerm] = useState("")
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
@@ -74,9 +35,13 @@ export default function Clinics() {
   const [selectedClinicForJson, setSelectedClinicForJson] = useState<Clinic | null>(null)
   const [jsonConfig, setJsonConfig] = useState("")
 
+  // API hooks
+  const { data: clinicsData, loading: clinicsLoading, error: clinicsError } = useClinics()
+  const clinics = clinicsData?.data || []
+
   const filteredClinics = clinics.filter(clinic =>
     clinic.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    clinic.address.toLowerCase().includes(searchTerm.toLowerCase())
+    clinic.whatsapp_number.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
   const handleEdit = (clinic: Clinic) => {
@@ -109,6 +74,26 @@ export default function Clinics() {
     }
     // Reset input value to allow selecting the same file again
     event.target.value = ""
+  }
+
+  // Loading state
+  if (clinicsLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin" />
+        <span className="ml-2">Carregando clínicas...</span>
+      </div>
+    )
+  }
+
+  // Error state
+  if (clinicsError) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <AlertTriangle className="h-8 w-8 text-destructive" />
+        <span className="ml-2 text-destructive">Erro ao carregar clínicas: {clinicsError}</span>
+      </div>
+    )
   }
 
   return (
@@ -219,9 +204,9 @@ export default function Clinics() {
                         <Building2 className="h-4 w-4 text-muted-foreground" />
                         <span>{clinic.name}</span>
                       </div>
-                      {clinic.description && (
+                      {clinic.context_json?.clinica?.informacoes_basicas?.descricao && (
                         <div className="text-sm text-muted-foreground line-clamp-2">
-                          {clinic.description}
+                          {clinic.context_json.clinica.informacoes_basicas.descricao}
                         </div>
                       )}
                     </div>
@@ -230,7 +215,12 @@ export default function Clinics() {
                   <TableCell>
                     <div className="flex items-start space-x-2 max-w-xs">
                       <MapPin className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
-                      <span className="text-sm line-clamp-2">{clinic.address}</span>
+                      <span className="text-sm line-clamp-2">
+                        {clinic.context_json?.clinica?.localizacao?.endereco_principal ? 
+                          `${clinic.context_json.clinica.localizacao.endereco_principal.logradouro}, ${clinic.context_json.clinica.localizacao.endereco_principal.numero} - ${clinic.context_json.clinica.localizacao.endereco_principal.bairro}` :
+                          'Endereço não informado'
+                        }
+                      </span>
                     </div>
                   </TableCell>
                   
@@ -238,17 +228,17 @@ export default function Clinics() {
                     <div className="space-y-1">
                       <div className="flex items-center space-x-2 text-sm">
                         <Phone className="h-3 w-3 text-muted-foreground" />
-                        <span>{clinic.phone}</span>
+                        <span>{clinic.context_json?.clinica?.contatos?.telefone_principal || 'Não informado'}</span>
                       </div>
                       <div className="flex items-center space-x-2 text-sm">
                         <Mail className="h-3 w-3 text-muted-foreground" />
-                        <span className="truncate max-w-[150px]">{clinic.email}</span>
+                        <span className="truncate max-w-[150px]">{clinic.context_json?.clinica?.contatos?.email_principal || 'Não informado'}</span>
                       </div>
                     </div>
                   </TableCell>
                   
                   <TableCell>
-                    <span className="text-sm">{clinic.whatsappNumber}</span>
+                    <span className="text-sm">{clinic.whatsapp_number}</span>
                   </TableCell>
                   
                   <TableCell>
@@ -265,13 +255,13 @@ export default function Clinics() {
                   
                   <TableCell>
                     <Badge variant="outline">
-                      {clinic.usersCount} usuários
+                      - usuários
                     </Badge>
                   </TableCell>
                   
                   <TableCell>
                     <span className="text-sm text-muted-foreground">
-                      {new Date(clinic.createdAt).toLocaleDateString('pt-BR')}
+                      {new Date(clinic.created_at).toLocaleDateString('pt-BR')}
                     </span>
                   </TableCell>
                   

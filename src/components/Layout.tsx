@@ -3,6 +3,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { AppSidebar } from "./AppSidebar"
+import { ClinicSelector } from "./ClinicSelector"
 import { useState, useEffect } from "react"
 import { useLocation, useNavigate } from "react-router-dom"
 import { useAuth } from "@/hooks/useAuth"
@@ -76,6 +77,7 @@ export function Layout({ children }: LayoutProps) {
             </div>
             
             <div className="flex items-center gap-4">
+              <ClinicSelector />
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="relative h-8 w-8 rounded-full">

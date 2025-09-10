@@ -1,26 +1,26 @@
-# API Resilience - AtendeAI 2.0
+# API Resilience - AtendeAí 2.0
 
 ## Estratégias de Resiliência
 
-- Rate limiting por IP e usuário
-- Validação de entrada em todos os endpoints
-- Tratamento de erros padronizado
-- Circuit breaker para APIs externas
-- Retry com exponential backoff
-- Fallback strategies para WhatsApp
+### 1. Retry Policy
+- Máximo 3 tentativas
+- Backoff exponencial (1s, 2s, 4s)
+- Apenas para erros 5xx
 
-## Medidas de Segurança
+### 2. Circuit Breaker
+- Abrir após 5 falhas consecutivas
+- Timeout de 30s para fechar
+- Fallback para modo offline
 
-- Autenticação obrigatória via Supabase
-- Autorização baseada em perfil de usuário
-- RLS (Row Level Security) no banco
-- CORS configurado adequadamente
-- Validação de webhook signatures
+### 3. Timeout
+- 10s para operações normais
+- 30s para uploads/operações pesadas
 
-## Otimizações de Performance
+### 4. Rate Limiting
+- 100 requests/min por usuário
+- 1000 requests/min por IP
 
-- Índices otimizados no banco
-- Cache Redis para dados frequentes
-- Paginação em listagens
-- Lazy loading em componentes
-- Compressão de respostas
+## Monitoramento
+- Logs de erro em tempo real
+- Métricas de latência
+- Alertas para falhas críticas

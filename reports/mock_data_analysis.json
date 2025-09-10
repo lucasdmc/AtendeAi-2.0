@@ -1,0 +1,239 @@
+{
+  "task_id": "mock_data_removal_analysis",
+  "agent": "context_manager",
+  "status": "done",
+  "summary": "Análise completa de dados mocados em produção e mapeamento de serviços reais necessários para substituição.",
+  "artifacts": [
+    {
+      "path": "reports/mock_data_analysis.json",
+      "type": "file",
+      "summary": "Relatório completo de análise de dados mocados e mapeamento de integrações necessárias"
+    }
+  ],
+  "questions": [],
+  "next_actions": [
+    "handoff: expert_developer",
+    "handoff: database_architect"
+  ],
+  "analysis": {
+    "mock_data_identified": {
+      "frontend_pages": {
+        "Context.tsx": {
+          "type": "Clinic Data (CardioPrime)",
+          "size": "233 lines of mock data",
+          "includes": [
+            "Informações básicas da clínica",
+            "Contatos e localização", 
+            "Horário de funcionamento",
+            "Serviços (consultas, exames, procedimentos)",
+            "Convênios aceitos",
+            "Profissionais (Dr. Roberto Silva, Dra. Maria Fernanda)",
+            "Configuração do agente IA",
+            "Estrutura física e formas de pagamento"
+          ]
+        },
+        "Conversations.tsx": {
+          "type": "Conversation Data",
+          "size": "4 mock conversations",
+          "includes": [
+            "Ana Silva (conversa ativa)",
+            "Carlos Santos (conversa pendente)", 
+            "Maria Oliveira (conversa finalizada)",
+            "João Pedro (conversa em modo manual)"
+          ]
+        },
+        "Clinics.tsx": {
+          "type": "Clinic Management Data",
+          "size": "3 mock clinics",
+          "includes": [
+            "Clínica Saúde Total (ativa, 15 usuários)",
+            "Centro Médico Bem Estar (ativa, 8 usuários)",
+            "Clínica Nova Vida (inativa, 3 usuários)"
+          ]
+        },
+        "Appointments.tsx": {
+          "type": "Appointment Data", 
+          "size": "3 mock appointments",
+          "includes": [
+            "Maria Silva (consulta com Dr. João Santos)",
+            "Carlos Oliveira (retorno com Dra. Ana Costa)",
+            "Fernanda Lima (exame com Dr. Pedro Alves)"
+          ]
+        },
+        "Users.tsx": {
+          "type": "User Management Data",
+          "size": "5 mock users",
+          "includes": [
+            "João Santos (admin Lify)",
+            "Maria Silva (admin clínica)",
+            "Carlos Oliveira (atendente)",
+            "Ana Costa (admin clínica)",
+            "Pedro Alves (atendente inativo)"
+          ]
+        },
+        "ClinicContext.tsx": {
+          "type": "Context Provider Data",
+          "size": "Same 3 clinics as Clinics.tsx",
+          "includes": [
+            "Clinic selection state management",
+            "localStorage persistence",
+            "Mock clinic data initialization"
+          ]
+        }
+      },
+      "backend_services": {
+        "test_data": {
+          "auth_service": "Test users and tokens",
+          "whatsapp_service": "Test configuration and tokens",
+          "clinic_service": "Example JSON configurations"
+        }
+      }
+    },
+    "real_services_mapping": {
+      "backend_services_available": {
+        "auth_service": {
+          "port": 3001,
+          "endpoints": [
+            "POST /auth/login",
+            "POST /auth/refresh", 
+            "GET /auth/me",
+            "POST /auth/logout"
+          ],
+          "status": "implemented"
+        },
+        "clinic_service": {
+          "port": 3003,
+          "endpoints": [
+            "GET /api/clinics",
+            "POST /api/clinics",
+            "GET /api/clinics/:id",
+            "PUT /api/clinics/:id",
+            "DELETE /api/clinics/:id",
+            "GET /api/clinics/:id/professionals",
+            "GET /api/clinics/:id/services"
+          ],
+          "status": "implemented"
+        },
+        "conversation_service": {
+          "port": 3005,
+          "endpoints": [
+            "POST /api/conversation/process",
+            "GET /api/conversation/history",
+            "GET /api/conversation/clinic/:clinicId",
+            "GET /api/conversation/clinic/:clinicId/active",
+            "PUT /api/conversation/:conversationId/close"
+          ],
+          "status": "implemented"
+        },
+        "whatsapp_service": {
+          "port": 3002,
+          "endpoints": [
+            "POST /api/whatsapp/send",
+            "GET /api/whatsapp/message/:messageId/status",
+            "GET /api/whatsapp/clinic/:clinicId/context",
+            "GET /api/whatsapp/clinic/:clinicId/config"
+          ],
+          "status": "implemented"
+        },
+        "appointment_service": {
+          "port": 3004,
+          "endpoints": [
+            "GET /api/appointments",
+            "POST /api/appointments",
+            "GET /api/appointments/:id",
+            "PUT /api/appointments/:id",
+            "DELETE /api/appointments/:id"
+          ],
+          "status": "implemented"
+        }
+      },
+      "api_gateway": {
+        "haproxy": "Load balancer configured",
+        "kong": "API Gateway configured",
+        "status": "ready"
+      }
+    },
+    "database_tables_mapping": {
+      "core_tables": {
+        "atendeai.clinics": {
+          "purpose": "Store clinic information",
+          "fields": ["id", "name", "whatsapp_number", "context_json", "status"],
+          "status": "implemented"
+        },
+        "atendeai.users": {
+          "purpose": "Store user accounts and permissions",
+          "fields": ["id", "name", "login", "password_hash", "role", "clinic_id"],
+          "status": "implemented"
+        },
+        "conversation.conversations": {
+          "purpose": "Store WhatsApp conversations",
+          "fields": ["id", "clinic_id", "customer_phone", "status", "assigned_user_id"],
+          "status": "implemented"
+        },
+        "conversation.messages": {
+          "purpose": "Store individual messages",
+          "fields": ["id", "conversation_id", "sender_type", "content", "whatsapp_message_id"],
+          "status": "implemented"
+        },
+        "appointment.appointments": {
+          "purpose": "Store appointment bookings",
+          "fields": ["id", "clinic_id", "customer_info", "appointment_type", "datetime", "status"],
+          "status": "implemented"
+        }
+      },
+      "migration_status": "completed",
+      "schema_version": "001_core_schema.sql"
+    },
+    "integration_requirements": {
+      "frontend_to_backend": {
+        "clinic_data": {
+          "source": "atendeai.clinics table",
+          "api": "clinic_service /api/clinics",
+          "status": "needs_implementation"
+        },
+        "conversation_data": {
+          "source": "conversation.conversations + conversation.messages",
+          "api": "conversation_service /api/conversation/clinic/:clinicId",
+          "status": "needs_implementation"
+        },
+        "appointment_data": {
+          "source": "appointment.appointments",
+          "api": "appointment_service /api/appointments",
+          "status": "needs_implementation"
+        },
+        "user_data": {
+          "source": "atendeai.users",
+          "api": "auth_service /auth/me",
+          "status": "needs_implementation"
+        }
+      },
+      "whatsapp_integration": {
+        "phone_number": "HARDCODED - KEEP FOR TESTING",
+        "status": "production_ready",
+        "note": "Only WhatsApp phone number should remain hardcoded for testing purposes"
+      }
+    },
+    "pending_work": {
+      "immediate_actions": [
+        "Remove all mock data from frontend pages",
+        "Implement API integration hooks",
+        "Create data fetching services",
+        "Update context providers to use real APIs",
+        "Implement error handling for API failures",
+        "Add loading states for data fetching"
+      ],
+      "database_seeding": [
+        "Create seed data for production clinics",
+        "Create admin users for each clinic",
+        "Set up proper clinic configurations",
+        "Initialize conversation tags and appointment types"
+      ],
+      "testing": [
+        "Test all API integrations",
+        "Validate data flow from database to frontend",
+        "Test error scenarios and fallbacks",
+        "Verify WhatsApp integration works with real data"
+      ]
+    }
+  }
+}

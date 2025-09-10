@@ -1,47 +1,46 @@
-# Especificação do Sistema AtendeAí 2.0
+# Especificação do Sistema - AtendeAí 2.0
 
-## Visão Geral
-Sistema de gestão de clínicas médicas com agenda própria, autenticação unificada e WhatsApp multi-clínica.
+## Estado Atual
+- ✅ Dados mock removidos completamente
+- ✅ Interfaces prontas para integração
+- ⚠️ APIs backend necessárias para funcionalidades pendentes
 
-## Requisitos Funcionais
+## Funcionalidades Pendentes
 
-### REQ-001: Sistema de Autenticação Unificado
-**Descrição**: Implementar sistema de autenticação único usando Supabase Auth
-**Prioridade**: high
-**Status**: pending
-**Critérios de Aceitação**:
-- Remover AuthService Custom completamente
-- Manter apenas Supabase Auth
-- Implementar middleware de proteção de rotas
-- Configurar redirecionamento automático
+### 1. Envio de Mensagens (Conversations)
+- **Localização**: src/pages/Conversations.tsx
+- **Status**: Interface pronta, API pendente
+- **Endpoint**: POST /api/conversations/:id/messages
+- **Payload**: { message: string, sender: string }
 
-### REQ-002: Controle de Acesso por Perfil
-**Descrição**: Implementar sistema RBAC com 3 perfis de usuário
-**Prioridade**: high
-**Status**: pending
-**Critérios de Aceitação**:
-- Admin Lify: Acesso total ao sistema
-- Admin Clínica: Acesso apenas à sua clínica
-- Atendente: Acesso operacional (Dashboard, Agenda, Agendamentos, Contexto, Conversas)
-- Implementar verificação de permissões em todas as operações
+### 2. Atribuição Manual (Conversations)  
+- **Localização**: src/pages/Conversations.tsx
+- **Status**: Interface pronta, API pendente
+- **Endpoint**: PUT /api/conversations/:id/assign
+- **Payload**: { assigned_user_id: string, mode: 'manual'|'auto' }
 
-### REQ-003: Integração Frontend-Backend
-**Descrição**: Conectar CRUDs com Supabase e implementar contextualização
-**Prioridade**: medium
-**Status**: pending
-**Critérios de Aceitação**:
-- Conectar CRUD de Clínicas com tabela atendeai.clinics
-- Conectar CRUD de Usuários com tabela atendeai.users
-- Implementar contextualização via context_json
-- Conectar combobox com dados reais do banco
+### 3. Criação/Edição de Clínicas
+- **Localização**: src/pages/Clinics.tsx
+- **Status**: Formulários prontos, API pendente
+- **Endpoints**: 
+  - POST /api/clinics (criar)
+  - PUT /api/clinics/:id (editar)
+- **Payload**: { name, whatsapp_number, context_json, etc. }
 
-### REQ-004: WhatsApp Multi-clínica
-**Descrição**: Configurar servidor para múltiplas conexões WhatsApp
-**Prioridade**: medium
-**Status**: pending
-**Critérios de Aceitação**:
-- Configurar webhook individual por clínica
-- Implementar roteamento de mensagens por clínica
-- Conectar tela de conversas com dados reais
-- Implementar controle bot/humano por clínica
+### 4. Autenticação
+- **Localização**: src/hooks/useAuth.tsx
+- **Status**: Estrutura pronta, integração pendente
+- **Endpoint**: POST /api/auth/login
+- **Payload**: { login, password }
 
+## Backend Services Necessários
+- whatsapp-service (porta 3001)
+- conversation-service (porta 3002)
+- clinic-service (porta 3003)
+- appointment-service (porta 3004)
+- auth-service (porta 3005)
+
+## Próximos Passos
+1. Implementar chamadas reais para APIs
+2. Testar integração com backend
+3. Validar funcionalidades end-to-end

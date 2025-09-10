@@ -21,219 +21,32 @@ import {
   Car,
   Accessibility,
   AlertTriangle,
-  MessageSquare
+  MessageSquare,
+  Loader2
 } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { useState } from "react"
-
-// Mock data baseado no JSON fornecido
-const mockClinicData = {
-  "_id": "cardioprime_blumenau_2024",
-  "clinica": {
-    "informacoes_basicas": {
-      "nome": "CardioPrime",
-      "razao_social": "CardioPrime Cardiologia Ltda",
-      "cnpj": "45.678.901/0001-03",
-      "especialidade_principal": "Cardiologia",
-      "especialidades_secundarias": [
-        "Cardiologia Intervencionista",
-        "Hemodinâmica", 
-        "Cateterismo Cardíaco",
-        "Angioplastia",
-        "Eletrofisiologia",
-        "Ecocardiografia",
-        "Ergometria"
-      ],
-      "descricao": "Clínica especializada em cardiologia com foco em procedimentos intervencionistas por cateteres.",
-      "missao": "Proporcionar cuidados cardiológicos de excelência com tecnologia avançada.",
-      "valores": [
-        "Excelência médica",
-        "Tecnologia de ponta", 
-        "Procedimentos minimamente invasivos",
-        "Segurança do paciente"
-      ]
-    },
-    "contatos": {
-      "telefone_principal": "(47) 3231-0200",
-      "whatsapp": "(47) 99999-7777",
-      "email_principal": "contato@cardioprime.med.br",
-      "website": "https://cardioprime.med.br",
-      "emails_departamentos": {
-        "agendamento": "agendamento@cardioprime.med.br",
-        "hemodinamica": "hemodinamica@cardioprime.med.br"
-      }
-    },
-    "localizacao": {
-      "endereco_principal": {
-        "logradouro": "Rua Azambuja",
-        "numero": "1000",
-        "complemento": "Hospital Santa Catarina - 1º andar",
-        "bairro": "Centro", 
-        "cidade": "Blumenau",
-        "estado": "SC",
-        "cep": "89010-000"
-      }
-    },
-    "horario_funcionamento": {
-      "segunda": { "abertura": "07:00", "fechamento": "23:00" },
-      "terca": { "abertura": "07:00", "fechamento": "23:00" },
-      "quarta": { "abertura": "07:00", "fechamento": "23:00" },
-      "quinta": { "abertura": "07:00", "fechamento": "23:00" },
-      "sexta": { "abertura": "07:00", "fechamento": "23:00" },
-      "sabado": { "abertura": "08:00", "fechamento": "23:00" },
-      "domingo": { "abertura": null, "fechamento": null },
-      "emergencia_24h": true
-    }
-  },
-  "servicos": {
-    "consultas": [
-      {
-        "nome": "Consulta Cardiológica",
-        "especialidade": "Cardiologia",
-        "duracao_minutos": 30,
-        "preco_particular": 300,
-        "aceita_convenio": true
-      },
-      {
-        "nome": "Consulta Pré-Procedimento", 
-        "especialidade": "Cardiologia Intervencionista",
-        "duracao_minutos": 45,
-        "preco_particular": 350,
-        "aceita_convenio": true
-      }
-    ],
-    "exames": [
-      {
-        "nome": "Ecocardiograma Transtorácico",
-        "categoria": "Diagnóstico por Imagem",
-        "duracao_minutos": 30,
-        "preco_particular": 250,
-        "resultado_prazo_dias": 1
-      },
-      {
-        "nome": "Teste Ergométrico",
-        "categoria": "Teste Funcional", 
-        "duracao_minutos": 45,
-        "preco_particular": 200,
-        "resultado_prazo_dias": 2
-      },
-      {
-        "nome": "Holter 24 horas",
-        "categoria": "Monitorização",
-        "duracao_minutos": 30,
-        "preco_particular": 180,
-        "resultado_prazo_dias": 3
-      }
-    ],
-    "procedimentos": [
-      {
-        "nome": "Cateterismo Cardíaco Diagnóstico",
-        "categoria": "Procedimento Diagnóstico",
-        "duracao_minutos": 60,
-        "preco_particular": 2500,
-        "internacao_necessaria": true,
-        "tempo_internacao_horas": 12
-      },
-      {
-        "nome": "Angioplastia Coronária",
-        "categoria": "Procedimento Terapêutico", 
-        "duracao_minutos": 90,
-        "preco_particular": 8500,
-        "internacao_necessaria": true,
-        "tempo_internacao_dias": 2
-      }
-    ]
-  },
-  "convenios": [
-    {
-      "nome": "Unimed",
-      "ativo": true,
-      "categoria": "Cooperativa Médica",
-      "copagamento": false,
-      "autorizacao_necessaria": true
-    },
-    {
-      "nome": "Bradesco Saúde",
-      "ativo": true, 
-      "categoria": "Seguradora",
-      "copagamento": true,
-      "valor_copagamento": 40
-    },
-    {
-      "nome": "Amil",
-      "ativo": true,
-      "categoria": "Seguradora", 
-      "copagamento": true,
-      "valor_copagamento": 45
-    }
-  ],
-  "profissionais": [
-    {
-      "nome_completo": "Dr. Roberto Silva",
-      "crm": "CRM-SC 4567",
-      "especialidades": ["Cardiologia", "Cardiologia Intervencionista"],
-      "experiencia": "Mais de 20 anos de experiência",
-      "aceita_novos_pacientes": true
-    },
-    {
-      "nome_completo": "Dra. Maria Fernanda", 
-      "crm": "CRM-SC 5678",
-      "especialidades": ["Cardiologia", "Ecocardiografia"],
-      "experiencia": "15 anos de experiência",
-      "aceita_novos_pacientes": true
-    }
-  ],
-  "agente_ia": {
-    "configuracao": {
-      "nome": "Cardio",
-      "personalidade": "Profissional, confiável e especializado em cardiologia",
-      "saudacao_inicial": "Olá! Sou o Cardio, assistente virtual da CardioPrime.",
-      "mensagem_despedida": "Obrigado por escolher a CardioPrime para cuidar do seu coração."
-    },
-    "restricoes": {
-      "nao_pode_prescrever": true,
-      "nao_pode_diagnosticar": true,
-      "emergencias_cardiacas": [
-        "Dor no peito - orientar procurar emergência imediatamente",
-        "Falta de ar súbita - orientar procurar atendimento urgente"
-      ]
-    }
-  },
-  "estrutura_fisica": {
-    "salas_atendimento": 4,
-    "salas_procedimentos": 2, 
-    "sala_hemodinamica": 1,
-    "leitos_observacao": 4,
-    "acessibilidade": {
-      "cadeirante": true,
-      "elevador": true,
-      "banheiro_adaptado": true
-    },
-    "estacionamento": {
-      "disponivel": true,
-      "vagas": 100,
-      "gratuito": false,
-      "valor_hora": 5
-    }
-  },
-  "formas_pagamento": {
-    "dinheiro": true,
-    "cartao_credito": true,
-    "cartao_debito": true,
-    "pix": true,
-    "parcelamento": {
-      "disponivel": true,
-      "max_parcelas": 10,
-      "valor_minimo_parcela": 300
-    }
-  }
-}
+import { useState, useEffect } from "react"
+import { useClinic, useClinicProfessionals, useClinicServices } from "@/hooks/useApi"
+import { useClinic as useClinicContext } from "@/contexts/ClinicContext"
 
 export default function Context() {
-  const [selectedClinic, setSelectedClinic] = useState("cardioprime_blumenau_2024")
+  const { selectedClinic: contextClinic } = useClinicContext()
+  const [selectedClinicId, setSelectedClinicId] = useState<string | null>(null)
+  
+  // API hooks
+  const { data: clinicData, loading: clinicLoading, error: clinicError } = useClinic(selectedClinicId || '')
+  const { data: professionalsData, loading: professionalsLoading } = useClinicProfessionals(selectedClinicId || '')
+  const { data: servicesData, loading: servicesLoading } = useClinicServices(selectedClinicId || '')
+
+  // Set selected clinic ID when context clinic changes
+  useEffect(() => {
+    if (contextClinic?.id) {
+      setSelectedClinicId(contextClinic.id)
+    }
+  }, [contextClinic])
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -243,6 +56,8 @@ export default function Context() {
   }
 
   const formatSchedule = (schedule: any) => {
+    if (!schedule) return []
+    
     const days = ['segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado', 'domingo']
     const dayNames = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo']
     
@@ -250,11 +65,48 @@ export default function Context() {
       const daySchedule = schedule[day]
       return {
         day: dayNames[index],
-        open: daySchedule.abertura,
-        close: daySchedule.fechamento
+        open: daySchedule?.abertura || null,
+        close: daySchedule?.fechamento || null
       }
     })
   }
+
+  // Loading state
+  if (clinicLoading || !selectedClinicId) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin" />
+        <span className="ml-2">Carregando dados da clínica...</span>
+      </div>
+    )
+  }
+
+  // Error state
+  if (clinicError) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <AlertTriangle className="h-8 w-8 text-destructive" />
+        <span className="ml-2 text-destructive">Erro ao carregar dados da clínica: {clinicError}</span>
+      </div>
+    )
+  }
+
+  // No clinic data
+  if (!clinicData?.data) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Building2 className="h-8 w-8 text-muted-foreground" />
+        <span className="ml-2 text-muted-foreground">Nenhuma clínica selecionada</span>
+      </div>
+    )
+  }
+
+  const clinic = clinicData.data
+  const contextJson = clinic.context_json || {}
+  const clinicInfo = contextJson.clinica || {}
+  const services = contextJson.servicos || {}
+  const professionals = professionalsData?.data || []
+  const clinicServices = servicesData?.data || []
 
   return (
     <div className="space-y-6">
@@ -280,26 +132,28 @@ export default function Context() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <h4 className="font-semibold">{mockClinicData.clinica.informacoes_basicas.nome}</h4>
-                  <p className="text-sm text-muted-foreground">{mockClinicData.clinica.informacoes_basicas.razao_social}</p>
-                  <p className="text-sm">CNPJ: {mockClinicData.clinica.informacoes_basicas.cnpj}</p>
+                  <h4 className="font-semibold">{clinic.name}</h4>
+                  <p className="text-sm text-muted-foreground">{clinicInfo.informacoes_basicas?.razao_social || 'Razão social não informada'}</p>
+                  <p className="text-sm">CNPJ: {clinicInfo.informacoes_basicas?.cnpj || 'Não informado'}</p>
                 </div>
                 
                 <div>
                   <h5 className="font-medium mb-2">Especialidades:</h5>
                   <div className="flex flex-wrap gap-1">
-                    <Badge variant="default">{mockClinicData.clinica.informacoes_basicas.especialidade_principal}</Badge>
-                    {mockClinicData.clinica.informacoes_basicas.especialidades_secundarias.slice(0, 3).map((esp, index) => (
+                    {clinicInfo.informacoes_basicas?.especialidade_principal && (
+                      <Badge variant="default">{clinicInfo.informacoes_basicas.especialidade_principal}</Badge>
+                    )}
+                    {clinicInfo.informacoes_basicas?.especialidades_secundarias?.slice(0, 3).map((esp: string, index: number) => (
                       <Badge key={index} variant="secondary">{esp}</Badge>
                     ))}
-                    {mockClinicData.clinica.informacoes_basicas.especialidades_secundarias.length > 3 && (
-                      <Badge variant="outline">+{mockClinicData.clinica.informacoes_basicas.especialidades_secundarias.length - 3} mais</Badge>
+                    {clinicInfo.informacoes_basicas?.especialidades_secundarias?.length > 3 && (
+                      <Badge variant="outline">+{clinicInfo.informacoes_basicas.especialidades_secundarias.length - 3} mais</Badge>
                     )}
                   </div>
                 </div>
 
                 <div>
-                  <p className="text-sm leading-relaxed">{mockClinicData.clinica.informacoes_basicas.descricao}</p>
+                  <p className="text-sm leading-relaxed">{clinicInfo.informacoes_basicas?.descricao || 'Descrição não disponível'}</p>
                 </div>
               </CardContent>
             </Card>
@@ -315,32 +169,38 @@ export default function Context() {
               <CardContent className="space-y-3">
                 <div className="flex items-center gap-2">
                   <Phone className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm">{mockClinicData.clinica.contatos.telefone_principal}</span>
+                  <span className="text-sm">{clinicInfo.contatos?.telefone_principal || 'Não informado'}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <MessageSquare className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm">{mockClinicData.clinica.contatos.whatsapp}</span>
+                  <span className="text-sm">{clinic.whatsapp_number}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Mail className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm">{mockClinicData.clinica.contatos.email_principal}</span>
+                  <span className="text-sm">{clinicInfo.contatos?.email_principal || 'Não informado'}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Globe className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm">{mockClinicData.clinica.contatos.website}</span>
+                  <span className="text-sm">{clinicInfo.contatos?.website || 'Não informado'}</span>
                 </div>
                 
-                <div className="pt-2">
-                  <h5 className="font-medium mb-2 text-sm">E-mails Departamentos:</h5>
-                  <div className="space-y-1">
-                    <div className="text-xs text-muted-foreground">
-                      Agendamento: {mockClinicData.clinica.contatos.emails_departamentos.agendamento}
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      Hemodinâmica: {mockClinicData.clinica.contatos.emails_departamentos.hemodinamica}
+                {clinicInfo.contatos?.emails_departamentos && (
+                  <div className="pt-2">
+                    <h5 className="font-medium mb-2 text-sm">E-mails Departamentos:</h5>
+                    <div className="space-y-1">
+                      {clinicInfo.contatos.emails_departamentos.agendamento && (
+                        <div className="text-xs text-muted-foreground">
+                          Agendamento: {clinicInfo.contatos.emails_departamentos.agendamento}
+                        </div>
+                      )}
+                      {clinicInfo.contatos.emails_departamentos.hemodinamica && (
+                        <div className="text-xs text-muted-foreground">
+                          Hemodinâmica: {clinicInfo.contatos.emails_departamentos.hemodinamica}
+                        </div>
+                      )}
                     </div>
                   </div>
-                </div>
+                )}
               </CardContent>
             </Card>
 
@@ -354,16 +214,24 @@ export default function Context() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
-                  <p className="text-sm">
-                    {mockClinicData.clinica.localizacao.endereco_principal.logradouro}, {mockClinicData.clinica.localizacao.endereco_principal.numero}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    {mockClinicData.clinica.localizacao.endereco_principal.complemento}
-                  </p>
-                  <p className="text-sm">
-                    {mockClinicData.clinica.localizacao.endereco_principal.bairro} - {mockClinicData.clinica.localizacao.endereco_principal.cidade}/{mockClinicData.clinica.localizacao.endereco_principal.estado}
-                  </p>
-                  <p className="text-sm">CEP: {mockClinicData.clinica.localizacao.endereco_principal.cep}</p>
+                  {clinicInfo.localizacao?.endereco_principal ? (
+                    <>
+                      <p className="text-sm">
+                        {clinicInfo.localizacao.endereco_principal.logradouro}, {clinicInfo.localizacao.endereco_principal.numero}
+                      </p>
+                      {clinicInfo.localizacao.endereco_principal.complemento && (
+                        <p className="text-sm text-muted-foreground">
+                          {clinicInfo.localizacao.endereco_principal.complemento}
+                        </p>
+                      )}
+                      <p className="text-sm">
+                        {clinicInfo.localizacao.endereco_principal.bairro} - {clinicInfo.localizacao.endereco_principal.cidade}/{clinicInfo.localizacao.endereco_principal.estado}
+                      </p>
+                      <p className="text-sm">CEP: {clinicInfo.localizacao.endereco_principal.cep}</p>
+                    </>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">Endereço não informado</p>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -374,21 +242,25 @@ export default function Context() {
                 <CardTitle className="flex items-center gap-2">
                   <Clock className="h-5 w-5" />
                   Horário de Funcionamento
-                  {mockClinicData.clinica.horario_funcionamento.emergencia_24h && (
+                  {clinicInfo.horario_funcionamento?.emergencia_24h && (
                     <Badge variant="destructive" className="ml-2">24h Emergência</Badge>
                   )}
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
-                  {formatSchedule(mockClinicData.clinica.horario_funcionamento).map((day, index) => (
-                    <div key={index} className="flex justify-between text-sm">
-                      <span className="font-medium">{day.day}:</span>
-                      <span className={day.open ? "text-foreground" : "text-muted-foreground"}>
-                        {day.open ? `${day.open} - ${day.close}` : "Fechado"}
-                      </span>
-                    </div>
-                  ))}
+                  {clinicInfo.horario_funcionamento ? (
+                    formatSchedule(clinicInfo.horario_funcionamento).map((day, index) => (
+                      <div key={index} className="flex justify-between text-sm">
+                        <span className="font-medium">{day.day}:</span>
+                        <span className={day.open ? "text-foreground" : "text-muted-foreground"}>
+                          {day.open ? `${day.open} - ${day.close}` : "Fechado"}
+                        </span>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-sm text-muted-foreground">Horário de funcionamento não informado</p>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -406,27 +278,36 @@ export default function Context() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid gap-4 md:grid-cols-2">
-                  {mockClinicData.servicos.consultas.map((consulta, index) => (
-                    <div key={index} className="p-4 border rounded-lg">
-                      <h5 className="font-medium">{consulta.nome}</h5>
-                      <p className="text-sm text-muted-foreground mb-2">{consulta.especialidade}</p>
-                      <div className="flex items-center justify-between text-sm">
-                        <div className="flex items-center gap-1">
-                          <Timer className="h-3 w-3" />
-                          <span>{consulta.duracao_minutos}min</span>
+                {servicesLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin" />
+                    <span className="ml-2">Carregando serviços...</span>
+                  </div>
+                ) : services.consultas && services.consultas.length > 0 ? (
+                  <div className="grid gap-4 md:grid-cols-2">
+                    {services.consultas.map((consulta: any, index: number) => (
+                      <div key={index} className="p-4 border rounded-lg">
+                        <h5 className="font-medium">{consulta.nome}</h5>
+                        <p className="text-sm text-muted-foreground mb-2">{consulta.especialidade}</p>
+                        <div className="flex items-center justify-between text-sm">
+                          <div className="flex items-center gap-1">
+                            <Timer className="h-3 w-3" />
+                            <span>{consulta.duracao_minutos}min</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <DollarSign className="h-3 w-3" />
+                            <span>{formatCurrency(consulta.preco_particular)}</span>
+                          </div>
+                          {consulta.aceita_convenio && (
+                            <Badge variant="outline" className="text-xs">Convênio</Badge>
+                          )}
                         </div>
-                        <div className="flex items-center gap-1">
-                          <DollarSign className="h-3 w-3" />
-                          <span>{formatCurrency(consulta.preco_particular)}</span>
-                        </div>
-                        {consulta.aceita_convenio && (
-                          <Badge variant="outline" className="text-xs">Convênio</Badge>
-                        )}
                       </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground text-center py-8">Nenhum serviço de consulta disponível</p>
+                )}
               </CardContent>
             </Card>
 
@@ -439,28 +320,37 @@ export default function Context() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                  {mockClinicData.servicos.exames.map((exame, index) => (
-                    <div key={index} className="p-4 border rounded-lg">
-                      <h5 className="font-medium text-sm">{exame.nome}</h5>
-                      <p className="text-xs text-muted-foreground mb-2">{exame.categoria}</p>
-                      <div className="space-y-1">
-                        <div className="flex items-center justify-between text-xs">
-                          <span>Duração:</span>
-                          <span>{exame.duracao_minutos}min</span>
-                        </div>
-                        <div className="flex items-center justify-between text-xs">
-                          <span>Preço:</span>
-                          <span>{formatCurrency(exame.preco_particular)}</span>
-                        </div>
-                        <div className="flex items-center justify-between text-xs">
-                          <span>Resultado:</span>
-                          <span>{exame.resultado_prazo_dias} dia(s)</span>
+                {servicesLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin" />
+                    <span className="ml-2">Carregando exames...</span>
+                  </div>
+                ) : services.exames && services.exames.length > 0 ? (
+                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                    {services.exames.map((exame: any, index: number) => (
+                      <div key={index} className="p-4 border rounded-lg">
+                        <h5 className="font-medium text-sm">{exame.nome}</h5>
+                        <p className="text-xs text-muted-foreground mb-2">{exame.categoria}</p>
+                        <div className="space-y-1">
+                          <div className="flex items-center justify-between text-xs">
+                            <span>Duração:</span>
+                            <span>{exame.duracao_minutos}min</span>
+                          </div>
+                          <div className="flex items-center justify-between text-xs">
+                            <span>Preço:</span>
+                            <span>{formatCurrency(exame.preco_particular)}</span>
+                          </div>
+                          <div className="flex items-center justify-between text-xs">
+                            <span>Resultado:</span>
+                            <span>{exame.resultado_prazo_dias} dia(s)</span>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground text-center py-8">Nenhum exame disponível</p>
+                )}
               </CardContent>
             </Card>
 
@@ -473,32 +363,41 @@ export default function Context() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid gap-4 md:grid-cols-2">
-                  {mockClinicData.servicos.procedimentos.map((proc, index) => (
-                    <div key={index} className="p-4 border rounded-lg">
-                      <h5 className="font-medium">{proc.nome}</h5>
-                      <p className="text-sm text-muted-foreground mb-2">{proc.categoria}</p>
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between text-sm">
-                          <span>Duração:</span>
-                          <span>{proc.duracao_minutos}min</span>
-                        </div>
-                        <div className="flex items-center justify-between text-sm">
-                          <span>Preço:</span>
-                          <span className="font-medium">{formatCurrency(proc.preco_particular)}</span>
-                        </div>
-                        {proc.internacao_necessaria && (
-                          <div className="flex items-center gap-2">
-                            <Badge variant="secondary" className="text-xs">Internação</Badge>
-                            <span className="text-xs text-muted-foreground">
-                              {proc.tempo_internacao_horas ? `${proc.tempo_internacao_horas}h` : `${proc.tempo_internacao_dias} dia(s)`}
-                            </span>
+                {servicesLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin" />
+                    <span className="ml-2">Carregando procedimentos...</span>
+                  </div>
+                ) : services.procedimentos && services.procedimentos.length > 0 ? (
+                  <div className="grid gap-4 md:grid-cols-2">
+                    {services.procedimentos.map((proc: any, index: number) => (
+                      <div key={index} className="p-4 border rounded-lg">
+                        <h5 className="font-medium">{proc.nome}</h5>
+                        <p className="text-sm text-muted-foreground mb-2">{proc.categoria}</p>
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between text-sm">
+                            <span>Duração:</span>
+                            <span>{proc.duracao_minutos}min</span>
                           </div>
-                        )}
+                          <div className="flex items-center justify-between text-sm">
+                            <span>Preço:</span>
+                            <span className="font-medium">{formatCurrency(proc.preco_particular)}</span>
+                          </div>
+                          {proc.internacao_necessaria && (
+                            <div className="flex items-center gap-2">
+                              <Badge variant="secondary" className="text-xs">Internação</Badge>
+                              <span className="text-xs text-muted-foreground">
+                                {proc.tempo_internacao_horas ? `${proc.tempo_internacao_horas}h` : `${proc.tempo_internacao_dias} dia(s)`}
+                              </span>
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground text-center py-8">Nenhum procedimento disponível</p>
+                )}
               </CardContent>
             </Card>
           </div>
@@ -513,36 +412,40 @@ export default function Context() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {mockClinicData.convenios.map((convenio, index) => (
-                  <div key={index} className="p-4 border rounded-lg">
-                    <div className="flex items-center justify-between mb-2">
-                      <h5 className="font-medium">{convenio.nome}</h5>
-                      {convenio.ativo ? (
-                        <CheckCircle className="h-4 w-4 text-green-500" />
-                      ) : (
-                        <XCircle className="h-4 w-4 text-red-500" />
-                      )}
-                    </div>
-                    <p className="text-sm text-muted-foreground mb-2">{convenio.categoria}</p>
-                    
-                    <div className="space-y-1">
-                      {convenio.copagamento ? (
-                        <div className="flex items-center justify-between text-sm">
-                          <span>Copagamento:</span>
-                          <span>{formatCurrency(convenio.valor_copagamento)}</span>
-                        </div>
-                      ) : (
-                        <div className="text-sm text-green-600">Sem copagamento</div>
-                      )}
+              {contextJson.convenios && contextJson.convenios.length > 0 ? (
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  {contextJson.convenios.map((convenio: any, index: number) => (
+                    <div key={index} className="p-4 border rounded-lg">
+                      <div className="flex items-center justify-between mb-2">
+                        <h5 className="font-medium">{convenio.nome}</h5>
+                        {convenio.ativo ? (
+                          <CheckCircle className="h-4 w-4 text-green-500" />
+                        ) : (
+                          <XCircle className="h-4 w-4 text-red-500" />
+                        )}
+                      </div>
+                      <p className="text-sm text-muted-foreground mb-2">{convenio.categoria}</p>
                       
-                      {convenio.autorizacao_necessaria && (
-                        <Badge variant="outline" className="text-xs">Autorização Necessária</Badge>
-                      )}
+                      <div className="space-y-1">
+                        {convenio.copagamento ? (
+                          <div className="flex items-center justify-between text-sm">
+                            <span>Copagamento:</span>
+                            <span>{formatCurrency(convenio.valor_copagamento)}</span>
+                          </div>
+                        ) : (
+                          <div className="text-sm text-green-600">Sem copagamento</div>
+                        )}
+                        
+                        {convenio.autorizacao_necessaria && (
+                          <Badge variant="outline" className="text-xs">Autorização Necessária</Badge>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground text-center py-8">Nenhum convênio cadastrado</p>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -556,35 +459,44 @@ export default function Context() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid gap-4 md:grid-cols-2">
-                {mockClinicData.profissionais.map((prof, index) => (
-                  <div key={index} className="p-4 border rounded-lg">
-                    <div className="flex items-center justify-between mb-2">
-                      <h5 className="font-medium">{prof.nome_completo}</h5>
-                      {prof.aceita_novos_pacientes ? (
-                        <Badge variant="default" className="text-xs">Aceita Novos</Badge>
-                      ) : (
-                        <Badge variant="secondary" className="text-xs">Agenda Fechada</Badge>
-                      )}
-                    </div>
-                    
-                    <p className="text-sm text-muted-foreground mb-2">{prof.crm}</p>
-                    
-                    <div className="space-y-2">
-                      <div>
-                        <span className="text-sm font-medium">Especialidades:</span>
-                        <div className="flex flex-wrap gap-1 mt-1">
-                          {prof.especialidades.map((esp, espIndex) => (
-                            <Badge key={espIndex} variant="outline" className="text-xs">{esp}</Badge>
-                          ))}
-                        </div>
+              {professionalsLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin" />
+                  <span className="ml-2">Carregando profissionais...</span>
+                </div>
+              ) : professionals.length > 0 ? (
+                <div className="grid gap-4 md:grid-cols-2">
+                  {professionals.map((prof: any, index: number) => (
+                    <div key={index} className="p-4 border rounded-lg">
+                      <div className="flex items-center justify-between mb-2">
+                        <h5 className="font-medium">{prof.name}</h5>
+                        {prof.accepts_new_patients ? (
+                          <Badge variant="default" className="text-xs">Aceita Novos</Badge>
+                        ) : (
+                          <Badge variant="secondary" className="text-xs">Agenda Fechada</Badge>
+                        )}
                       </div>
                       
-                      <p className="text-xs text-muted-foreground">{prof.experiencia}</p>
+                      <p className="text-sm text-muted-foreground mb-2">{prof.crm || 'CRM não informado'}</p>
+                      
+                      <div className="space-y-2">
+                        <div>
+                          <span className="text-sm font-medium">Especialidades:</span>
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {prof.specialties?.map((esp: string, espIndex: number) => (
+                              <Badge key={espIndex} variant="outline" className="text-xs">{esp}</Badge>
+                            ))}
+                          </div>
+                        </div>
+                        
+                        <p className="text-xs text-muted-foreground">{prof.bio || 'Informações não disponíveis'}</p>
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground text-center py-8">Nenhum profissional cadastrado</p>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -601,22 +513,22 @@ export default function Context() {
               <CardContent className="space-y-4">
                 <div>
                   <h5 className="font-medium">Nome:</h5>
-                  <p className="text-sm">{mockClinicData.agente_ia.configuracao.nome}</p>
+                  <p className="text-sm">{contextJson.agente_ia?.configuracao?.nome || 'Não configurado'}</p>
                 </div>
                 
                 <div>
                   <h5 className="font-medium">Personalidade:</h5>
-                  <p className="text-sm text-muted-foreground">{mockClinicData.agente_ia.configuracao.personalidade}</p>
+                  <p className="text-sm text-muted-foreground">{contextJson.agente_ia?.configuracao?.personalidade || 'Não configurado'}</p>
                 </div>
                 
                 <div>
                   <h5 className="font-medium">Saudação Inicial:</h5>
-                  <p className="text-sm italic">"{mockClinicData.agente_ia.configuracao.saudacao_inicial}"</p>
+                  <p className="text-sm italic">"{contextJson.agente_ia?.configuracao?.saudacao_inicial || 'Não configurado'}"</p>
                 </div>
                 
                 <div>
                   <h5 className="font-medium">Mensagem de Despedida:</h5>
-                  <p className="text-sm italic">"{mockClinicData.agente_ia.configuracao.mensagem_despedida}"</p>
+                  <p className="text-sm italic">"{contextJson.agente_ia?.configuracao?.mensagem_despedida || 'Não configurado'}"</p>
                 </div>
               </CardContent>
             </Card>
@@ -642,11 +554,13 @@ export default function Context() {
                 <div>
                   <h5 className="font-medium mb-2">Orientações para Emergências:</h5>
                   <div className="space-y-2">
-                    {mockClinicData.agente_ia.restricoes.emergencias_cardiacas.map((emergencia, index) => (
+                    {contextJson.agente_ia?.restricoes?.emergencias_cardiacas?.map((emergencia: string, index: number) => (
                       <div key={index} className="text-xs text-muted-foreground p-2 bg-muted rounded">
                         {emergencia}
                       </div>
-                    ))}
+                    )) || (
+                      <p className="text-xs text-muted-foreground">Nenhuma orientação de emergência configurada</p>
+                    )}
                   </div>
                 </div>
               </CardContent>
@@ -664,42 +578,48 @@ export default function Context() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <span className="font-medium">Salas de Atendimento:</span>
-                    <p>{mockClinicData.estrutura_fisica.salas_atendimento}</p>
-                  </div>
-                  <div>
-                    <span className="font-medium">Salas de Procedimentos:</span>
-                    <p>{mockClinicData.estrutura_fisica.salas_procedimentos}</p>
-                  </div>
-                  <div>
-                    <span className="font-medium">Sala de Hemodinâmica:</span>
-                    <p>{mockClinicData.estrutura_fisica.sala_hemodinamica}</p>
-                  </div>
-                  <div>
-                    <span className="font-medium">Leitos de Observação:</span>
-                    <p>{mockClinicData.estrutura_fisica.leitos_observacao}</p>
-                  </div>
-                </div>
-                
-                <div className="pt-2">
-                  <h5 className="font-medium mb-2">Acessibilidade:</h5>
-                  <div className="flex flex-wrap gap-2">
-                    {mockClinicData.estrutura_fisica.acessibilidade.cadeirante && (
-                      <Badge variant="outline" className="text-xs">
-                        <Accessibility className="h-3 w-3 mr-1" />
-                        Cadeirante
-                      </Badge>
-                    )}
-                    {mockClinicData.estrutura_fisica.acessibilidade.elevador && (
-                      <Badge variant="outline" className="text-xs">Elevador</Badge>
-                    )}
-                    {mockClinicData.estrutura_fisica.acessibilidade.banheiro_adaptado && (
-                      <Badge variant="outline" className="text-xs">Banheiro Adaptado</Badge>
-                    )}
-                  </div>
-                </div>
+                {contextJson.estrutura_fisica ? (
+                  <>
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <span className="font-medium">Salas de Atendimento:</span>
+                        <p>{contextJson.estrutura_fisica.salas_atendimento || 'Não informado'}</p>
+                      </div>
+                      <div>
+                        <span className="font-medium">Salas de Procedimentos:</span>
+                        <p>{contextJson.estrutura_fisica.salas_procedimentos || 'Não informado'}</p>
+                      </div>
+                      <div>
+                        <span className="font-medium">Sala de Hemodinâmica:</span>
+                        <p>{contextJson.estrutura_fisica.sala_hemodinamica || 'Não informado'}</p>
+                      </div>
+                      <div>
+                        <span className="font-medium">Leitos de Observação:</span>
+                        <p>{contextJson.estrutura_fisica.leitos_observacao || 'Não informado'}</p>
+                      </div>
+                    </div>
+                    
+                    <div className="pt-2">
+                      <h5 className="font-medium mb-2">Acessibilidade:</h5>
+                      <div className="flex flex-wrap gap-2">
+                        {contextJson.estrutura_fisica.acessibilidade?.cadeirante && (
+                          <Badge variant="outline" className="text-xs">
+                            <Accessibility className="h-3 w-3 mr-1" />
+                            Cadeirante
+                          </Badge>
+                        )}
+                        {contextJson.estrutura_fisica.acessibilidade?.elevador && (
+                          <Badge variant="outline" className="text-xs">Elevador</Badge>
+                        )}
+                        {contextJson.estrutura_fisica.acessibilidade?.banheiro_adaptado && (
+                          <Badge variant="outline" className="text-xs">Banheiro Adaptado</Badge>
+                        )}
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <p className="text-sm text-muted-foreground">Informações de estrutura física não disponíveis</p>
+                )}
               </CardContent>
             </Card>
 
@@ -711,29 +631,33 @@ export default function Context() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                {mockClinicData.estrutura_fisica.estacionamento.disponivel ? (
-                  <>
+                {contextJson.estrutura_fisica?.estacionamento ? (
+                  contextJson.estrutura_fisica.estacionamento.disponivel ? (
+                    <>
+                      <div className="flex items-center gap-2">
+                        <CheckCircle className="h-4 w-4 text-green-500" />
+                        <span className="text-sm">Estacionamento disponível</span>
+                      </div>
+                      
+                      <div className="space-y-2 text-sm">
+                        <div className="flex justify-between">
+                          <span>Vagas:</span>
+                          <span>{contextJson.estrutura_fisica.estacionamento.vagas || 'Não informado'}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Valor por hora:</span>
+                          <span>{contextJson.estrutura_fisica.estacionamento.valor_hora ? formatCurrency(contextJson.estrutura_fisica.estacionamento.valor_hora) : 'Não informado'}</span>
+                        </div>
+                      </div>
+                    </>
+                  ) : (
                     <div className="flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4 text-green-500" />
-                      <span className="text-sm">Estacionamento disponível</span>
+                      <XCircle className="h-4 w-4 text-red-500" />
+                      <span className="text-sm">Estacionamento não disponível</span>
                     </div>
-                    
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span>Vagas:</span>
-                        <span>{mockClinicData.estrutura_fisica.estacionamento.vagas}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Valor por hora:</span>
-                        <span>{formatCurrency(mockClinicData.estrutura_fisica.estacionamento.valor_hora)}</span>
-                      </div>
-                    </div>
-                  </>
+                  )
                 ) : (
-                  <div className="flex items-center gap-2">
-                    <XCircle className="h-4 w-4 text-red-500" />
-                    <span className="text-sm">Estacionamento não disponível</span>
-                  </div>
+                  <p className="text-sm text-muted-foreground">Informações de estacionamento não disponíveis</p>
                 )}
               </CardContent>
             </Card>
@@ -750,16 +674,16 @@ export default function Context() {
                   <div>
                     <h5 className="font-medium mb-2">Métodos Aceitos:</h5>
                     <div className="flex flex-wrap gap-2">
-                      {mockClinicData.formas_pagamento.dinheiro && (
+                      {contextJson.formas_pagamento?.dinheiro && (
                         <Badge variant="outline">Dinheiro</Badge>
                       )}
-                      {mockClinicData.formas_pagamento.cartao_credito && (
+                      {contextJson.formas_pagamento?.cartao_credito && (
                         <Badge variant="outline">Cartão de Crédito</Badge>
                       )}
-                      {mockClinicData.formas_pagamento.cartao_debito && (
+                      {contextJson.formas_pagamento?.cartao_debito && (
                         <Badge variant="outline">Cartão de Débito</Badge>
                       )}
-                      {mockClinicData.formas_pagamento.pix && (
+                      {contextJson.formas_pagamento?.pix && (
                         <Badge variant="outline">PIX</Badge>
                       )}
                     </div>
@@ -767,10 +691,10 @@ export default function Context() {
                   
                   <div>
                     <h5 className="font-medium mb-2">Parcelamento:</h5>
-                    {mockClinicData.formas_pagamento.parcelamento.disponivel ? (
+                    {contextJson.formas_pagamento?.parcelamento?.disponivel ? (
                       <div className="text-sm space-y-1">
-                        <div>Até {mockClinicData.formas_pagamento.parcelamento.max_parcelas}x</div>
-                        <div>Parcela mínima: {formatCurrency(mockClinicData.formas_pagamento.parcelamento.valor_minimo_parcela)}</div>
+                        <div>Até {contextJson.formas_pagamento.parcelamento.max_parcelas}x</div>
+                        <div>Parcela mínima: {formatCurrency(contextJson.formas_pagamento.parcelamento.valor_minimo_parcela)}</div>
                       </div>
                     ) : (
                       <span className="text-sm text-muted-foreground">Não disponível</span>

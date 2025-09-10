@@ -1,17 +1,19 @@
 # Assumptions - AtendeAí 2.0
 
 ## Assumptions Técnicas
-1. Sistema funcionará sem integrações externas (Google)
-2. Agenda própria será suficiente para gestão de agendamentos
-3. Supabase fornece toda infraestrutura necessária
-4. Frontend será buildado sem erros de runtime
+- Backend services estarão disponíveis nas portas especificadas
+- APIs seguirão padrão REST com JSON
+- Autenticação será via JWT token
+- Banco de dados estará populado com dados reais
 
 ## Assumptions de Negócio
-1. Clínicas não precisam sincronizar com Google Calendar
-2. Usuários preferem interface própria
-3. Sistema deve ser independente de serviços externos
+- Usuários terão acesso às clínicas baseado em roles
+- Conversas serão atribuídas automaticamente ou manualmente
+- Agendamentos serão sincronizados com Google Calendar
+- WhatsApp será o canal principal de comunicação
 
-## Assumptions de Desenvolvimento
-1. Remoção de Google integrations não afetará funcionalidades core
-2. Nova agenda será mais simples e eficiente
-3. Build errors são resolvíveis com configuração adequada
+## Dependências Externas
+- Meta WhatsApp Business API
+- Google Calendar API
+- Supabase (banco de dados)
+- Railway (deploy)

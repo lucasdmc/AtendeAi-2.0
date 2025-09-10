@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { Users as UsersIcon, Plus, Edit, Trash2, Search, Filter, Building2, Shield, Mail, Phone } from "lucide-react"
+import { Users as UsersIcon, Plus, Edit, Trash2, Search, Filter, Building2, Shield, Mail, Phone, Loader2, AlertTriangle } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -9,96 +9,40 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Label } from "@/components/ui/label"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { useAuth } from "@/hooks/useApi"
+import { useClinic as useClinicContext } from "@/contexts/ClinicContext"
 
 interface User {
   id: string
   name: string
-  email: string
-  phone?: string
-  role: 'admin_lify' | 'clinic_admin' | 'attendant'
-  clinicId: string
-  clinicName: string
+  login: string
+  role: 'admin_lify' | 'suporte_lify' | 'atendente' | 'gestor' | 'administrador'
+  clinic_id: string
   status: 'active' | 'inactive'
-  lastLogin?: string
-  createdAt: string
-  avatar?: string
+  created_at: string
+  updated_at: string
 }
 
-const mockUsers: User[] = [
-  {
-    id: "1",
-    name: "João Santos",
-    email: "joao@lify.com.br",
-    phone: "(11) 99999-1111",
-    role: "admin_lify",
-    clinicId: "all",
-    clinicName: "Todas as Clínicas",
-    status: "active",
-    lastLogin: "2024-03-15T10:30:00",
-    createdAt: "2024-01-01",
-    avatar: "/placeholder.svg"
-  },
-  {
-    id: "2",
-    name: "Maria Silva",
-    email: "maria@saudetotal.com.br",
-    phone: "(11) 88888-2222",
-    role: "clinic_admin",
-    clinicId: "1",
-    clinicName: "Clínica Saúde Total",
-    status: "active",
-    lastLogin: "2024-03-15T09:15:00",
-    createdAt: "2024-01-15"
-  },
-  {
-    id: "3",
-    name: "Carlos Oliveira",
-    email: "carlos@saudetotal.com.br",
-    phone: "(11) 77777-3333",
-    role: "attendant",
-    clinicId: "1",
-    clinicName: "Clínica Saúde Total",
-    status: "active",
-    lastLogin: "2024-03-14T16:45:00",
-    createdAt: "2024-02-01"
-  },
-  {
-    id: "4",
-    name: "Ana Costa",
-    email: "ana@bemestar.com.br",
-    role: "clinic_admin",
-    clinicId: "2",
-    clinicName: "Centro Médico Bem Estar",
-    status: "active",
-    createdAt: "2024-02-10"
-  },
-  {
-    id: "5",
-    name: "Pedro Alves",
-    email: "pedro@novavida.com.br",
-    role: "attendant",
-    clinicId: "3",
-    clinicName: "Clínica Nova Vida", 
-    status: "inactive",
-    lastLogin: "2024-03-01T11:20:00",
-    createdAt: "2024-03-01"
-  }
-]
+// Mock data removed - now using real API data
 
 const roleLabels = {
   admin_lify: "Admin Lify",
-  clinic_admin: "Admin Clínica",
-  attendant: "Atendente"
+  suporte_lify: "Suporte Lify",
+  atendente: "Atendente",
+  gestor: "Gestor",
+  administrador: "Administrador"
 }
 
 const roleColors = {
   admin_lify: "bg-purple-100 text-purple-800 border-purple-200",
-  clinic_admin: "bg-blue-100 text-blue-800 border-blue-200",
-  attendant: "bg-green-100 text-green-800 border-green-200"
+  suporte_lify: "bg-orange-100 text-orange-800 border-orange-200",
+  atendente: "bg-green-100 text-green-800 border-green-200",
+  gestor: "bg-blue-100 text-blue-800 border-blue-200",
+  administrador: "bg-red-100 text-red-800 border-red-200"
 }
 
 export default function Users() {
-  const [users, setUsers] = useState<User[]>(mockUsers)
+  const { selectedClinic } = useClinicContext()
   const [searchTerm, setSearchTerm] = useState("")
   const [roleFilter, setRoleFilter] = useState<string>("all")
   const [statusFilter, setStatusFilter] = useState<string>("all")
@@ -106,10 +50,13 @@ export default function Users() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [editingUser, setEditingUser] = useState<User | null>(null)
 
+  // API hooks - Note: We don't have a specific users API endpoint yet
+  // For now, we'll show a placeholder message
+  const users: User[] = []
+
   const filteredUsers = users.filter(user => {
     const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.clinicName.toLowerCase().includes(searchTerm.toLowerCase())
+                         user.login.toLowerCase().includes(searchTerm.toLowerCase())
     const matchesRole = roleFilter === "all" || user.role === roleFilter
     const matchesStatus = statusFilter === "all" || user.status === statusFilter
     
@@ -129,6 +76,16 @@ export default function Users() {
   const handleEdit = (user: User) => {
     setEditingUser(user)
     setIsEditDialogOpen(true)
+  }
+
+  // No clinic selected
+  if (!selectedClinic) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Building2 className="h-8 w-8 text-muted-foreground" />
+        <span className="ml-2 text-muted-foreground">Nenhuma clínica selecionada</span>
+      </div>
+    )
   }
 
   return (
@@ -269,47 +226,41 @@ export default function Users() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredUsers.map((user) => (
-                <TableRow key={user.id} className="hover:bg-muted/50">
-                  <TableCell>
-                    <div className="flex items-center space-x-3">
-                      <Avatar className="h-8 w-8">
-                        <AvatarImage src={user.avatar} alt={user.name} />
-                        <AvatarFallback className="text-xs">{getInitials(user.name)}</AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <div className="font-medium">{user.name}</div>
-                        <div className="text-sm text-muted-foreground">{user.email}</div>
+              {filteredUsers.length > 0 ? (
+                filteredUsers.map((user) => (
+                  <TableRow key={user.id} className="hover:bg-muted/50">
+                    <TableCell>
+                      <div className="flex items-center space-x-3">
+                        <Avatar className="h-8 w-8">
+                          <AvatarFallback className="text-xs">{getInitials(user.name)}</AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <div className="font-medium">{user.name}</div>
+                          <div className="text-sm text-muted-foreground">{user.login}</div>
+                        </div>
                       </div>
-                    </div>
-                  </TableCell>
-                  
-                  <TableCell>
-                    <Badge variant="outline" className={roleColors[user.role]}>
-                      <Shield className="h-3 w-3 mr-1" />
-                      {roleLabels[user.role]}
-                    </Badge>
-                  </TableCell>
-                  
-                  <TableCell>
-                    <div className="flex items-center space-x-2">
-                      <Building2 className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm">{user.clinicName}</span>
-                    </div>
-                  </TableCell>
+                    </TableCell>
+                    
+                    <TableCell>
+                      <Badge variant="outline" className={roleColors[user.role]}>
+                        <Shield className="h-3 w-3 mr-1" />
+                        {roleLabels[user.role]}
+                      </Badge>
+                    </TableCell>
+                    
+                    <TableCell>
+                      <div className="flex items-center space-x-2">
+                        <Building2 className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm">Clínica ID: {user.clinic_id}</span>
+                      </div>
+                    </TableCell>
                   
                   <TableCell>
                     <div className="space-y-1">
                       <div className="flex items-center space-x-1 text-sm">
                         <Mail className="h-3 w-3 text-muted-foreground" />
-                        <span>{user.email}</span>
+                        <span>{user.login}</span>
                       </div>
-                      {user.phone && (
-                        <div className="flex items-center space-x-1 text-sm">
-                          <Phone className="h-3 w-3 text-muted-foreground" />
-                          <span>{user.phone}</span>
-                        </div>
-                      )}
                     </div>
                   </TableCell>
                   
@@ -327,7 +278,7 @@ export default function Users() {
                   
                   <TableCell>
                     <div className="text-sm text-muted-foreground">
-                      {formatLastLogin(user.lastLogin)}
+                      {new Date(user.created_at).toLocaleDateString('pt-BR')}
                     </div>
                   </TableCell>
                   
@@ -342,23 +293,24 @@ export default function Users() {
                      </div>
                    </TableCell>
                 </TableRow>
-              ))}
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center py-8">
+                    <div className="flex flex-col items-center justify-center">
+                      <UsersIcon className="h-12 w-12 text-muted-foreground mb-4" />
+                      <h3 className="text-lg font-semibold mb-2">Nenhum usuário encontrado</h3>
+                      <p className="text-muted-foreground text-center max-w-sm">
+                        Não há usuários cadastrados para esta clínica.
+                      </p>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </CardContent>
       </Card>
-
-      {filteredUsers.length === 0 && (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-16">
-            <UsersIcon className="h-12 w-12 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold mb-2">Nenhum usuário encontrado</h3>
-            <p className="text-muted-foreground text-center max-w-sm">
-              Não há usuários que correspondam aos filtros selecionados.
-            </p>
-          </CardContent>
-        </Card>
-      )}
 
       {/* Modal de Edição */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>

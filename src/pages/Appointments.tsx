@@ -1,64 +1,34 @@
 import { useState } from "react"
-import { Calendar, Clock, User, Phone, MapPin, Filter, Search, Plus } from "lucide-react"
+import { Calendar, Clock, User, Phone, MapPin, Filter, Search, Plus, Loader2, AlertTriangle } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useAppointments } from "@/hooks/useApi"
+import { useClinic as useClinicContext } from "@/contexts/ClinicContext"
 
 interface Appointment {
   id: string
-  patientName: string
-  patientPhone: string
-  date: string
-  time: string
+  clinic_id: string
+  customer_info: any
+  google_event_id?: string
+  google_calendar_id?: string
+  appointment_type: string
+  datetime: string
   duration: number
-  type: string
-  status: 'scheduled' | 'confirmed' | 'completed' | 'cancelled'
-  professional: string
-  location: string
+  status: 'scheduled' | 'confirmed' | 'cancelled' | 'completed' | 'no_show'
+  priority: number
+  confirmation_sent: boolean
+  confirmation_received: boolean
+  confirmation_sent_at?: string
+  confirmation_received_at?: string
   notes?: string
+  created_at: string
+  updated_at: string
 }
 
-const mockAppointments: Appointment[] = [
-  {
-    id: "1",
-    patientName: "Maria Silva",
-    patientPhone: "(11) 99999-1234",
-    date: "2024-03-15",
-    time: "09:00",
-    duration: 60,
-    type: "Consulta",
-    status: "scheduled",
-    professional: "Dr. João Santos",
-    location: "Consultório 1",
-    notes: "Primeira consulta"
-  },
-  {
-    id: "2",
-    patientName: "Carlos Oliveira",
-    patientPhone: "(11) 99999-5678",
-    date: "2024-03-15",
-    time: "10:30",
-    duration: 45,
-    type: "Retorno",
-    status: "confirmed",
-    professional: "Dra. Ana Costa",
-    location: "Consultório 2"
-  },
-  {
-    id: "3",
-    patientName: "Fernanda Lima",
-    patientPhone: "(11) 99999-9876",
-    date: "2024-03-15",
-    time: "14:00",
-    duration: 30,
-    type: "Exame",
-    status: "completed",
-    professional: "Dr. Pedro Alves",
-    location: "Sala de Exames"
-  }
-]
+// Mock data removed - now using real API data
 
 const statusColors = {
   scheduled: "bg-blue-100 text-blue-800 border-blue-200",
@@ -75,19 +45,57 @@ const statusLabels = {
 }
 
 export default function Appointments() {
-  const [appointments, setAppointments] = useState<Appointment[]>(mockAppointments)
+  const { selectedClinic } = useClinicContext()
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState<string>("all")
   const [dateFilter, setDateFilter] = useState<string>("all")
 
+  // API hooks
+  const { data: appointmentsData, loading: appointmentsLoading, error: appointmentsError } = useAppointments(selectedClinic?.id)
+  const appointments = appointmentsData?.data || []
+
   const filteredAppointments = appointments.filter(appointment => {
-    const matchesSearch = appointment.patientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         appointment.professional.toLowerCase().includes(searchTerm.toLowerCase())
+    const customerName = appointment.customer_info?.name || 'Cliente'
+    const customerPhone = appointment.customer_info?.phone || ''
+    const appointmentDate = new Date(appointment.datetime).toISOString().split('T')[0]
+    
+    const matchesSearch = customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         customerPhone.includes(searchTerm)
     const matchesStatus = statusFilter === "all" || appointment.status === statusFilter
-    const matchesDate = dateFilter === "all" || appointment.date === dateFilter
+    const matchesDate = dateFilter === "all" || appointmentDate === dateFilter
     
     return matchesSearch && matchesStatus && matchesDate
   })
+
+  // Loading state
+  if (appointmentsLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin" />
+        <span className="ml-2">Carregando agendamentos...</span>
+      </div>
+    )
+  }
+
+  // Error state
+  if (appointmentsError) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <AlertTriangle className="h-8 w-8 text-destructive" />
+        <span className="ml-2 text-destructive">Erro ao carregar agendamentos: {appointmentsError}</span>
+      </div>
+    )
+  }
+
+  // No clinic selected
+  if (!selectedClinic) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Calendar className="h-8 w-8 text-muted-foreground" />
+        <span className="ml-2 text-muted-foreground">Nenhuma clínica selecionada</span>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
@@ -146,7 +154,8 @@ export default function Appointments() {
       </div>
 
       <div className="grid gap-4">
-        {filteredAppointments.map((appointment) => (
+        {filteredAppointments.length > 0 ? (
+          filteredAppointments.map((appointment) => (
           <Card key={appointment.id} className="hover:shadow-md transition-shadow">
             <CardContent className="p-6">
               <div className="flex items-start justify-between">
@@ -154,10 +163,10 @@ export default function Appointments() {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-4">
                       <div>
-                        <h3 className="font-semibold text-lg">{appointment.patientName}</h3>
+                        <h3 className="font-semibold text-lg">{appointment.customer_info?.name || 'Cliente'}</h3>
                         <div className="flex items-center space-x-2 text-sm text-muted-foreground">
                           <Phone className="h-4 w-4" />
-                          <span>{appointment.patientPhone}</span>
+                          <span>{appointment.customer_info?.phone || 'Telefone não informado'}</span>
                         </div>
                       </div>
                     </div>
@@ -169,25 +178,25 @@ export default function Appointments() {
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                     <div className="flex items-center space-x-2">
                       <Calendar className="h-4 w-4 text-muted-foreground" />
-                      <span>{new Date(appointment.date).toLocaleDateString('pt-BR')}</span>
+                      <span>{new Date(appointment.datetime).toLocaleDateString('pt-BR')}</span>
                     </div>
                     
                     <div className="flex items-center space-x-2">
                       <Clock className="h-4 w-4 text-muted-foreground" />
-                      <span>{appointment.time} ({appointment.duration}min)</span>
+                      <span>{new Date(appointment.datetime).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })} ({appointment.duration}min)</span>
                     </div>
                     
                     <div className="flex items-center space-x-2">
                       <MapPin className="h-4 w-4 text-muted-foreground" />
-                      <span>{appointment.location}</span>
+                      <span>{appointment.customer_info?.location || 'Local não informado'}</span>
                     </div>
                   </div>
 
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-2">
                       <User className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm">{appointment.professional}</span>
-                      <Badge variant="secondary">{appointment.type}</Badge>
+                      <span className="text-sm">{appointment.customer_info?.professional || 'Profissional não informado'}</span>
+                      <Badge variant="secondary">{appointment.appointment_type}</Badge>
                     </div>
                     
                     <div className="flex space-x-2">
@@ -211,20 +220,20 @@ export default function Appointments() {
               </div>
             </CardContent>
           </Card>
-        ))}
+          ))
+        ) : (
+          <Card>
+            <CardContent className="flex flex-col items-center justify-center py-16">
+              <Calendar className="h-12 w-12 text-muted-foreground mb-4" />
+              <h3 className="text-lg font-semibold mb-2">Nenhum agendamento encontrado</h3>
+              <p className="text-muted-foreground text-center">
+                Não há agendamentos que correspondam aos filtros aplicados.
+              </p>
+            </CardContent>
+          </Card>
+        )}
       </div>
 
-      {filteredAppointments.length === 0 && (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-16">
-            <Calendar className="h-12 w-12 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold mb-2">Nenhum agendamento encontrado</h3>
-            <p className="text-muted-foreground text-center max-w-sm">
-              Não há agendamentos que correspondam aos filtros selecionados.
-            </p>
-          </CardContent>
-        </Card>
-      )}
     </div>
   )
 }
