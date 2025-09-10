@@ -2,8 +2,10 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider } from '@/hooks/useAuth';
 import Auth from './pages/Auth';
 import { Layout } from './components/Layout';
+import Index from './pages/Index';
 import Agenda from './pages/Agenda';
 import ContextPage from './pages/ContextPage';
+import Conversations from './pages/Conversations';
 import { Toaster } from "@/components/ui/sonner";
 
 function App() {
@@ -14,7 +16,7 @@ function App() {
           <Route path="/auth" element={<Auth />} />
           <Route path="/" element={
             <Layout>
-              <Navigate to="/agenda" replace />
+              <Index />
             </Layout>
           } />
           <Route path="/calendar" element={
@@ -30,6 +32,11 @@ function App() {
           <Route path="/context" element={
             <Layout>
               <ContextPage />
+            </Layout>
+          } />
+          <Route path="/conversations" element={
+            <Layout>
+              <Conversations />
             </Layout>
           } />
         </Routes>
