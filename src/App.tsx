@@ -6,6 +6,9 @@ import Index from './pages/Index';
 import Agenda from './pages/Agenda';
 import ContextPage from './pages/ContextPage';
 import Conversations from './pages/Conversations';
+import Appointments from './pages/Appointments';
+import Clinics from './pages/Clinics';
+import Users from './pages/Users';
 import { Toaster } from "@/components/ui/sonner";
 
 function App() {
@@ -37,6 +40,21 @@ function App() {
           <Route path="/conversations" element={
             <Layout>
               <Conversations />
+            </Layout>
+          } />
+          <Route path="/appointments" element={
+            <Layout>
+              <Appointments />
+            </Layout>
+          } />
+          <Route path="/clinics" element={
+            <Layout>
+              <Clinics />
+            </Layout>
+          } />
+          <Route path="/users" element={
+            <Layout>
+              <Users />
             </Layout>
           } />
         </Routes>

@@ -53,7 +53,11 @@ export function Layout({ children }: LayoutProps) {
       "/": "Dashboard",
       "/agenda": "Agenda",
       "/calendar": "Agenda",
-      "/context": "Contexto"
+      "/context": "Contexto",
+      "/conversations": "Conversas",
+      "/appointments": "Agendamentos",
+      "/clinics": "Gestão de Clínicas",
+      "/users": "Gestão de Usuários",
     }
     return pageTitles[location.pathname] || "Sistema de Gestão"
   }
