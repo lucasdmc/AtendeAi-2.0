@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { Building2, MapPin, Phone, Mail, Plus, Edit, Trash2, Search, Settings } from "lucide-react"
+import { Building2, MapPin, Phone, Mail, Plus, Edit, Trash2, Search, Brain } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -69,7 +69,9 @@ export default function Clinics() {
   const [searchTerm, setSearchTerm] = useState("")
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  const [isJsonDialogOpen, setIsJsonDialogOpen] = useState(false)
   const [editingClinic, setEditingClinic] = useState<Clinic | null>(null)
+  const [selectedClinicForJson, setSelectedClinicForJson] = useState<Clinic | null>(null)
 
   const filteredClinics = clinics.filter(clinic =>
     clinic.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -79,6 +81,11 @@ export default function Clinics() {
   const handleEdit = (clinic: Clinic) => {
     setEditingClinic(clinic)
     setIsEditDialogOpen(true)
+  }
+
+  const handleJsonConfig = (clinic: Clinic) => {
+    setSelectedClinicForJson(clinic)
+    setIsJsonDialogOpen(true)
   }
 
   return (
@@ -247,8 +254,8 @@ export default function Clinics() {
                   
                    <TableCell className="text-right">
                      <div className="flex justify-end space-x-1">
-                       <Button variant="ghost" size="sm">
-                         <Settings className="h-4 w-4" />
+                       <Button variant="ghost" size="sm" onClick={() => handleJsonConfig(clinic)}>
+                         <Brain className="h-4 w-4" />
                        </Button>
                        <Button variant="ghost" size="sm" onClick={() => handleEdit(clinic)}>
                          <Edit className="h-4 w-4" />
@@ -332,6 +339,37 @@ export default function Clinics() {
               </div>
             </form>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de Configuração JSON */}
+      <Dialog open={isJsonDialogOpen} onOpenChange={setIsJsonDialogOpen}>
+        <DialogContent className="sm:max-w-[700px]">
+          <DialogHeader>
+            <DialogTitle>Configuração JSON - {selectedClinicForJson?.name}</DialogTitle>
+            <DialogDescription>
+              Insira a configuração JSON para esta clínica
+            </DialogDescription>
+          </DialogHeader>
+          <form className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="json-config">Configuração JSON</Label>
+              <Textarea 
+                id="json-config"
+                placeholder='{"key": "value", "setting": "example"}'
+                className="min-h-[300px] font-mono text-sm"
+              />
+            </div>
+            
+            <div className="flex justify-end space-x-2">
+              <Button variant="outline" onClick={() => setIsJsonDialogOpen(false)}>
+                Cancelar
+              </Button>
+              <Button type="submit">
+                Salvar Configuração
+              </Button>
+            </div>
+          </form>
         </DialogContent>
       </Dialog>
     </div>
