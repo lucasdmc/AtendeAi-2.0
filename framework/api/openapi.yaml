@@ -1,1587 +1,315 @@
-openapi: 3.1.0
-info:
-  title: AtendeAI 2.0 API
-  version: 1.3.0
-  description: |
-    API completa do sistema AtendeAI 2.0 - Sistema multiclínicas com IA conversacional,
-    agendamentos inteligentes e integração WhatsApp Business + Google Calendar.
-    
-    ## 🏗️ Arquitetura
-    - **Microserviços**: 8 serviços especializados
-    - **Multi-tenant**: Isolamento completo entre clínicas via RLS
-    - **Autenticação**: Supabase Auth com JWT tokens
-    - **Rate Limiting**: Proteção contra abuso
-    - **Idempotência**: Operações seguras para retry
-    
-    ## 🔐 Segurança
-    - **JWT Authentication**: Bearer tokens obrigatórios
-    - **Row Level Security**: Isolamento automático por clínica
-    - **RBAC**: 5 perfis de usuário (Admin Lify, Suporte, Administrador, Gestor, Atendente)
-    - **Input Validation**: Validação rigorosa via JSON Schema
-    
-    ## 🎯 Perfis de Usuário
-    - **Admin Lify**: Acesso total, pode navegar entre clínicas
-    - **Suporte Lify**: Acesso total exceto criar clínicas
-    - **Administrador**: Gestão completa da própria clínica
-    - **Gestor**: Operações + contextualização da própria clínica
-    - **Atendente**: Operações básicas da própria clínica
-
-  contact:
-    name: AtendeAI Development Team
-    email: dev@atendeai.com.br
-  license:
-    name: Proprietary
-    
-servers:
-  - url: http://localhost:8000
-    description: Development (Kong Gateway)
-  - url: https://api.atendeai.com.br
-    description: Production
-
-security:
-  - bearerAuth: []
-
-paths:
-  # =====================================================
-  # AUTHENTICATION ENDPOINTS
-  # =====================================================
-  /auth/login:
-    post:
-      tags: [Authentication]
-      summary: Login de usuário
-      description: Autentica usuário e retorna tokens JWT
-      security: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [email, password]
-              properties:
-                email:
-                  type: string
-                  format: email
-                  example: admin@clinica.com
-                password:
-                  type: string
-                  minLength: 6
-                  maxLength: 25
-                  example: senha123
-      responses:
-        '200':
-          description: Login realizado com sucesso
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  access_token:
-                    type: string
-                    example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-                  refresh_token:
-                    type: string
-                  expires_in:
-                    type: integer
-                    example: 3600
-                  user:
-                    $ref: '#/components/schemas/User'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '422':
-          $ref: '#/components/responses/ValidationError'
-        '429':
-          $ref: '#/components/responses/RateLimit'
-
-  /auth/logout:
-    post:
-      tags: [Authentication]
-      summary: Logout de usuário
-      description: Invalida tokens de acesso e refresh
-      responses:
-        '200':
-          description: Logout realizado com sucesso
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: Logout realizado com sucesso
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-
-  /auth/refresh:
-    post:
-      tags: [Authentication]
-      summary: Renovar token de acesso
-      description: Renova token de acesso usando refresh token
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [refresh_token]
-              properties:
-                refresh_token:
-                  type: string
-      responses:
-        '200':
-          description: Token renovado com sucesso
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  access_token:
-                    type: string
-                  expires_in:
-                    type: integer
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-
-  /auth/profile:
-    get:
-      tags: [Authentication]
-      summary: Perfil do usuário autenticado
-      description: Retorna dados do usuário e permissões
-      responses:
-        '200':
-          description: Dados do perfil
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: '#/components/schemas/User'
-                  - type: object
-                    properties:
-                      clinic:
-                        $ref: '#/components/schemas/Clinic'
-                      permissions:
-                        type: array
-                        items:
-                          type: string
-                        example: [read_conversations, manage_appointments]
-
-  # =====================================================
-  # CLINICS MANAGEMENT
-  # =====================================================
-  /clinics:
-    get:
-      tags: [Clinics]
-      summary: Listar clínicas
-      description: |
-        Lista clínicas baseado no perfil do usuário:
-        - Admin Lify/Suporte: Todas as clínicas
-        - Outros perfis: Apenas a própria clínica
-      parameters:
-        - $ref: '#/components/parameters/PageParam'
-        - $ref: '#/components/parameters/LimitParam'
-        - name: status
-          in: query
-          schema:
-            type: string
-            enum: [active, inactive]
-        - name: search
-          in: query
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Lista de clínicas
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  data:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/Clinic'
-                  pagination:
-                    $ref: '#/components/schemas/Pagination'
-
-    post:
-      tags: [Clinics]
-      summary: Criar nova clínica
-      description: Criar nova clínica (apenas Admin Lify)
-      security:
-        - bearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreateClinicRequest'
-      responses:
-        '201':
-          description: Clínica criada com sucesso
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Clinic'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '422':
-          $ref: '#/components/responses/ValidationError'
-
-  /clinics/{clinic_id}:
-    get:
-      tags: [Clinics]
-      summary: Obter clínica por ID
-      parameters:
-        - $ref: '#/components/parameters/ClinicIdParam'
-      responses:
-        '200':
-          description: Dados da clínica
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Clinic'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-    put:
-      tags: [Clinics]
-      summary: Atualizar clínica
-      parameters:
-        - $ref: '#/components/parameters/ClinicIdParam'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdateClinicRequest'
-      responses:
-        '200':
-          description: Clínica atualizada
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Clinic'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-    delete:
-      tags: [Clinics]
-      summary: Remover clínica
-      description: Remover clínica (apenas Admin Lify)
-      parameters:
-        - $ref: '#/components/parameters/ClinicIdParam'
-      responses:
-        '204':
-          description: Clínica removida com sucesso
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-  /clinics/{clinic_id}/context:
-    get:
-      tags: [Clinics]
-      summary: Relatório de contextualização
-      description: Retorna relatório executivo das configurações JSON da clínica
-      parameters:
-        - $ref: '#/components/parameters/ClinicIdParam'
-      responses:
-        '200':
-          description: Relatório de contextualização
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ClinicContextReport'
-
-  # =====================================================
-  # USERS MANAGEMENT
-  # =====================================================
-  /users:
-    get:
-      tags: [Users]
-      summary: Listar usuários
-      description: Lista usuários da clínica do usuário autenticado
-      parameters:
-        - $ref: '#/components/parameters/PageParam'
-        - $ref: '#/components/parameters/LimitParam'
-        - name: role
-          in: query
-          schema:
-            $ref: '#/components/schemas/UserRole'
-        - name: status
-          in: query
-          schema:
-            type: string
-            enum: [active, inactive]
-      responses:
-        '200':
-          description: Lista de usuários
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  data:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/User'
-                  pagination:
-                    $ref: '#/components/schemas/Pagination'
-
-    post:
-      tags: [Users]
-      summary: Criar novo usuário
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreateUserRequest'
-      responses:
-        '201':
-          description: Usuário criado com sucesso
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/User'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '422':
-          $ref: '#/components/responses/ValidationError'
-
-  /users/{user_id}:
-    get:
-      tags: [Users]
-      summary: Obter usuário por ID
-      parameters:
-        - $ref: '#/components/parameters/UserIdParam'
-      responses:
-        '200':
-          description: Dados do usuário
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/User'
-
-    put:
-      tags: [Users]
-      summary: Atualizar usuário
-      parameters:
-        - $ref: '#/components/parameters/UserIdParam'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdateUserRequest'
-      responses:
-        '200':
-          description: Usuário atualizado
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/User'
-
-    delete:
-      tags: [Users]
-      summary: Remover usuário
-      parameters:
-        - $ref: '#/components/parameters/UserIdParam'
-      responses:
-        '204':
-          description: Usuário removido com sucesso
-
-  # =====================================================
-  # CONVERSATIONS
-  # =====================================================
-  /conversations:
-    get:
-      tags: [Conversations]
-      summary: Listar conversas
-      description: Lista conversas da clínica do usuário autenticado
-      parameters:
-        - $ref: '#/components/parameters/PageParam'
-        - $ref: '#/components/parameters/LimitParam'
-        - name: status
-          in: query
-          schema:
-            type: string
-            enum: [active, paused, closed]
-        - name: conversation_type
-          in: query
-          schema:
-            type: string
-            enum: [chatbot, human, mixed]
-        - name: tags
-          in: query
-          schema:
-            type: array
-            items:
-              type: string
-        - name: customer_phone
-          in: query
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Lista de conversas
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  data:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/Conversation'
-                  pagination:
-                    $ref: '#/components/schemas/Pagination'
-
-  /conversations/{conversation_id}/messages:
-    get:
-      tags: [Conversations]
-      summary: Listar mensagens da conversa
-      parameters:
-        - $ref: '#/components/parameters/ConversationIdParam'
-        - $ref: '#/components/parameters/PageParam'
-        - $ref: '#/components/parameters/LimitParam'
-      responses:
-        '200':
-          description: Lista de mensagens
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  data:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/Message'
-                  pagination:
-                    $ref: '#/components/schemas/Pagination'
-
-    post:
-      tags: [Conversations]
-      summary: Enviar mensagem
-      parameters:
-        - $ref: '#/components/parameters/ConversationIdParam'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/SendMessageRequest'
-      responses:
-        '201':
-          description: Mensagem enviada
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Message'
-
-  /conversations/{conversation_id}/bot-control:
-    put:
-      tags: [Conversations]
-      summary: Controlar chatbot
-      description: Ativar/desativar chatbot na conversa (assumir/devolver controle)
-      parameters:
-        - $ref: '#/components/parameters/ConversationIdParam'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [bot_active]
-              properties:
-                bot_active:
-                  type: boolean
-                  description: true = chatbot ativo, false = atendimento humano
-      responses:
-        '200':
-          description: Controle do chatbot atualizado
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Conversation'
-
-  /conversations/{conversation_id}/tags:
-    put:
-      tags: [Conversations]
-      summary: Gerenciar etiquetas da conversa
-      parameters:
-        - $ref: '#/components/parameters/ConversationIdParam'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [tags]
-              properties:
-                tags:
-                  type: array
-                  items:
-                    type: string
-                    format: uuid
-      responses:
-        '200':
-          description: Etiquetas atualizadas
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Conversation'
-
-  /conversations/broadcast:
-    post:
-      tags: [Conversations]
-      summary: Enviar mensagem em massa
-      description: Enviar mensagem padrão para múltiplos contatos
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/BroadcastMessageRequest'
-      responses:
-        '202':
-          description: Mensagem em massa processando
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  broadcast_id:
-                    type: string
-                    format: uuid
-                  status:
-                    type: string
-                    example: processing
-                  total_recipients:
-                    type: integer
-
-  # =====================================================
-  # APPOINTMENTS & CALENDAR
-  # =====================================================
-  /appointments:
-    get:
-      tags: [Appointments]
-      summary: Listar agendamentos
-      parameters:
-        - $ref: '#/components/parameters/PageParam'
-        - $ref: '#/components/parameters/LimitParam'
-        - name: start_date
-          in: query
-          schema:
-            type: string
-            format: date-time
-        - name: end_date
-          in: query
-          schema:
-            type: string
-            format: date-time
-        - name: status
-          in: query
-          schema:
-            type: string
-            enum: [scheduled, confirmed, cancelled, completed, no_show]
-        - name: appointment_type
-          in: query
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Lista de agendamentos
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  data:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/Appointment'
-                  pagination:
-                    $ref: '#/components/schemas/Pagination'
-
-    post:
-      tags: [Appointments]
-      summary: Criar agendamento
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreateAppointmentRequest'
-      responses:
-        '201':
-          description: Agendamento criado
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Appointment'
-
-  /appointments/{appointment_id}:
-    get:
-      tags: [Appointments]
-      summary: Obter agendamento por ID
-      parameters:
-        - $ref: '#/components/parameters/AppointmentIdParam'
-      responses:
-        '200':
-          description: Dados do agendamento
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Appointment'
-
-    put:
-      tags: [Appointments]
-      summary: Atualizar agendamento
-      parameters:
-        - $ref: '#/components/parameters/AppointmentIdParam'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdateAppointmentRequest'
-      responses:
-        '200':
-          description: Agendamento atualizado
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Appointment'
-
-    delete:
-      tags: [Appointments]
-      summary: Cancelar agendamento
-      parameters:
-        - $ref: '#/components/parameters/AppointmentIdParam'
-      responses:
-        '204':
-          description: Agendamento cancelado
-
-  /google/auth:
-    post:
-      tags: [Google Calendar]
-      summary: Autenticação OAuth Google
-      description: Iniciar fluxo OAuth2 para integração com Google Calendar
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                redirect_uri:
-                  type: string
-                  format: uri
-                  example: http://localhost:3000/auth/google/callback
-      responses:
-        '200':
-          description: URL de autorização OAuth
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  auth_url:
-                    type: string
-                    format: uri
-                  state:
-                    type: string
-
-  /google/callback:
-    post:
-      tags: [Google Calendar]
-      summary: Callback OAuth Google
-      description: Processar callback OAuth e salvar tokens
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [code, state]
-              properties:
-                code:
-                  type: string
-                state:
-                  type: string
-      responses:
-        '200':
-          description: Integração configurada
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GoogleIntegration'
-
-  /google/calendars:
-    get:
-      tags: [Google Calendar]
-      summary: Listar calendários integrados
-      responses:
-        '200':
-          description: Lista de calendários
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/GoogleIntegration'
-
-  /google/events:
-    get:
-      tags: [Google Calendar]
-      summary: Listar eventos do calendário
-      parameters:
-        - name: calendar_id
-          in: query
-          required: true
-          schema:
-            type: string
-        - name: start_date
-          in: query
-          schema:
-            type: string
-            format: date-time
-        - name: end_date
-          in: query
-          schema:
-            type: string
-            format: date-time
-      responses:
-        '200':
-          description: Lista de eventos
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/GoogleEvent'
-
-  # =====================================================
-  # DASHBOARD & METRICS
-  # =====================================================
-  /dashboard/metrics:
-    get:
-      tags: [Dashboard]
-      summary: Métricas do dashboard
-      parameters:
-        - name: start_date
-          in: query
-          schema:
-            type: string
-            format: date
-        - name: end_date
-          in: query
-          schema:
-            type: string
-            format: date
-      responses:
-        '200':
-          description: Métricas do dashboard
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DashboardMetrics'
-
-  /dashboard/conversations-stats:
-    get:
-      tags: [Dashboard]
-      summary: Estatísticas de conversas
-      parameters:
-        - name: period
-          in: query
-          schema:
-            type: string
-            enum: [today, week, month]
-      responses:
-        '200':
-          description: Estatísticas de conversas
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ConversationStats'
-
-  /dashboard/appointments-stats:
-    get:
-      tags: [Dashboard]
-      summary: Estatísticas de agendamentos
-      parameters:
-        - name: period
-          in: query
-          schema:
-            type: string
-            enum: [today, week, month]
-      responses:
-        '200':
-          description: Estatísticas de agendamentos
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AppointmentStats'
-
-  # =====================================================
-  # WHATSAPP INTEGRATION
-  # =====================================================
-  /whatsapp/webhook:
-    post:
-      tags: [WhatsApp]
-      summary: Webhook Meta WhatsApp
-      description: Endpoint para receber webhooks da Meta WhatsApp Business API
-      security: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/WhatsAppWebhook'
-      responses:
-        '200':
-          description: Webhook processado
-        '400':
-          description: Payload inválido
-        '401':
-          description: Verificação webhook falhou
-
-  /whatsapp/conversations:
-    get:
-      tags: [WhatsApp]
-      summary: Conversas WhatsApp
-      description: Lista conversas WhatsApp da clínica
-      responses:
-        '200':
-          description: Lista de conversas WhatsApp
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/WhatsAppConversation'
-
-  /whatsapp/send-message:
-    post:
-      tags: [WhatsApp]
-      summary: Enviar mensagem WhatsApp
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/SendWhatsAppMessageRequest'
-      responses:
-        '201':
-          description: Mensagem enviada
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message_id:
-                    type: string
-                  status:
-                    type: string
-                    example: sent
-
-components:
-  securitySchemes:
-    bearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
-
-  parameters:
-    PageParam:
-      name: page
-      in: query
-      schema:
-        type: integer
-        minimum: 1
-        default: 1
-    
-    LimitParam:
-      name: limit
-      in: query
-      schema:
-        type: integer
-        minimum: 1
-        maximum: 100
-        default: 20
-
-    ClinicIdParam:
-      name: clinic_id
-      in: path
-      required: true
-      schema:
-        type: string
-        format: uuid
-
-    UserIdParam:
-      name: user_id
-      in: path
-      required: true
-      schema:
-        type: string
-        format: uuid
-
-    ConversationIdParam:
-      name: conversation_id
-      in: path
-      required: true
-      schema:
-        type: string
-        format: uuid
-
-    AppointmentIdParam:
-      name: appointment_id
-      in: path
-      required: true
-      schema:
-        type: string
-        format: uuid
-
-  schemas:
-    # Core Entities
-    Clinic:
-      type: object
-      required: [id, name, whatsapp_number, context_json, status]
-      properties:
-        id:
-          type: string
-          format: uuid
-        name:
-          type: string
-          maxLength: 255
-        whatsapp_number:
-          type: string
-          pattern: '^\+[1-9]\d{1,14}$'
-          example: "+5511999999999"
-        meta_webhook_url:
-          type: string
-          format: uri
-        whatsapp_id:
-          type: string
-        context_json:
-          type: object
-          description: JSON de contextualização completo da clínica
-        simulation_mode:
-          type: boolean
-          default: false
-        status:
-          type: string
-          enum: [active, inactive]
-        created_at:
-          type: string
-          format: date-time
-        updated_at:
-          type: string
-          format: date-time
-
-    User:
-      type: object
-      required: [id, name, login, role, clinic_id, status]
-      properties:
-        id:
-          type: string
-          format: uuid
-        name:
-          type: string
-          maxLength: 30
-        login:
-          type: string
-          maxLength: 25
-        role:
-          $ref: '#/components/schemas/UserRole'
-        clinic_id:
-          type: string
-          format: uuid
-        status:
-          type: string
-          enum: [active, inactive]
-        created_at:
-          type: string
-          format: date-time
-        updated_at:
-          type: string
-          format: date-time
-
-    UserRole:
-      type: string
-      enum: [admin_lify, suporte_lify, atendente, gestor, administrador]
-
-    Conversation:
-      type: object
-      required: [id, clinic_id, customer_phone, conversation_type, status, bot_active]
-      properties:
-        id:
-          type: string
-          format: uuid
-        clinic_id:
-          type: string
-          format: uuid
-        customer_phone:
-          type: string
-          pattern: '^\+[1-9]\d{1,14}$'
-        conversation_type:
-          type: string
-          enum: [chatbot, human, mixed]
-        status:
-          type: string
-          enum: [active, paused, closed]
-        bot_active:
-          type: boolean
-        assigned_user_id:
-          type: string
-          format: uuid
-          nullable: true
-        tags:
-          type: array
-          items:
-            type: string
-            format: uuid
-        created_at:
-          type: string
-          format: date-time
-        updated_at:
-          type: string
-          format: date-time
-
-    Message:
-      type: object
-      required: [id, conversation_id, sender_type, content, message_type]
-      properties:
-        id:
-          type: string
-          format: uuid
-        conversation_id:
-          type: string
-          format: uuid
-        sender_type:
-          type: string
-          enum: [customer, bot, human]
-        content:
-          type: string
-        message_type:
-          type: string
-          enum: [text, image, audio, video, document]
-        whatsapp_message_id:
-          type: string
-          nullable: true
-        timestamp:
-          type: string
-          format: date-time
-
-    Appointment:
-      type: object
-      required: [id, clinic_id, customer_info, appointment_type, datetime, duration, status]
-      properties:
-        id:
-          type: string
-          format: uuid
-        clinic_id:
-          type: string
-          format: uuid
-        customer_info:
-          type: object
-          description: Dados do cliente (nome, telefone, etc.)
-        google_event_id:
-          type: string
-          nullable: true
-        appointment_type:
-          type: string
-        datetime:
-          type: string
-          format: date-time
-        duration:
-          type: integer
-          minimum: 1
-          description: Duração em minutos
-        status:
-          type: string
-          enum: [scheduled, confirmed, cancelled, completed, no_show]
-        priority:
-          type: integer
-          minimum: 1
-          maximum: 10
-        confirmation_sent:
-          type: boolean
-        confirmation_received:
-          type: boolean
-        notes:
-          type: string
-          nullable: true
-        created_at:
-          type: string
-          format: date-time
-        updated_at:
-          type: string
-          format: date-time
-
-    GoogleIntegration:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-        clinic_id:
-          type: string
-          format: uuid
-        calendar_id:
-          type: string
-        calendar_name:
-          type: string
-        status:
-          type: string
-          enum: [active, expired, revoked, error]
-        expires_at:
-          type: string
-          format: date-time
-
-    # Request/Response Schemas
-    CreateClinicRequest:
-      type: object
-      required: [name, whatsapp_number, context_json]
-      properties:
-        name:
-          type: string
-          maxLength: 255
-        whatsapp_number:
-          type: string
-          pattern: '^\+[1-9]\d{1,14}$'
-        meta_webhook_url:
-          type: string
-          format: uri
-        whatsapp_id:
-          type: string
-        context_json:
-          type: object
-        simulation_mode:
-          type: boolean
-          default: false
-
-    UpdateClinicRequest:
-      type: object
-      properties:
-        name:
-          type: string
-          maxLength: 255
-        whatsapp_number:
-          type: string
-          pattern: '^\+[1-9]\d{1,14}$'
-        meta_webhook_url:
-          type: string
-          format: uri
-        whatsapp_id:
-          type: string
-        context_json:
-          type: object
-        simulation_mode:
-          type: boolean
-
-    CreateUserRequest:
-      type: object
-      required: [name, login, password, role]
-      properties:
-        name:
-          type: string
-          maxLength: 30
-        login:
-          type: string
-          maxLength: 25
-        password:
-          type: string
-          minLength: 6
-          maxLength: 25
-        role:
-          $ref: '#/components/schemas/UserRole'
-        clinic_id:
-          type: string
-          format: uuid
-          description: Obrigatório apenas para Admin Lify criando usuário de outra clínica
-
-    UpdateUserRequest:
-      type: object
-      properties:
-        name:
-          type: string
-          maxLength: 30
-        login:
-          type: string
-          maxLength: 25
-        password:
-          type: string
-          minLength: 6
-          maxLength: 25
-        role:
-          $ref: '#/components/schemas/UserRole'
-        status:
-          type: string
-          enum: [active, inactive]
-
-    SendMessageRequest:
-      type: object
-      required: [content, message_type]
-      properties:
-        content:
-          type: string
-        message_type:
-          type: string
-          enum: [text, image, audio, video, document]
-          default: text
-        file_url:
-          type: string
-          format: uri
-          description: URL do arquivo para tipos de mídia
-
-    BroadcastMessageRequest:
-      type: object
-      required: [content, recipients]
-      properties:
-        content:
-          type: string
-        recipients:
-          type: array
-          items:
-            type: string
-            description: Números de telefone ou IDs de conversa
-        message_type:
-          type: string
-          enum: [text, image, audio, video, document]
-          default: text
-
-    CreateAppointmentRequest:
-      type: object
-      required: [customer_info, appointment_type, datetime]
-      properties:
-        customer_info:
-          type: object
-          required: [name, phone]
-          properties:
-            name:
-              type: string
-            phone:
-              type: string
-            email:
-              type: string
-              format: email
-        appointment_type:
-          type: string
-        datetime:
-          type: string
-          format: date-time
-        duration:
-          type: integer
-          minimum: 1
-          default: 30
-        notes:
-          type: string
-
-    UpdateAppointmentRequest:
-      type: object
-      properties:
-        customer_info:
-          type: object
-        appointment_type:
-          type: string
-        datetime:
-          type: string
-          format: date-time
-        duration:
-          type: integer
-          minimum: 1
-        status:
-          type: string
-          enum: [scheduled, confirmed, cancelled, completed, no_show]
-        notes:
-          type: string
-
-    # Dashboard & Metrics
-    DashboardMetrics:
-      type: object
-      properties:
-        conversations:
-          type: object
-          properties:
-            new_conversations:
-              type: integer
-            ongoing_conversations:
-              type: integer
-            awaiting_response:
-              type: integer
-            human_takeovers:
-              type: integer
-            avg_response_time_seconds:
-              type: number
-            auto_resolution_rate:
-              type: number
-              minimum: 0
-              maximum: 1
-        appointments:
-          type: object
-          properties:
-            today:
-              type: integer
-            this_week:
-              type: integer
-            this_month:
-              type: integer
-            total_events:
-              type: integer
-
-    ConversationStats:
-      type: object
-      properties:
-        total_conversations:
-          type: integer
-        by_status:
-          type: object
-          properties:
-            active:
-              type: integer
-            paused:
-              type: integer
-            closed:
-              type: integer
-        by_type:
-          type: object
-          properties:
-            chatbot:
-              type: integer
-            human:
-              type: integer
-            mixed:
-              type: integer
-        by_tags:
-          type: array
-          items:
-            type: object
-            properties:
-              tag_name:
-                type: string
-              count:
-                type: integer
-
-    AppointmentStats:
-      type: object
-      properties:
-        total_appointments:
-          type: integer
-        by_status:
-          type: object
-          properties:
-            scheduled:
-              type: integer
-            confirmed:
-              type: integer
-            cancelled:
-              type: integer
-            completed:
-              type: integer
-            no_show:
-              type: integer
-        by_type:
-          type: array
-          items:
-            type: object
-            properties:
-              type_name:
-                type: string
-              count:
-                type: integer
-
-    # WhatsApp Schemas
-    WhatsAppWebhook:
-      type: object
-      properties:
-        object:
-          type: string
-        entry:
-          type: array
-          items:
-            type: object
-
-    WhatsAppConversation:
-      type: object
-      properties:
-        id:
-          type: string
-        phone_number:
-          type: string
-        display_name:
-          type: string
-        last_message:
-          type: object
-        status:
-          type: string
-
-    SendWhatsAppMessageRequest:
-      type: object
-      required: [to, content]
-      properties:
-        to:
-          type: string
-          description: Número do destinatário
-        content:
-          type: string
-        message_type:
-          type: string
-          enum: [text, image, audio, video, document]
-          default: text
-
-    GoogleEvent:
-      type: object
-      properties:
-        id:
-          type: string
-        summary:
-          type: string
-        start:
-          type: object
-        end:
-          type: object
-        status:
-          type: string
-
-    ClinicContextReport:
-      type: object
-      description: Relatório executivo das configurações JSON da clínica
-      properties:
-        clinic_info:
-          type: object
-        ai_agent_config:
-          type: object
-        business_hours:
-          type: object
-        appointment_types:
-          type: array
-          items:
-            type: object
-        professionals:
-          type: array
-          items:
-            type: object
-
-    # Common Schemas
-    Pagination:
-      type: object
-      properties:
-        page:
-          type: integer
-        limit:
-          type: integer
-        total:
-          type: integer
-        pages:
-          type: integer
-        has_next:
-          type: boolean
-        has_prev:
-          type: boolean
-
-    Error:
-      type: object
-      properties:
-        type:
-          type: string
-          format: uri
-          example: https://api.atendeai.com.br/errors/validation-error
-        title:
-          type: string
-          example: Erro de validação
-        status:
-          type: integer
-          example: 422
-        detail:
-          type: string
-          example: O campo 'email' é obrigatório
-        instance:
-          type: string
-          format: uri
-          example: /users/123
-        errors:
-          type: array
-          items:
-            type: object
-            properties:
-              field:
-                type: string
-              message:
-                type: string
-
-  responses:
-    Unauthorized:
-      description: Token de acesso inválido ou expirado
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-      headers:
-        WWW-Authenticate:
-          schema:
-            type: string
-            example: Bearer error="invalid_token"
-
-    Forbidden:
-      description: Usuário não tem permissão para esta operação
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-
-    NotFound:
-      description: Recurso não encontrado
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-
-    ValidationError:
-      description: Erro de validação dos dados de entrada
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-
-    RateLimit:
-      description: Limite de requisições excedido
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-      headers:
-        Retry-After:
-          schema:
-            type: integer
-            example: 60
-        X-RateLimit-Limit:
-          schema:
-            type: integer
-        X-RateLimit-Remaining:
-          schema:
-            type: integer
-        X-RateLimit-Reset:
-          schema:
-            type: integer
-
-tags:
-  - name: Authentication
-    description: Autenticação e autorização de usuários
-  - name: Clinics
-    description: Gestão de clínicas multiclínicas
-  - name: Users
-    description: Gestão de usuários e perfis
-  - name: Conversations
-    description: Conversas WhatsApp e controle chatbot
-  - name: Appointments
-    description: Agendamentos e sincronização calendário
-  - name: Google Calendar
-    description: Integração OAuth Google Calendar
-  - name: Dashboard
-    description: Métricas e estatísticas operacionais
-  - name: WhatsApp
-    description: Integração WhatsApp Business API
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "AtendeAí 2.0 API",
+    "version": "2.0.0",
+    "description": "API para sistema de gestão de clínicas com agenda própria"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000",
+      "description": "Development server"
+    }
+  ],
+  "paths": {
+    "/api/appointments": {
+      "get": {
+        "summary": "Listar agendamentos",
+        "parameters": [
+          {
+            "name": "clinic_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "start_date",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "end_date",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de agendamentos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Appointment"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Criar agendamento",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAppointmentRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Agendamento criado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Appointment"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/appointments/{id}": {
+      "put": {
+        "summary": "Atualizar agendamento",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAppointmentRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Agendamento atualizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Appointment"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Excluir agendamento",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Agendamento excluído"
+          }
+        }
+      }
+    },
+    "/api/appointments/availability": {
+      "get": {
+        "summary": "Obter horários disponíveis",
+        "parameters": [
+          {
+            "name": "clinic_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "date",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Horários disponíveis",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "start_time": {
+                        "type": "string",
+                        "format": "time"
+                      },
+                      "end_time": {
+                        "type": "string",
+                        "format": "time"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Appointment": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "clinic_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "user_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "patient_name": {
+            "type": "string"
+          },
+          "patient_phone": {
+            "type": "string"
+          },
+          "patient_email": {
+            "type": "string"
+          },
+          "appointment_date": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "duration_minutes": {
+            "type": "integer"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "scheduled",
+              "confirmed",
+              "cancelled",
+              "completed"
+            ]
+          },
+          "notes": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "CreateAppointmentRequest": {
+        "type": "object",
+        "required": [
+          "clinic_id",
+          "patient_name",
+          "appointment_date"
+        ],
+        "properties": {
+          "clinic_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "patient_name": {
+            "type": "string"
+          },
+          "patient_phone": {
+            "type": "string"
+          },
+          "patient_email": {
+            "type": "string"
+          },
+          "appointment_date": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "duration_minutes": {
+            "type": "integer",
+            "default": 30
+          },
+          "notes": {
+            "type": "string"
+          }
+        }
+      },
+      "UpdateAppointmentRequest": {
+        "type": "object",
+        "properties": {
+          "patient_name": {
+            "type": "string"
+          },
+          "patient_phone": {
+            "type": "string"
+          },
+          "patient_email": {
+            "type": "string"
+          },
+          "appointment_date": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "duration_minutes": {
+            "type": "integer"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "scheduled",
+              "confirmed",
+              "cancelled",
+              "completed"
+            ]
+          },
+          "notes": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

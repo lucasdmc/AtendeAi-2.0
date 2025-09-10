@@ -1,0 +1,7 @@
+requirement_id,description,component,status,priority
+REQ-001,Remover integrações Google Auth,googleCalendarService.ts,removed,high
+REQ-002,Remover integrações Google Calendar,googleCalendarService.ts,removed,high
+REQ-003,Criar tela de Agenda própria,src/pages/Agenda.tsx,new,high
+REQ-004,Corrigir erros de build,Layout.tsx,fix,high
+REQ-005,Configurar Vite para frontend,vite.config.ts,configured,medium
+REQ-006,Testar build completo,package.json,test,medium

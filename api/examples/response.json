@@ -1,0 +1,8 @@
+{
+  "example": "response",
+  "data": {
+    "field1": "value1",
+    "field2": "value2"
+  },
+  "status": "success"
+}

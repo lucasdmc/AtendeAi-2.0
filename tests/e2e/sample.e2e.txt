@@ -1,0 +1,5 @@
+Describe: e2e example
+It: should complete full user journey
+Given: user is on homepage
+When: user performs complete workflow
+Then: all steps complete successfully

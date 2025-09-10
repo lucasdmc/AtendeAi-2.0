@@ -1,0 +1,5 @@
+Describe: integration example
+It: should pass
+Given: system is integrated
+When: external service is called
+Then: response is received correctly

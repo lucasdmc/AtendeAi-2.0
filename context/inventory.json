@@ -1,0 +1,37 @@
+{
+  "last_updated": "2025-01-09T12:00:00.000Z",
+  "project": "AtendeAí 2.0",
+  "version": "2.0.0",
+  "status": "ready_for_deploy",
+  "components": {
+    "frontend": {
+      "status": "completed",
+      "build_status": "success",
+      "files": [
+        "src/pages/Agenda.tsx",
+        "src/services/appointmentService.ts",
+        "src/components/Layout.tsx",
+        "src/App.tsx",
+        "src/components/AppSidebar.tsx"
+      ]
+    },
+    "backend": {
+      "status": "completed",
+      "migrations": [
+        "framework/db/migrations/004_remove_google_add_agenda.sql"
+      ]
+    },
+    "database": {
+      "status": "pending_migration",
+      "tables": [
+        "appointments",
+        "appointment_availability"
+      ]
+    }
+  },
+  "removed_components": [
+    "googleCalendarService.ts",
+    "Google Auth integration",
+    "Google Calendar integration"
+  ]
+}

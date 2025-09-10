@@ -1,0 +1,34 @@
+---
+version: "1.0"
+created_at: "2025-01-27T14:30:00.000Z"
+mode: "mvp|incremental"
+scope:
+  in_scope: []
+  out_of_scope: []
+domain_model:
+  entities: []
+  relationships: []
+api_high_level:
+  style: "HTTP REST"
+  endpoints: []
+database_high_level:
+  tables: []
+  relationships: []
+non_functional_requirements:
+  performance: []
+  security: []
+  scalability: []
+  reliability: []
+acceptance_criteria:
+  functional: []
+  non_functional: []
+test_plan:
+  unit_tests: []
+  integration_tests: []
+  e2e_tests: []
+  contract_tests: []
+release_plan:
+  phases: []
+  dependencies: []
+  risks: []
+---

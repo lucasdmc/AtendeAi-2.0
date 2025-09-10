@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Clock, MapPin, User, AlertCircle, RefreshCw, Plus, Filter } from 'lucide-react';
+import { Calendar, Clock, MapPin, User, AlertCircle, RefreshCw, Plus, Filter, Phone, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -12,76 +12,66 @@ import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
-import { googleCalendarService } from '@/services/googleCalendarService';
-import { appointmentService } from '@/services/appointmentService';
+import { appointmentService, Appointment, CreateAppointmentRequest } from '@/services/appointmentService';
+import { useApp } from '@/contexts/AppContext';
 
-interface CalendarEvent {
-  id: string;
-  google_event_id: string;
-  integration_id: string;
-  title: string;
-  description?: string;
-  start_time: string;
-  end_time: string;
-  all_day: boolean;
-  location?: string;
-  attendees: string[];
-  status: 'confirmed' | 'tentative' | 'cancelled';
-  created_at: string;
-  updated_at: string;
-}
-
-interface GoogleIntegration {
-  id: string;
-  user_id: string;
-  clinic_id: string;
-  google_calendar_id: string;
-  calendar_name?: string;
-  sync_enabled: boolean;
-  last_sync: string;
-  status: 'active' | 'expired' | 'error';
-}
+// Removed Google Calendar interfaces - using only internal appointment system
 
 const Appointments: React.FC = () => {
-  const [events, setEvents] = useState<CalendarEvent[]>([]);
-  const [integration, setIntegration] = useState<GoogleIntegration | null>(null);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
-  const [syncLoading, setSyncLoading] = useState(false);
   const [selectedDate, setSelectedDate] = useState<string>('');
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [searchTerm, setSearchTerm] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [newEventData, setNewEventData] = useState({
-    title: '',
-    description: '',
-    start_time: '',
-    end_time: '',
-    location: '',
-    attendees: ''
+  const [newAppointmentData, setNewAppointmentData] = useState<CreateAppointmentRequest>({
+    patient_name: '',
+    patient_phone: '',
+    patient_email: '',
+    appointment_type: '',
+    appointment_date: '',
+    duration_minutes: 30,
+    notes: ''
+  });
+  const [stats, setStats] = useState({
+    total: 0,
+    scheduled: 0,
+    confirmed: 0,
+    completed: 0,
+    cancelled: 0,
+    today: 0,
+    this_week: 0,
+    this_month: 0
   });
 
   const { toast } = useToast();
   const { user } = useAuth();
+  const { state: { selectedClinic } } = useApp();
 
   useEffect(() => {
-    loadData();
-  }, []);
-
-  useEffect(() => {
-    if (integration) {
-      loadEvents();
+    if (selectedClinic) {
+      loadData();
     }
-  }, [integration, selectedDate, statusFilter]);
+  }, [selectedClinic]);
+
+  useEffect(() => {
+    if (selectedClinic) {
+      loadAppointments();
+    }
+  }, [selectedClinic, selectedDate, statusFilter]);
 
   const loadData = async () => {
     try {
-      if (!user?.id) return;
+      if (!selectedClinic) return;
 
-      // Load user's Google Calendar integration
-      const integrations = await googleCalendarService.getUserIntegrations(user.id);
-      if (integrations.length > 0) {
-        setIntegration(integrations[0]);
-      }
+      setLoading(true);
+      
+      // Load appointments and stats in parallel
+      const [appointmentsData, statsData] = await Promise.all([
+        loadAppointments(),
+        loadStats()
+      ]);
+      
     } catch (error) {
       console.error('Error loading data:', error);
       toast({
@@ -94,8 +84,8 @@ const Appointments: React.FC = () => {
     }
   };
 
-  const loadEvents = async () => {
-    if (!integration) return;
+  const loadAppointments = async () => {
+    if (!selectedClinic) return;
 
     try {
       setLoading(true);
@@ -105,87 +95,90 @@ const Appointments: React.FC = () => {
       const endDate = new Date(startDate);
       endDate.setDate(endDate.getDate() + 30); // Next 30 days
 
-      const eventsList = await googleCalendarService.getEvents(integration.id, {
-        start_date: `${startDate}T00:00:00Z`,
-        end_date: endDate.toISOString(),
-        max_results: 100
+      const response = await appointmentService.list({
+        date_from: `${startDate}T00:00:00Z`,
+        date_to: endDate.toISOString(),
+        status: statusFilter || undefined,
+        search: searchTerm || undefined,
+        limit: 100
       });
 
-      setEvents(eventsList);
+      setAppointments(response.data);
+      return response.data;
     } catch (error) {
-      console.error('Error loading events:', error);
+      console.error('Error loading appointments:', error);
       toast({
         title: "Erro",
         description: "Erro ao carregar agendamentos",
         variant: "destructive"
       });
+      return [];
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSync = async () => {
-    if (!integration) return;
+  const loadStats = async () => {
+    if (!selectedClinic) return;
 
     try {
-      setSyncLoading(true);
-      await googleCalendarService.syncCalendar(integration.id);
-      await loadEvents();
-      
-      toast({
-        title: "Sincronizado",
-        description: "Agendamentos sincronizados com sucesso"
+      const statsData = await appointmentService.getStats({
+        date_from: new Date().toISOString().split('T')[0] + 'T00:00:00Z'
       });
-    } catch (error: any) {
-      console.error('Error syncing calendar:', error);
-      toast({
-        title: "Erro",
-        description: error.message || "Erro ao sincronizar agendamentos",
-        variant: "destructive"
-      });
-    } finally {
-      setSyncLoading(false);
+      setStats(statsData);
+    } catch (error) {
+      console.error('Error loading stats:', error);
     }
   };
 
-  const handleCreateEvent = async (e: React.FormEvent) => {
+  const handleRefresh = async () => {
+    try {
+      await loadData();
+      toast({
+        title: "Atualizado",
+        description: "Agendamentos atualizados com sucesso"
+      });
+    } catch (error: any) {
+      console.error('Error refreshing appointments:', error);
+      toast({
+        title: "Erro",
+        description: error.message || "Erro ao atualizar agendamentos",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleCreateAppointment = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!integration) return;
+    if (!selectedClinic) return;
 
     try {
-      if (!newEventData.title || !newEventData.start_time || !newEventData.end_time) {
+      if (!newAppointmentData.patient_name || !newAppointmentData.patient_phone || 
+          !newAppointmentData.appointment_type || !newAppointmentData.appointment_date) {
         toast({
           title: "Erro",
-          description: "Título, data/hora de início e fim são obrigatórios",
+          description: "Nome do paciente, telefone, tipo e data do agendamento são obrigatórios",
           variant: "destructive"
         });
         return;
       }
 
-      const attendeesList = newEventData.attendees
-        ? newEventData.attendees.split(',').map(email => email.trim()).filter(email => email)
-        : [];
-
-      await googleCalendarService.createEvent(integration.id, {
-        title: newEventData.title,
-        description: newEventData.description || undefined,
-        start_time: newEventData.start_time,
-        end_time: newEventData.end_time,
-        location: newEventData.location || undefined,
-        attendees: attendeesList
+      await appointmentService.create({
+        ...newAppointmentData,
+        clinic_id: selectedClinic
       });
 
       setIsDialogOpen(false);
       resetForm();
-      await loadEvents();
+      await loadData();
       
       toast({
         title: "Sucesso",
         description: "Agendamento criado com sucesso"
       });
     } catch (error: any) {
-      console.error('Error creating event:', error);
+      console.error('Error creating appointment:', error);
       toast({
         title: "Erro",
         description: error.message || "Erro ao criar agendamento",
@@ -195,23 +188,30 @@ const Appointments: React.FC = () => {
   };
 
   const resetForm = () => {
-    setNewEventData({
-      title: '',
-      description: '',
-      start_time: '',
-      end_time: '',
-      location: '',
-      attendees: ''
+    setNewAppointmentData({
+      patient_name: '',
+      patient_phone: '',
+      patient_email: '',
+      appointment_type: '',
+      appointment_date: '',
+      duration_minutes: 30,
+      notes: ''
     });
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
+      case 'scheduled':
+        return 'bg-blue-100 text-blue-800';
       case 'confirmed':
         return 'bg-green-100 text-green-800';
-      case 'tentative':
+      case 'in_progress':
         return 'bg-yellow-100 text-yellow-800';
+      case 'completed':
+        return 'bg-gray-100 text-gray-800';
       case 'cancelled':
+        return 'bg-red-100 text-red-800';
+      case 'no_show':
         return 'bg-red-100 text-red-800';
       default:
         return 'bg-gray-100 text-gray-800';
@@ -220,12 +220,18 @@ const Appointments: React.FC = () => {
 
   const getStatusLabel = (status: string) => {
     switch (status) {
+      case 'scheduled':
+        return 'Agendado';
       case 'confirmed':
         return 'Confirmado';
-      case 'tentative':
-        return 'Tentativo';
+      case 'in_progress':
+        return 'Em andamento';
+      case 'completed':
+        return 'Concluído';
       case 'cancelled':
         return 'Cancelado';
+      case 'no_show':
+        return 'Não compareceu';
       default:
         return 'Desconhecido';
     }
@@ -242,36 +248,37 @@ const Appointments: React.FC = () => {
     };
   };
 
-  const filteredEvents = events.filter(event => {
-    const matchesStatus = !statusFilter || event.status === statusFilter;
+  const filteredAppointments = appointments.filter(appointment => {
+    const matchesStatus = !statusFilter || appointment.status === statusFilter;
     const matchesSearch = !searchTerm || 
-      event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      event.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      event.location?.toLowerCase().includes(searchTerm.toLowerCase());
+      appointment.patient_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      appointment.patient_phone.includes(searchTerm) ||
+      appointment.patient_email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      appointment.appointment_type.toLowerCase().includes(searchTerm.toLowerCase());
     
     return matchesStatus && matchesSearch;
   });
 
-  const groupEventsByDate = (eventsList: CalendarEvent[]) => {
-    const grouped: { [key: string]: CalendarEvent[] } = {};
+  const groupAppointmentsByDate = (appointmentsList: Appointment[]) => {
+    const grouped: { [key: string]: Appointment[] } = {};
     
-    eventsList.forEach(event => {
-      const date = new Date(event.start_time).toLocaleDateString('pt-BR');
+    appointmentsList.forEach(appointment => {
+      const date = new Date(appointment.appointment_date).toLocaleDateString('pt-BR');
       if (!grouped[date]) {
         grouped[date] = [];
       }
-      grouped[date].push(event);
+      grouped[date].push(appointment);
     });
 
-    // Sort dates and events within each date
+    // Sort dates and appointments within each date
     Object.keys(grouped).forEach(date => {
-      grouped[date].sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime());
+      grouped[date].sort((a, b) => new Date(a.appointment_date).getTime() - new Date(b.appointment_date).getTime());
     });
 
     return grouped;
   };
 
-  if (loading && !integration) {
+  if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
@@ -282,32 +289,30 @@ const Appointments: React.FC = () => {
     );
   }
 
-  if (!integration) {
+  if (!selectedClinic) {
     return (
       <div className="container mx-auto p-6">
         <div className="flex items-center space-x-3 mb-6">
           <Calendar className="h-8 w-8 text-primary" />
           <div>
             <h1 className="text-3xl font-bold">Agendamentos</h1>
-            <p className="text-muted-foreground">Visualização de eventos do Google Calendar</p>
+            <p className="text-muted-foreground">Sistema de agendamentos interno</p>
           </div>
         </div>
 
         <Alert>
           <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Google Calendar não conectado</AlertTitle>
+          <AlertTitle>Nenhuma clínica selecionada</AlertTitle>
           <AlertDescription>
-            Para visualizar agendamentos, primeiro conecte sua conta do Google Calendar na tela de Calendários.
+            Selecione uma clínica para visualizar os agendamentos.
           </AlertDescription>
         </Alert>
       </div>
     );
   }
 
-  const groupedEvents = groupEventsByDate(filteredEvents);
-  const totalEvents = filteredEvents.length;
-  const confirmedEvents = filteredEvents.filter(e => e.status === 'confirmed').length;
-  const tentativeEvents = filteredEvents.filter(e => e.status === 'tentative').length;
+  const groupedAppointments = groupAppointmentsByDate(filteredAppointments);
+  const totalAppointments = filteredAppointments.length;
 
   return (
     <div className="container mx-auto p-6">

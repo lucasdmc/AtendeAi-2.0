@@ -1,0 +1,31 @@
+{
+  "version": "1.0",
+  "created_at": "2025-01-27T14:30:00.000Z",
+  "task_id": "T-20250127-001",
+  "status": "framework_updated",
+  "agents_executed": [],
+  "current_agent": null,
+  "next_actions": ["handoff: discovery_agent"],
+  "metrics": {
+    "orchestrator_cycles_total": 0,
+    "orchestrator_blocks_total": 0,
+    "tests_coverage_lines": 0,
+    "acceptance_pass_ratio": 0
+  },
+  "artifacts_created": [
+    "context/state.journal.ndjson",
+    "context/inventory.json",
+    "context/housekeeping.manifest.json",
+    "docs/templates/system_spec.frontmatter.yml",
+    "docs/templates/acceptance_report.md",
+    "docs/templates/traceability.csv",
+    "Makefile",
+    "tests/unit/sample.test.txt",
+    "tests/integration/sample.test.txt",
+    "tests/e2e/sample.e2e.txt",
+    "perf/k6_smoke.js",
+    "api/examples/request.json",
+    "api/examples/response.json"
+  ],
+  "framework_status": "ready_for_execution"
+}

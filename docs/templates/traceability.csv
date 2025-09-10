@@ -1,0 +1,4 @@
+req_id,req_summary,test_id,test_summary,status,agent,notes
+R-001,Requisito exemplo 1,T-001,Teste exemplo 1,implemented,expert_developer,Implementado com sucesso
+R-002,Requisito exemplo 2,T-002,Teste exemplo 2,pending,test_engineer,Aguardando implementação
+R-003,Requisito exemplo 3,T-003,Teste exemplo 3,blocked,expert_developer,Dependência externa

@@ -1,0 +1,5 @@
+Describe: unit example
+It: should pass
+Given: initial state
+When: action is performed
+Then: expected result occurs
