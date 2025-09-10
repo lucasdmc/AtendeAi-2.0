@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
@@ -66,11 +67,18 @@ export default function Clinics() {
   const [clinics, setClinics] = useState<Clinic[]>(mockClinics)
   const [searchTerm, setSearchTerm] = useState("")
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  const [editingClinic, setEditingClinic] = useState<Clinic | null>(null)
 
   const filteredClinics = clinics.filter(clinic =>
     clinic.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     clinic.address.toLowerCase().includes(searchTerm.toLowerCase())
   )
+
+  const handleEdit = (clinic: Clinic) => {
+    setEditingClinic(clinic)
+    setIsEditDialogOpen(true)
+  }
 
   return (
     <div className="space-y-6">
@@ -239,19 +247,19 @@ export default function Clinics() {
                     </span>
                   </TableCell>
                   
-                  <TableCell className="text-right">
-                    <div className="flex justify-end space-x-1">
-                      <Button variant="ghost" size="sm">
-                        <Settings className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="sm">
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive">
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
+                   <TableCell className="text-right">
+                     <div className="flex justify-end space-x-1">
+                       <Button variant="ghost" size="sm">
+                         <Settings className="h-4 w-4" />
+                       </Button>
+                       <Button variant="ghost" size="sm" onClick={() => handleEdit(clinic)}>
+                         <Edit className="h-4 w-4" />
+                       </Button>
+                       <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive">
+                         <Trash2 className="h-4 w-4" />
+                       </Button>
+                     </div>
+                   </TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -270,6 +278,80 @@ export default function Clinics() {
           </CardContent>
         </Card>
       )}
+
+      {/* Modal de Edição */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>Editar Clínica</DialogTitle>
+            <DialogDescription>
+              Altere as informações da clínica
+            </DialogDescription>
+          </DialogHeader>
+          {editingClinic && (
+            <form className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-name">Nome da Clínica</Label>
+                  <Input id="edit-name" defaultValue={editingClinic.name} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-phone">Telefone</Label>
+                  <Input id="edit-phone" defaultValue={editingClinic.phone} />
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="edit-address">Endereço</Label>
+                <Input id="edit-address" defaultValue={editingClinic.address} />
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-email">E-mail</Label>
+                  <Input id="edit-email" type="email" defaultValue={editingClinic.email} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-whatsapp">WhatsApp</Label>
+                  <Input id="edit-whatsapp" defaultValue={editingClinic.whatsappNumber} />
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="edit-webhook">Meta Webhook (Opcional)</Label>
+                <Input id="edit-webhook" defaultValue={editingClinic.metaWebhook || ""} />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="edit-description">Descrição</Label>
+                <Textarea id="edit-description" defaultValue={editingClinic.description || ""} />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit-status">Status</Label>
+                <Select defaultValue={editingClinic.status}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="active">Ativa</SelectItem>
+                    <SelectItem value="inactive">Inativa</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="flex justify-end space-x-2">
+                <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+                  Cancelar
+                </Button>
+                <Button type="submit">
+                  Salvar Alterações
+                </Button>
+              </div>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

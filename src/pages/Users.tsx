@@ -103,6 +103,8 @@ export default function Users() {
   const [roleFilter, setRoleFilter] = useState<string>("all")
   const [statusFilter, setStatusFilter] = useState<string>("all")
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  const [editingUser, setEditingUser] = useState<User | null>(null)
 
   const filteredUsers = users.filter(user => {
     const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -122,6 +124,11 @@ export default function Users() {
     if (!lastLogin) return "Nunca"
     const date = new Date(lastLogin)
     return date.toLocaleDateString('pt-BR') + ' ' + date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+  }
+
+  const handleEdit = (user: User) => {
+    setEditingUser(user)
+    setIsEditDialogOpen(true)
   }
 
   return (
@@ -324,16 +331,16 @@ export default function Users() {
                     </div>
                   </TableCell>
                   
-                  <TableCell className="text-right">
-                    <div className="flex justify-end space-x-1">
-                      <Button variant="ghost" size="sm">
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive">
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
+                   <TableCell className="text-right">
+                     <div className="flex justify-end space-x-1">
+                       <Button variant="ghost" size="sm" onClick={() => handleEdit(user)}>
+                         <Edit className="h-4 w-4" />
+                       </Button>
+                       <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive">
+                         <Trash2 className="h-4 w-4" />
+                       </Button>
+                     </div>
+                   </TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -352,6 +359,88 @@ export default function Users() {
           </CardContent>
         </Card>
       )}
+
+      {/* Modal de Edição */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Editar Usuário</DialogTitle>
+            <DialogDescription>
+              Altere as informações do usuário
+            </DialogDescription>
+          </DialogHeader>
+          {editingUser && (
+            <form className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-name">Nome Completo</Label>
+                  <Input id="edit-name" defaultValue={editingUser.name} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-email">E-mail</Label>
+                  <Input id="edit-email" type="email" defaultValue={editingUser.email} />
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-phone">Telefone</Label>
+                  <Input id="edit-phone" defaultValue={editingUser.phone || ""} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-role">Função</Label>
+                  <Select defaultValue={editingUser.role}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="admin_lify">Admin Lify</SelectItem>
+                      <SelectItem value="clinic_admin">Admin Clínica</SelectItem>
+                      <SelectItem value="attendant">Atendente</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="edit-clinic">Clínica</Label>
+                <Select defaultValue={editingUser.clinicId}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1">Clínica Saúde Total</SelectItem>
+                    <SelectItem value="2">Centro Médico Bem Estar</SelectItem>
+                    <SelectItem value="3">Clínica Nova Vida</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit-status">Status</Label>
+                <Select defaultValue={editingUser.status}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="active">Ativo</SelectItem>
+                    <SelectItem value="inactive">Inativo</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="flex justify-end space-x-2">
+                <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+                  Cancelar
+                </Button>
+                <Button type="submit">
+                  Salvar Alterações
+                </Button>
+              </div>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
