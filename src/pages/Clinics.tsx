@@ -105,41 +105,19 @@ export default function Clinics() {
               </DialogDescription>
             </DialogHeader>
             <form className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Nome da Clínica</Label>
-                  <Input id="name" placeholder="Digite o nome da clínica" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Telefone</Label>
-                  <Input id="phone" placeholder="(11) 1234-5678" />
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor="name">Nome da Clínica</Label>
+                <Input id="name" placeholder="Digite o nome da clínica" />
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="address">Endereço</Label>
-                <Input id="address" placeholder="Endereço completo da clínica" />
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="email">E-mail</Label>
-                  <Input id="email" type="email" placeholder="contato@clinica.com" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="whatsapp">WhatsApp</Label>
-                  <Input id="whatsapp" placeholder="(11) 99999-9999" />
-                </div>
+                <Label htmlFor="whatsapp">WhatsApp</Label>
+                <Input id="whatsapp" placeholder="(11) 99999-9999" />
               </div>
               
               <div className="space-y-2">
                 <Label htmlFor="webhook">Meta Webhook (Opcional)</Label>
                 <Input id="webhook" placeholder="https://api.clinica.com/webhook" />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="description">Descrição</Label>
-                <Textarea id="description" placeholder="Descrição da clínica" />
               </div>
               
               <div className="flex justify-end space-x-2">
@@ -290,54 +268,19 @@ export default function Clinics() {
           </DialogHeader>
           {editingClinic && (
             <form className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="edit-name">Nome da Clínica</Label>
-                  <Input id="edit-name" defaultValue={editingClinic.name} />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="edit-phone">Telefone</Label>
-                  <Input id="edit-phone" defaultValue={editingClinic.phone} />
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-name">Nome da Clínica</Label>
+                <Input id="edit-name" defaultValue={editingClinic.name} />
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="edit-address">Endereço</Label>
-                <Input id="edit-address" defaultValue={editingClinic.address} />
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="edit-email">E-mail</Label>
-                  <Input id="edit-email" type="email" defaultValue={editingClinic.email} />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="edit-whatsapp">WhatsApp</Label>
-                  <Input id="edit-whatsapp" defaultValue={editingClinic.whatsappNumber} />
-                </div>
+                <Label htmlFor="edit-whatsapp">WhatsApp</Label>
+                <Input id="edit-whatsapp" defaultValue={editingClinic.whatsappNumber} />
               </div>
               
               <div className="space-y-2">
                 <Label htmlFor="edit-webhook">Meta Webhook (Opcional)</Label>
                 <Input id="edit-webhook" defaultValue={editingClinic.metaWebhook || ""} />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="edit-description">Descrição</Label>
-                <Textarea id="edit-description" defaultValue={editingClinic.description || ""} />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="edit-status">Status</Label>
-                <Select defaultValue={editingClinic.status}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="active">Ativa</SelectItem>
-                    <SelectItem value="inactive">Inativa</SelectItem>
-                  </SelectContent>
-                </Select>
               </div>
               
               <div className="flex justify-end space-x-2">
