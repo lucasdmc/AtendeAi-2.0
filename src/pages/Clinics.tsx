@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 
 interface Clinic {
   id: string
@@ -158,75 +159,105 @@ export default function Clinics() {
         </div>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {filteredClinics.map((clinic) => (
-          <Card key={clinic.id} className="hover:shadow-md transition-shadow">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <div className="space-y-1">
-                <CardTitle className="text-lg">{clinic.name}</CardTitle>
-                <div className="flex items-center space-x-2">
-                  <Badge 
-                    variant={clinic.status === 'active' ? 'default' : 'secondary'}
-                    className={clinic.status === 'active' 
-                      ? 'bg-green-100 text-green-800 border-green-200' 
-                      : 'bg-gray-100 text-gray-800 border-gray-200'
-                    }
-                  >
-                    {clinic.status === 'active' ? 'Ativa' : 'Inativa'}
-                  </Badge>
-                  <Badge variant="outline">
-                    {clinic.usersCount} usuários
-                  </Badge>
-                </div>
-              </div>
-              <Building2 className="h-8 w-8 text-muted-foreground" />
-            </CardHeader>
-            
-            <CardContent className="space-y-4">
-              {clinic.description && (
-                <p className="text-sm text-muted-foreground">
-                  {clinic.description}
-                </p>
-              )}
-              
-              <div className="space-y-2">
-                <div className="flex items-center space-x-2 text-sm">
-                  <MapPin className="h-4 w-4 text-muted-foreground" />
-                  <span className="truncate">{clinic.address}</span>
-                </div>
-                
-                <div className="flex items-center space-x-2 text-sm">
-                  <Phone className="h-4 w-4 text-muted-foreground" />
-                  <span>{clinic.phone}</span>
-                </div>
-                
-                <div className="flex items-center space-x-2 text-sm">
-                  <Mail className="h-4 w-4 text-muted-foreground" />
-                  <span className="truncate">{clinic.email}</span>
-                </div>
-              </div>
-              
-              <div className="flex items-center justify-between pt-4 border-t">
-                <span className="text-xs text-muted-foreground">
-                  Criada em {new Date(clinic.createdAt).toLocaleDateString('pt-BR')}
-                </span>
-                
-                <div className="flex space-x-1">
-                  <Button variant="ghost" size="sm">
-                    <Settings className="h-4 w-4" />
-                  </Button>
-                  <Button variant="ghost" size="sm">
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                  <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive">
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      <Card>
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Clínica</TableHead>
+                <TableHead>Endereço</TableHead>
+                <TableHead>Contato</TableHead>
+                <TableHead>WhatsApp</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Usuários</TableHead>
+                <TableHead>Criada em</TableHead>
+                <TableHead className="text-right">Ações</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredClinics.map((clinic) => (
+                <TableRow key={clinic.id} className="hover:bg-muted/50">
+                  <TableCell>
+                    <div className="space-y-1">
+                      <div className="font-medium flex items-center space-x-2">
+                        <Building2 className="h-4 w-4 text-muted-foreground" />
+                        <span>{clinic.name}</span>
+                      </div>
+                      {clinic.description && (
+                        <div className="text-sm text-muted-foreground line-clamp-2">
+                          {clinic.description}
+                        </div>
+                      )}
+                    </div>
+                  </TableCell>
+                  
+                  <TableCell>
+                    <div className="flex items-start space-x-2 max-w-xs">
+                      <MapPin className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+                      <span className="text-sm line-clamp-2">{clinic.address}</span>
+                    </div>
+                  </TableCell>
+                  
+                  <TableCell>
+                    <div className="space-y-1">
+                      <div className="flex items-center space-x-2 text-sm">
+                        <Phone className="h-3 w-3 text-muted-foreground" />
+                        <span>{clinic.phone}</span>
+                      </div>
+                      <div className="flex items-center space-x-2 text-sm">
+                        <Mail className="h-3 w-3 text-muted-foreground" />
+                        <span className="truncate max-w-[150px]">{clinic.email}</span>
+                      </div>
+                    </div>
+                  </TableCell>
+                  
+                  <TableCell>
+                    <span className="text-sm">{clinic.whatsappNumber}</span>
+                  </TableCell>
+                  
+                  <TableCell>
+                    <Badge 
+                      variant={clinic.status === 'active' ? 'default' : 'secondary'}
+                      className={clinic.status === 'active' 
+                        ? 'bg-green-100 text-green-800 border-green-200' 
+                        : 'bg-gray-100 text-gray-800 border-gray-200'
+                      }
+                    >
+                      {clinic.status === 'active' ? 'Ativa' : 'Inativa'}
+                    </Badge>
+                  </TableCell>
+                  
+                  <TableCell>
+                    <Badge variant="outline">
+                      {clinic.usersCount} usuários
+                    </Badge>
+                  </TableCell>
+                  
+                  <TableCell>
+                    <span className="text-sm text-muted-foreground">
+                      {new Date(clinic.createdAt).toLocaleDateString('pt-BR')}
+                    </span>
+                  </TableCell>
+                  
+                  <TableCell className="text-right">
+                    <div className="flex justify-end space-x-1">
+                      <Button variant="ghost" size="sm">
+                        <Settings className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="sm">
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive">
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
 
       {filteredClinics.length === 0 && (
         <Card>

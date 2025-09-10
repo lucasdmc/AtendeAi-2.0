@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 
 interface User {
   id: string
@@ -246,76 +247,99 @@ export default function Users() {
         </div>
       </div>
 
-      <div className="grid gap-4">
-        {filteredUsers.map((user) => (
-          <Card key={user.id} className="hover:shadow-md transition-shadow">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  <Avatar className="h-12 w-12">
-                    <AvatarImage src={user.avatar} alt={user.name} />
-                    <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
-                  </Avatar>
-                  
-                  <div className="space-y-1">
-                    <div className="flex items-center space-x-2">
-                      <h3 className="font-semibold text-lg">{user.name}</h3>
-                      <Badge variant="outline" className={roleColors[user.role]}>
-                        <Shield className="h-3 w-3 mr-1" />
-                        {roleLabels[user.role]}
-                      </Badge>
-                      <Badge 
-                        variant={user.status === 'active' ? 'default' : 'secondary'}
-                        className={user.status === 'active' 
-                          ? 'bg-green-100 text-green-800 border-green-200' 
-                          : 'bg-gray-100 text-gray-800 border-gray-200'
-                        }
-                      >
-                        {user.status === 'active' ? 'Ativo' : 'Inativo'}
-                      </Badge>
+      <Card>
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Usuário</TableHead>
+                <TableHead>Função</TableHead>
+                <TableHead>Clínica</TableHead>
+                <TableHead>Contato</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Último Acesso</TableHead>
+                <TableHead className="text-right">Ações</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredUsers.map((user) => (
+                <TableRow key={user.id} className="hover:bg-muted/50">
+                  <TableCell>
+                    <div className="flex items-center space-x-3">
+                      <Avatar className="h-8 w-8">
+                        <AvatarImage src={user.avatar} alt={user.name} />
+                        <AvatarFallback className="text-xs">{getInitials(user.name)}</AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <div className="font-medium">{user.name}</div>
+                        <div className="text-sm text-muted-foreground">{user.email}</div>
+                      </div>
                     </div>
-                    
-                    <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-                      <div className="flex items-center space-x-1">
-                        <Mail className="h-4 w-4" />
+                  </TableCell>
+                  
+                  <TableCell>
+                    <Badge variant="outline" className={roleColors[user.role]}>
+                      <Shield className="h-3 w-3 mr-1" />
+                      {roleLabels[user.role]}
+                    </Badge>
+                  </TableCell>
+                  
+                  <TableCell>
+                    <div className="flex items-center space-x-2">
+                      <Building2 className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm">{user.clinicName}</span>
+                    </div>
+                  </TableCell>
+                  
+                  <TableCell>
+                    <div className="space-y-1">
+                      <div className="flex items-center space-x-1 text-sm">
+                        <Mail className="h-3 w-3 text-muted-foreground" />
                         <span>{user.email}</span>
                       </div>
-                      
                       {user.phone && (
-                        <div className="flex items-center space-x-1">
-                          <Phone className="h-4 w-4" />
+                        <div className="flex items-center space-x-1 text-sm">
+                          <Phone className="h-3 w-3 text-muted-foreground" />
                           <span>{user.phone}</span>
                         </div>
                       )}
                     </div>
-                    
-                    <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-                      <Building2 className="h-4 w-4" />
-                      <span>{user.clinicName}</span>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="text-right space-y-2">
-                  <div className="flex space-x-2">
-                    <Button variant="outline" size="sm">
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button variant="outline" size="sm" className="text-destructive hover:text-destructive">
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
+                  </TableCell>
                   
-                  <div className="text-xs text-muted-foreground">
-                    <p>Último acesso:</p>
-                    <p>{formatLastLogin(user.lastLogin)}</p>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+                  <TableCell>
+                    <Badge 
+                      variant={user.status === 'active' ? 'default' : 'secondary'}
+                      className={user.status === 'active' 
+                        ? 'bg-green-100 text-green-800 border-green-200' 
+                        : 'bg-gray-100 text-gray-800 border-gray-200'
+                      }
+                    >
+                      {user.status === 'active' ? 'Ativo' : 'Inativo'}
+                    </Badge>
+                  </TableCell>
+                  
+                  <TableCell>
+                    <div className="text-sm text-muted-foreground">
+                      {formatLastLogin(user.lastLogin)}
+                    </div>
+                  </TableCell>
+                  
+                  <TableCell className="text-right">
+                    <div className="flex justify-end space-x-1">
+                      <Button variant="ghost" size="sm">
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive">
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
 
       {filteredUsers.length === 0 && (
         <Card>
