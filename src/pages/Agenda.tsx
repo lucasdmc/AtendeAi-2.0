@@ -1,202 +1,26 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Calendar as CalendarIcon, Settings, ExternalLink, RefreshCw, AlertCircle, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
-import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/hooks/useAuth';
-import { googleCalendarService } from '@/services/googleCalendarService';
-
-interface GoogleIntegration {
-  id: string;
-  user_id: string;
-  clinic_id: string;
-  google_calendar_id: string;
-  access_token: string;
-  refresh_token: string;
-  scope: string;
-  token_expiry: string;
-  calendar_name?: string;
-  calendar_description?: string;
-  sync_enabled: boolean;
-  last_sync: string;
-  status: 'active' | 'expired' | 'error';
-  created_at: string;
-  updated_at: string;
-}
+import { useGoogleCalendar } from '@/hooks/useGoogleCalendar';
 
 const Agenda: React.FC = () => {
-  const [integration, setIntegration] = useState<GoogleIntegration | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [authLoading, setAuthLoading] = useState(false);
-  const [syncLoading, setSyncLoading] = useState(false);
-  const [calendarUrl, setCalendarUrl] = useState<string>('');
+  const {
+    integration,
+    events,
+    loading,
+    authLoading,
+    syncLoading,
+    calendarUrl,
+    handleGoogleAuth,
+    handleDisconnect,
+    handleSync,
+    isConnected,
+    status
+  } = useGoogleCalendar();
 
-  const { toast } = useToast();
-  const { user } = useAuth();
-
-  useEffect(() => {
-    loadIntegration();
-  }, []);
-
-  const loadIntegration = async () => {
-    try {
-      if (!user?.id) return;
-
-      const integrations = await googleCalendarService.getUserIntegrations(user.id);
-      if (integrations.length > 0) {
-        const activeIntegration = integrations[0];
-        setIntegration(activeIntegration);
-        
-        // Generate calendar embed URL
-        if (activeIntegration.google_calendar_id) {
-          const embedUrl = generateCalendarEmbedUrl(activeIntegration.google_calendar_id);
-          setCalendarUrl(embedUrl);
-        }
-      }
-    } catch (error) {
-      console.error('Error loading integration:', error);
-      toast({
-        title: "Erro",
-        description: "Erro ao carregar integração com Google Calendar",
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleGoogleAuth = async () => {
-    try {
-      setAuthLoading(true);
-      
-      // Get Google OAuth URL
-      const authUrl = await googleCalendarService.getAuthUrl();
-      
-      // Open popup window for OAuth
-      const popup = window.open(
-        authUrl,
-        'google-auth',
-        'width=600,height=700,scrollbars=yes,resizable=yes'
-      );
-
-      // Listen for completion
-      const checkClosed = setInterval(async () => {
-        if (popup?.closed) {
-          clearInterval(checkClosed);
-          
-          // Check if auth was successful
-          try {
-            await new Promise(resolve => setTimeout(resolve, 2000)); // Wait for callback processing
-            await loadIntegration();
-            
-            if (integration) {
-              toast({
-                title: "Sucesso!",
-                description: "Google Calendar integrado com sucesso!"
-              });
-            }
-          } catch (error) {
-            toast({
-              title: "Erro",
-              description: "Erro ao processar autenticação",
-              variant: "destructive"
-            });
-          }
-        }
-      }, 1000);
-
-      // Timeout after 5 minutes
-      setTimeout(() => {
-        clearInterval(checkClosed);
-        if (popup && !popup.closed) {
-          popup.close();
-        }
-        setAuthLoading(false);
-      }, 300000);
-
-    } catch (error: any) {
-      console.error('Error during Google auth:', error);
-      toast({
-        title: "Erro",
-        description: error.message || "Erro ao autenticar com Google",
-        variant: "destructive"
-      });
-    } finally {
-      setAuthLoading(false);
-    }
-  };
-
-  const handleDisconnect = async () => {
-    if (!integration) return;
-
-    const confirmed = confirm('Tem certeza que deseja desconectar o Google Calendar?');
-    if (!confirmed) return;
-
-    try {
-      await googleCalendarService.disconnect(integration.id);
-      setIntegration(null);
-      setCalendarUrl('');
-      
-      toast({
-        title: "Desconectado",
-        description: "Google Calendar desconectado com sucesso"
-      });
-    } catch (error: any) {
-      console.error('Error disconnecting:', error);
-      toast({
-        title: "Erro",
-        description: error.message || "Erro ao desconectar Google Calendar",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const handleSync = async () => {
-    if (!integration) return;
-
-    try {
-      setSyncLoading(true);
-      await googleCalendarService.syncCalendar(integration.id);
-      await loadIntegration();
-      
-      toast({
-        title: "Sincronizado",
-        description: "Calendário sincronizado com sucesso"
-      });
-    } catch (error: any) {
-      console.error('Error syncing calendar:', error);
-      toast({
-        title: "Erro",
-        description: error.message || "Erro ao sincronizar calendário",
-        variant: "destructive"
-      });
-    } finally {
-      setSyncLoading(false);
-    }
-  };
-
-  const generateCalendarEmbedUrl = (calendarId: string): string => {
-    const baseUrl = 'https://calendar.google.com/calendar/embed';
-    const params = new URLSearchParams({
-      src: calendarId,
-      ctz: 'America/Sao_Paulo',
-      mode: 'AGENDA',
-      showTitle: '1',
-      showNav: '1',
-      showDate: '1',
-      showPrint: '0',
-      showTabs: '1',
-      showCalendars: '0',
-      showTz: '0',
-      height: '600',
-      wkst: '1',
-      bgcolor: '%23ffffff'
-    });
-
-    return `${baseUrl}?${params.toString()}`;
-  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -245,7 +69,7 @@ const Agenda: React.FC = () => {
         </div>
       </div>
 
-      {!integration ? (
+      {!isConnected ? (
         <div className="space-y-6">
           <Alert>
             <AlertCircle className="h-4 w-4" />
@@ -317,8 +141,8 @@ const Agenda: React.FC = () => {
                     {integration.calendar_name || 'Calendário Principal'}
                   </CardDescription>
                 </div>
-                <Badge className={getStatusColor(integration.status)}>
-                  {getStatusLabel(integration.status)}
+                <Badge className={getStatusColor(status)}>
+                  {getStatusLabel(status)}
                 </Badge>
               </div>
             </CardHeader>
@@ -398,7 +222,7 @@ const Agenda: React.FC = () => {
           </Card>
 
           {/* Status Alerts */}
-          {integration.status === 'expired' && (
+          {status === 'expired' && (
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
               <AlertTitle>Token Expirado</AlertTitle>
@@ -408,7 +232,7 @@ const Agenda: React.FC = () => {
             </Alert>
           )}
 
-          {integration.status === 'error' && (
+          {status === 'error' && (
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
               <AlertTitle>Erro na Integração</AlertTitle>
@@ -418,7 +242,7 @@ const Agenda: React.FC = () => {
             </Alert>
           )}
 
-          {integration.status === 'active' && (
+          {status === 'active' && (
             <Alert>
               <CheckCircle className="h-4 w-4" />
               <AlertTitle>Integração Ativa</AlertTitle>
@@ -429,7 +253,7 @@ const Agenda: React.FC = () => {
           )}
 
           {/* Embedded Calendar */}
-          {calendarUrl && integration.status === 'active' && (
+          {calendarUrl && status === 'active' && (
             <Card>
               <CardHeader>
                 <CardTitle>Sua Agenda</CardTitle>
