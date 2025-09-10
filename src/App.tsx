@@ -1,68 +1,67 @@
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { Layout } from "@/components/Layout";
-import { AuthProvider } from "@/hooks/useAuth";
-import { AppProvider } from "@/contexts/AppContext";
-import { ProtectedRoute } from "@/components/ProtectedRoute";
-import Index from "./pages/Index";
-import Auth from "./pages/Auth";
-import Clinics from "./pages/Clinics";
-import Users from "./pages/Users";
-import Appointments from "./pages/Appointments";
-import Agenda from "./pages/Agenda";
-import Context from "./pages/Context";
-import Conversations from "./pages/Conversations";
-import NotFound from "./pages/NotFound";
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider } from '@/hooks/useAuth';
+import Auth from './pages/Auth';
+import { Layout } from './components/Layout';
+import Index from './pages/Index';
+import Agenda from './pages/Agenda';
+import ContextPage from './pages/ContextPage';
+import Conversations from './pages/Conversations';
+import Appointments from './pages/Appointments';
+import Clinics from './pages/Clinics';
+import Users from './pages/Users';
+import { Toaster } from "@/components/ui/sonner";
 
-const queryClient = new QueryClient();
-
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <AuthProvider>
-          <AppProvider>
-            <Routes>
-              {/* Auth route outside Layout */}
-              <Route path="/auth" element={<Auth />} />
-              
-              {/* All other routes wrapped in Layout */}
-              <Route path="/*" element={
-                <ProtectedRoute>
-                  <Layout>
-                    <Routes>
-                      <Route path="/" element={<Index />} />
-                      <Route path="/clinics" element={
-                        <ProtectedRoute requiredRoles={['admin_lify']}>
-                          <Clinics />
-                        </ProtectedRoute>
-                      } />
-                      <Route path="/users" element={
-                        <ProtectedRoute requiredRoles={['admin_lify', 'admin_clinic']}>
-                          <Users />
-                        </ProtectedRoute>
-                      } />
-                      <Route path="/appointments" element={<Appointments />} />
-                      <Route path="/calendar" element={<Agenda />} />
-                      <Route path="/context" element={<Context />} />
-                      <Route path="/conversations" element={<Conversations />} />
-                      {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                      <Route path="*" element={<NotFound />} />
-                    </Routes>
-                  </Layout>
-                </ProtectedRoute>
-              } />
-            </Routes>
-          </AppProvider>
-        </AuthProvider>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+function App() {
+  return (
+    <AuthProvider>
+      <Router>
+        <Routes>
+          <Route path="/auth" element={<Auth />} />
+          <Route path="/" element={
+            <Layout>
+              <Index />
+            </Layout>
+          } />
+          <Route path="/calendar" element={
+            <Layout>
+              <Agenda />
+            </Layout>
+          } />
+          <Route path="/agenda" element={
+            <Layout>
+              <Agenda />
+            </Layout>
+          } />
+          <Route path="/context" element={
+            <Layout>
+              <ContextPage />
+            </Layout>
+          } />
+          <Route path="/conversations" element={
+            <Layout>
+              <Conversations />
+            </Layout>
+          } />
+          <Route path="/appointments" element={
+            <Layout>
+              <Appointments />
+            </Layout>
+          } />
+          <Route path="/clinics" element={
+            <Layout>
+              <Clinics />
+            </Layout>
+          } />
+          <Route path="/users" element={
+            <Layout>
+              <Users />
+            </Layout>
+          } />
+        </Routes>
+        <Toaster />
+      </Router>
+    </AuthProvider>
+  );
+}
 
 export default App;

@@ -1,33 +1,23 @@
-// =====================================================
-// HOOK DE AUTENTICAÇÃO SUPABASE - ATENDEAÍ 2.0
-// =====================================================
-
-import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { useState, useEffect, createContext, useContext, ReactNode, useMemo } from 'react';
 import type { User, Session } from '@supabase/supabase-js';
-import { permissionService } from '@/services/permissionService';
+
+interface CustomUser extends User {
+  clinic_id?: string;
+}
 
 interface AuthContextType {
-  user: User | null;
+  user: CustomUser | null;
   session: Session | null;
-  isAuthenticated: boolean;
-  isLoading: boolean;
-  signIn: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
-  signUp: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   signOut: () => Promise<void>;
-  hasRole: (role: string) => Promise<boolean>;
-  hasAnyRole: (roles: string[]) => Promise<boolean>;
-  hasAllRoles: (roles: string[]) => Promise<boolean>;
-  isAdminLify: () => Promise<boolean>;
-  isAdminClinic: () => Promise<boolean>;
-  isAttendant: () => Promise<boolean>;
-  getUserClinics: () => Promise<string[]>;
-  canManageUsers: () => Promise<boolean>;
-  canManageClinics: () => Promise<boolean>;
-  canViewDashboard: () => Promise<boolean>;
-  canAccessConversations: () => Promise<boolean>;
-  canAccessCalendar: () => Promise<boolean>;
-  canAccessAppointments: () => Promise<boolean>;
+  isLoading: boolean;
+  isAuthenticated: boolean;
+  isAdminLify: () => boolean;
+  canManageUsers: boolean;
+  canManageClinics: boolean;
+  canViewDashboard: boolean;
+  canAccessConversations: boolean;
+  canAccessCalendar: boolean;
+  canAccessAppointments: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -37,165 +27,87 @@ interface AuthProviderProps {
 }
 
 export const AuthProvider = ({ children }: AuthProviderProps) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-    // Verificar sessão existente
-    const getInitialSession = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        setSession(session);
-        setUser(session?.user ?? null);
-      } catch (error) {
-        console.error('Error getting initial session:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    // Listener para mudanças de autenticação
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log('Auth state changed:', event, session?.user?.email);
-        setSession(session);
-        setUser(session?.user ?? null);
-        setIsLoading(false);
-      }
-    );
-
-    getInitialSession();
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  const signIn = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
-    try {
-      // Try Supabase auth first
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) {
-        return { success: false, error: error.message };
-      }
-
-      return { success: true };
-    } catch (error) {
-      console.error('Sign in error:', error);
-      return { success: false, error: 'Erro inesperado durante o login' };
-    }
+  // Mock user and session for development
+  const mockUser: CustomUser = {
+    id: '1',
+    email: 'admin@example.com',
+    role: 'admin' as any,
+    clinic_id: '1',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    aud: 'authenticated',
+    app_metadata: {},
+    user_metadata: {},
+    email_confirmed_at: new Date().toISOString(),
+    phone_confirmed_at: null,
+    confirmation_sent_at: null,
+    recovery_sent_at: null,
+    email_change_sent_at: null,
+    new_email: null,
+    new_phone: null,
+    invited_at: null,
+    action_link: null,
+    last_sign_in_at: new Date().toISOString(),
+    identities: [],
+    factors: [],
+    is_anonymous: false
   };
 
-  const signUp = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
-    try {
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-      });
-
-      if (error) {
-        return { success: false, error: error.message };
-      }
-
-      return { success: true };
-    } catch (error) {
-      console.error('Sign up error:', error);
-      return { success: false, error: 'Erro inesperado durante o cadastro' };
-    }
+  const mockSession: Session = {
+    access_token: 'mock-token',
+    refresh_token: 'mock-refresh-token',
+    expires_in: 3600,
+    expires_at: Math.floor(Date.now() / 1000) + 3600,
+    token_type: 'bearer',
+    user: mockUser
   };
+
+  const user = mockUser;
+  const session = mockSession;
+  const isAuthenticated = !!user;
+
+  const isAdminLify = () => {
+    return user?.role === 'admin';
+  };
+
+  // Permission checks using mock values
+  const canManageUsers = useMemo(() => {
+    return user?.role === 'admin';
+  }, [user]);
+
+  const canManageClinics = useMemo(() => {
+    return user?.role === 'admin';
+  }, [user]);
+
+  const canViewDashboard = useMemo(() => {
+    return true; // Todos podem ver dashboard
+  }, [user]);
+
+  const canAccessConversations = useMemo(() => {
+    return true; // Todos podem acessar conversas
+  }, [user]);
+
+  const canAccessCalendar = useMemo(() => {
+    return true; // Todos podem acessar calendário
+  }, [user]);
+
+  const canAccessAppointments = useMemo(() => {
+    return true; // Todos podem acessar agendamentos
+  }, [user]);
 
   const signOut = async (): Promise<void> => {
-    try {
-      await supabase.auth.signOut();
-    } catch (error) {
-      console.error('Sign out error:', error);
-    }
-  };
-
-  // Funções de verificação de roles usando PermissionService
-  const hasRole = async (role: string): Promise<boolean> => {
-    if (!user?.id) return false;
-    return permissionService.hasRole(user.id, role);
-  };
-
-  const hasAnyRole = async (roles: string[]): Promise<boolean> => {
-    if (!user?.id) return false;
-    return permissionService.hasAnyRole(user.id, roles);
-  };
-
-  const hasAllRoles = async (roles: string[]): Promise<boolean> => {
-    if (!user?.id) return false;
-    return permissionService.hasAllRoles(user.id, roles);
-  };
-
-  const isAdminLify = async (): Promise<boolean> => {
-    if (!user?.id) return false;
-    return permissionService.isAdminLify(user.id);
-  };
-
-  const isAdminClinic = async (): Promise<boolean> => {
-    if (!user?.id) return false;
-    return permissionService.isAdminClinic(user.id);
-  };
-
-  const isAttendant = async (): Promise<boolean> => {
-    if (!user?.id) return false;
-    return permissionService.isAttendant(user.id);
-  };
-
-  const getUserClinics = async (): Promise<string[]> => {
-    if (!user?.id) return [];
-    return permissionService.getUserClinics(user.id);
-  };
-
-  const canManageUsers = async (): Promise<boolean> => {
-    if (!user?.id) return false;
-    return permissionService.canManageUsers(user.id);
-  };
-
-  const canManageClinics = async (): Promise<boolean> => {
-    if (!user?.id) return false;
-    return permissionService.canManageClinics(user.id);
-  };
-
-  const canViewDashboard = async (): Promise<boolean> => {
-    if (!user?.id) return false;
-    return permissionService.canViewDashboard(user.id);
-  };
-
-  const canAccessConversations = async (): Promise<boolean> => {
-    if (!user?.id) return false;
-    return permissionService.canAccessConversations(user.id);
-  };
-
-  const canAccessCalendar = async (): Promise<boolean> => {
-    if (!user?.id) return false;
-    return permissionService.canAccessCalendar(user.id);
-  };
-
-  const canAccessAppointments = async (): Promise<boolean> => {
-    if (!user?.id) return false;
-    return permissionService.canAccessAppointments(user.id);
+    console.log('Mock sign out');
   };
 
   const value: AuthContextType = {
     user,
     session,
-    isAuthenticated: !!user,
     isLoading,
-    signIn,
-    signUp,
+    isAuthenticated,
     signOut,
-    hasRole,
-    hasAnyRole,
-    hasAllRoles,
     isAdminLify,
-    isAdminClinic,
-    isAttendant,
-    getUserClinics,
     canManageUsers,
     canManageClinics,
     canViewDashboard,

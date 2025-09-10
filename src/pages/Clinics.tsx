@@ -1,365 +1,181 @@
-import React, { useState, useEffect } from 'react';
-import { Plus, Edit, Trash2, Search, Building2, Settings } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
-import { Textarea } from '@/components/ui/textarea';
-import { Badge } from '@/components/ui/badge';
-import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/hooks/useAuth';
-import { clinicService } from '@/services/clinicService';
+import { useState } from "react"
+import { Building2, MapPin, Phone, Mail, Plus, Edit, Trash2, Search, Brain, Upload } from "lucide-react"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Badge } from "@/components/ui/badge"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 
 interface Clinic {
-  id: string;
-  name: string;
-  whatsapp_number: string;
-  meta_webhook_url?: string;
-  whatsapp_id?: string;
-  context_json: Record<string, any>;
-  simulation_mode: boolean;
-  status: 'active' | 'inactive';
-  created_at: string;
-  updated_at: string;
+  id: string
+  name: string
+  address: string
+  phone: string
+  email: string
+  whatsappNumber: string
+  whatsappVerifyToken?: string
+  metaWebhook?: string
+  status: 'active' | 'inactive'
+  usersCount: number
+  description?: string
+  createdAt: string
 }
 
-const defaultContextJSON = {
-  agente_ia: {
-    configuracao: {
-      nome: "Dr. Virtual",
-      personalidade: "Profissional e acolhedor",
-      tom_comunicacao: "Formal mas amigável",
-      saudacao_inicial: "Olá! Sou o assistente virtual da clínica. Como posso ajudá-lo?",
-      mensagem_despedida: "Obrigado pelo contato! Tenha um ótimo dia!",
-      mensagem_fora_horario: "No momento estamos fora do horário de atendimento."
-    },
-    comportamento: {
-      proativo: true,
-      oferece_sugestoes: true,
-      escalacao_automatica: true,
-      limite_tentativas: 3
-    }
+const mockClinics: Clinic[] = [
+  {
+    id: "1",
+    name: "Clínica Saúde Total",
+    address: "Rua das Flores, 123 - Centro, São Paulo - SP",
+    phone: "(11) 3333-4444",
+    email: "contato@saudetotal.com.br",
+    whatsappNumber: "(11) 99999-1234",
+    metaWebhook: "https://api.clinic1.com/webhook",
+    status: "active",
+    usersCount: 15,
+    description: "Clínica especializada em medicina geral e preventiva",
+    createdAt: "2024-01-15"
   },
-  horario_funcionamento: {
-    segunda: { abertura: "08:00", fechamento: "18:00" },
-    terca: { abertura: "08:00", fechamento: "18:00" },
-    quarta: { abertura: "08:00", fechamento: "18:00" },
-    quinta: { abertura: "08:00", fechamento: "18:00" },
-    sexta: { abertura: "08:00", fechamento: "18:00" },
-    sabado: { abertura: "08:00", fechamento: "12:00" },
-    domingo: { abertura: "00:00", fechamento: "00:00" }
+  {
+    id: "2", 
+    name: "Centro Médico Bem Estar",
+    address: "Av. Paulista, 1000 - Bela Vista, São Paulo - SP",
+    phone: "(11) 2222-3333",
+    email: "recepcao@bemestar.com.br",
+    whatsappNumber: "(11) 88888-5678",
+    status: "active",
+    usersCount: 8,
+    description: "Especialidades médicas e exames diagnósticos",
+    createdAt: "2024-02-10"
+  },
+  {
+    id: "3",
+    name: "Clínica Nova Vida",
+    address: "Rua da Esperança, 456 - Vila Madalena, São Paulo - SP", 
+    phone: "(11) 1111-2222",
+    email: "info@novavida.com.br",
+    whatsappNumber: "(11) 77777-9012",
+    status: "inactive",
+    usersCount: 3,
+    createdAt: "2024-03-01"
   }
-};
+]
 
-const Clinics: React.FC = () => {
-  const [clinics, setClinics] = useState<Clinic[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingClinic, setEditingClinic] = useState<Clinic | null>(null);
-  const [formData, setFormData] = useState({
-    name: '',
-    whatsapp_number: '',
-    meta_webhook_url: '',
-    whatsapp_id: '',
-    context_json: JSON.stringify(defaultContextJSON, null, 2),
-    simulation_mode: false
-  });
-
-  const { toast } = useToast();
-  const { isAdminLify } = useAuth();
-
-  useEffect(() => {
-    checkPermissionAndLoadClinics();
-  }, []);
-
-  const checkPermissionAndLoadClinics = async () => {
-    try {
-      const hasPermission = await isAdminLify();
-      if (!hasPermission) {
-        toast({
-          title: "Acesso Negado",
-          description: "Apenas Admin Lify pode gerenciar clínicas",
-          variant: "destructive"
-        });
-        return;
-      }
-      await loadClinics();
-    } catch (error) {
-      console.error('Error checking permissions:', error);
-      toast({
-        title: "Erro",
-        description: "Erro ao verificar permissões",
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const loadClinics = async () => {
-    try {
-      const response = await clinicService.list();
-      setClinics(response.data);
-    } catch (error) {
-      console.error('Error loading clinics:', error);
-      toast({
-        title: "Erro",
-        description: "Erro ao carregar clínicas",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    try {
-      // Validate JSON
-      let contextJson;
-      try {
-        contextJson = JSON.parse(formData.context_json);
-      } catch {
-        toast({
-          title: "Erro",
-          description: "JSON de contextualização inválido",
-          variant: "destructive"
-        });
-        return;
-      }
-
-      const clinicData = {
-        name: formData.name,
-        whatsapp_number: formData.whatsapp_number,
-        meta_webhook_url: formData.meta_webhook_url || undefined,
-        whatsapp_id: formData.whatsapp_id || undefined,
-        context_json: contextJson,
-        simulation_mode: formData.simulation_mode
-      };
-
-      if (editingClinic) {
-        await clinicService.update(editingClinic.id, clinicData);
-        toast({
-          title: "Sucesso",
-          description: "Clínica atualizada com sucesso!"
-        });
-      } else {
-        await clinicService.create(clinicData);
-        toast({
-          title: "Sucesso", 
-          description: "Clínica criada com sucesso!"
-        });
-      }
-
-      setIsDialogOpen(false);
-      resetForm();
-      await loadClinics();
-    } catch (error: any) {
-      console.error('Error saving clinic:', error);
-      toast({
-        title: "Erro",
-        description: error.response?.data?.detail || "Erro ao salvar clínica",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const handleEdit = (clinic: Clinic) => {
-    setEditingClinic(clinic);
-    setFormData({
-      name: clinic.name,
-      whatsapp_number: clinic.whatsapp_number,
-      meta_webhook_url: clinic.meta_webhook_url || '',
-      whatsapp_id: clinic.whatsapp_id || '',
-      context_json: JSON.stringify(clinic.context_json, null, 2),
-      simulation_mode: clinic.simulation_mode
-    });
-    setIsDialogOpen(true);
-  };
-
-  const handleDelete = async (clinic: Clinic) => {
-    if (!confirm(`Tem certeza que deseja remover a clínica "${clinic.name}"?`)) {
-      return;
-    }
-
-    try {
-      await clinicService.delete(clinic.id);
-      toast({
-        title: "Sucesso",
-        description: "Clínica removida com sucesso!"
-      });
-      await loadClinics();
-    } catch (error: any) {
-      console.error('Error deleting clinic:', error);
-      toast({
-        title: "Erro",
-        description: error.response?.data?.detail || "Erro ao remover clínica",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const resetForm = () => {
-    setEditingClinic(null);
-    setFormData({
-      name: '',
-      whatsapp_number: '',
-      meta_webhook_url: '',
-      whatsapp_id: '',
-      context_json: JSON.stringify(defaultContextJSON, null, 2),
-      simulation_mode: false
-    });
-  };
-
-  const loadTemplate = () => {
-    setFormData(prev => ({
-      ...prev,
-      context_json: JSON.stringify(defaultContextJSON, null, 2)
-    }));
-    toast({
-      title: "Template Carregado",
-      description: "Template padrão carregado com sucesso!"
-    });
-  };
-
-  const copyTemplate = () => {
-    navigator.clipboard.writeText(JSON.stringify(defaultContextJSON, null, 2));
-    toast({
-      title: "Template Copiado",
-      description: "Template copiado para a área de transferência!"
-    });
-  };
+export default function Clinics() {
+  const [clinics, setClinics] = useState<Clinic[]>(mockClinics)
+  const [searchTerm, setSearchTerm] = useState("")
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  const [isJsonDialogOpen, setIsJsonDialogOpen] = useState(false)
+  const [editingClinic, setEditingClinic] = useState<Clinic | null>(null)
+  const [selectedClinicForJson, setSelectedClinicForJson] = useState<Clinic | null>(null)
+  const [jsonConfig, setJsonConfig] = useState("")
 
   const filteredClinics = clinics.filter(clinic =>
     clinic.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    clinic.whatsapp_number.includes(searchTerm)
-  );
+    clinic.address.toLowerCase().includes(searchTerm.toLowerCase())
+  )
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-muted-foreground">Carregando clínicas...</p>
-        </div>
-      </div>
-    );
+  const handleEdit = (clinic: Clinic) => {
+    setEditingClinic(clinic)
+    setIsEditDialogOpen(true)
+  }
+
+  const handleJsonConfig = (clinic: Clinic) => {
+    setSelectedClinicForJson(clinic)
+    setJsonConfig("")
+    setIsJsonDialogOpen(true)
+  }
+
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (file && file.type === "application/json") {
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        try {
+          const content = e.target?.result as string
+          const parsedJson = JSON.parse(content)
+          setJsonConfig(JSON.stringify(parsedJson, null, 2))
+        } catch (error) {
+          alert("Erro ao ler o arquivo JSON. Verifique se o formato está correto.")
+        }
+      }
+      reader.readAsText(file)
+    } else {
+      alert("Por favor, selecione um arquivo JSON válido.")
+    }
+    // Reset input value to allow selecting the same file again
+    event.target.value = ""
   }
 
   return (
-    <div className="container mx-auto p-6">
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center space-x-3">
-          <Building2 className="h-8 w-8 text-primary" />
-          <div>
-            <h1 className="text-3xl font-bold">Gestão de Clínicas</h1>
-            <p className="text-muted-foreground">Gerencie clínicas do sistema multiclínicas</p>
-          </div>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Gestão de Clínicas</h1>
+          <p className="text-muted-foreground">
+            Gerencie as clínicas do sistema e suas configurações
+          </p>
         </div>
         
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger asChild>
-            <Button onClick={resetForm}>
-              <Plus className="h-4 w-4 mr-2" />
+            <Button>
+              <Plus className="mr-2 h-4 w-4" />
               Nova Clínica
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogContent className="sm:max-w-[600px]">
             <DialogHeader>
-              <DialogTitle>
-                {editingClinic ? 'Editar Clínica' : 'Nova Clínica'}
-              </DialogTitle>
+              <DialogTitle>Criar Nova Clínica</DialogTitle>
               <DialogDescription>
-                {editingClinic ? 'Edite os dados da clínica' : 'Cadastre uma nova clínica no sistema'}
+                Preencha as informações da nova clínica
               </DialogDescription>
             </DialogHeader>
-            
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">Nome da Clínica</Label>
+                <Input id="name" placeholder="Digite o nome da clínica" />
+              </div>
+              
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="name">Nome da Clínica *</Label>
-                  <Input
-                    id="name"
-                    value={formData.name}
-                    onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                    placeholder="Ex: Clínica São Paulo"
-                    required
-                  />
+                  <Label htmlFor="whatsapp">WhatsApp</Label>
+                  <Input id="whatsapp" placeholder="(11) 99999-9999" />
                 </div>
-                
                 <div className="space-y-2">
-                  <Label htmlFor="whatsapp_number">Número WhatsApp *</Label>
-                  <Input
-                    id="whatsapp_number"
-                    value={formData.whatsapp_number}
-                    onChange={(e) => setFormData(prev => ({ ...prev, whatsapp_number: e.target.value }))}
-                    placeholder="Ex: +5511999999999"
-                    required
-                  />
+                  <Label htmlFor="verify-token">WhatsApp Verify Token</Label>
+                  <Input id="verify-token" placeholder="verify_token_123" />
                 </div>
               </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="meta_webhook_url">Webhook URL Meta</Label>
-                  <Input
-                    id="meta_webhook_url"
-                    value={formData.meta_webhook_url}
-                    onChange={(e) => setFormData(prev => ({ ...prev, meta_webhook_url: e.target.value }))}
-                    placeholder="https://webhook.clinica.com/whatsapp"
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="whatsapp_id">WhatsApp ID</Label>
-                  <Input
-                    id="whatsapp_id"
-                    value={formData.whatsapp_id}
-                    onChange={(e) => setFormData(prev => ({ ...prev, whatsapp_id: e.target.value }))}
-                    placeholder="whatsapp_business_id"
-                  />
-                </div>
-              </div>
-
-              <div className="flex items-center space-x-2">
-                <Switch
-                  id="simulation_mode"
-                  checked={formData.simulation_mode}
-                  onCheckedChange={(checked) => setFormData(prev => ({ ...prev, simulation_mode: checked }))}
-                />
-                <Label htmlFor="simulation_mode">Modo de Simulação</Label>
+              
+              <div className="space-y-2">
+                <Label htmlFor="webhook">Meta Webhook (Opcional)</Label>
+                <Input id="webhook" placeholder="https://api.clinica.com/webhook" />
               </div>
 
               <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="context_json">JSON de Contextualização *</Label>
-                  <div className="flex space-x-2">
-                    <Button type="button" variant="outline" size="sm" onClick={loadTemplate}>
-                      Carregar Template
-                    </Button>
-                    <Button type="button" variant="outline" size="sm" onClick={copyTemplate}>
-                      Copiar Template
-                    </Button>
-                  </div>
-                </div>
-                <Textarea
-                  id="context_json"
-                  value={formData.context_json}
-                  onChange={(e) => setFormData(prev => ({ ...prev, context_json: e.target.value }))}
-                  placeholder="Cole ou edite o JSON de contextualização..."
-                  className="min-h-[200px] font-mono text-sm"
-                  required
-                />
+                <Label htmlFor="status">Status</Label>
+                <Select defaultValue="active">
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="active">Ativa</SelectItem>
+                    <SelectItem value="inactive">Inativa</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-
-              <div className="flex justify-end space-x-2 pt-4">
-                <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+              
+              <div className="flex justify-end space-x-2">
+                <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
                   Cancelar
                 </Button>
                 <Button type="submit">
-                  {editingClinic ? 'Salvar Alterações' : 'Criar Clínica'}
+                  Criar Clínica
                 </Button>
               </div>
             </form>
@@ -367,86 +183,240 @@ const Clinics: React.FC = () => {
         </Dialog>
       </div>
 
-      <div className="flex items-center space-x-4 mb-6">
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+      <div className="flex items-center space-x-2">
+        <div className="relative flex-1 max-w-sm">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Buscar por nome ou WhatsApp..."
+            placeholder="Buscar clínicas..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
+            className="pl-9"
           />
         </div>
       </div>
 
-      {filteredClinics.length === 0 ? (
+      <Card>
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Clínica</TableHead>
+                <TableHead>Endereço</TableHead>
+                <TableHead>Contato</TableHead>
+                <TableHead>WhatsApp</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Usuários</TableHead>
+                <TableHead>Criada em</TableHead>
+                <TableHead className="text-right">Ações</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredClinics.map((clinic) => (
+                <TableRow key={clinic.id} className="hover:bg-muted/50">
+                  <TableCell>
+                    <div className="space-y-1">
+                      <div className="font-medium flex items-center space-x-2">
+                        <Building2 className="h-4 w-4 text-muted-foreground" />
+                        <span>{clinic.name}</span>
+                      </div>
+                      {clinic.description && (
+                        <div className="text-sm text-muted-foreground line-clamp-2">
+                          {clinic.description}
+                        </div>
+                      )}
+                    </div>
+                  </TableCell>
+                  
+                  <TableCell>
+                    <div className="flex items-start space-x-2 max-w-xs">
+                      <MapPin className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+                      <span className="text-sm line-clamp-2">{clinic.address}</span>
+                    </div>
+                  </TableCell>
+                  
+                  <TableCell>
+                    <div className="space-y-1">
+                      <div className="flex items-center space-x-2 text-sm">
+                        <Phone className="h-3 w-3 text-muted-foreground" />
+                        <span>{clinic.phone}</span>
+                      </div>
+                      <div className="flex items-center space-x-2 text-sm">
+                        <Mail className="h-3 w-3 text-muted-foreground" />
+                        <span className="truncate max-w-[150px]">{clinic.email}</span>
+                      </div>
+                    </div>
+                  </TableCell>
+                  
+                  <TableCell>
+                    <span className="text-sm">{clinic.whatsappNumber}</span>
+                  </TableCell>
+                  
+                  <TableCell>
+                    <Badge 
+                      variant={clinic.status === 'active' ? 'default' : 'secondary'}
+                      className={clinic.status === 'active' 
+                        ? 'bg-green-100 text-green-800 border-green-200' 
+                        : 'bg-gray-100 text-gray-800 border-gray-200'
+                      }
+                    >
+                      {clinic.status === 'active' ? 'Ativa' : 'Inativa'}
+                    </Badge>
+                  </TableCell>
+                  
+                  <TableCell>
+                    <Badge variant="outline">
+                      {clinic.usersCount} usuários
+                    </Badge>
+                  </TableCell>
+                  
+                  <TableCell>
+                    <span className="text-sm text-muted-foreground">
+                      {new Date(clinic.createdAt).toLocaleDateString('pt-BR')}
+                    </span>
+                  </TableCell>
+                  
+                   <TableCell className="text-right">
+                     <div className="flex justify-end space-x-1">
+                       <Button variant="ghost" size="sm" onClick={() => handleJsonConfig(clinic)}>
+                         <Brain className="h-4 w-4" />
+                       </Button>
+                       <Button variant="ghost" size="sm" onClick={() => handleEdit(clinic)}>
+                         <Edit className="h-4 w-4" />
+                       </Button>
+                       <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive">
+                         <Trash2 className="h-4 w-4" />
+                       </Button>
+                     </div>
+                   </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+
+      {filteredClinics.length === 0 && (
         <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12">
+          <CardContent className="flex flex-col items-center justify-center py-16">
             <Building2 className="h-12 w-12 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold mb-2">
-              {searchTerm ? 'Nenhuma clínica encontrada' : 'Nenhuma clínica cadastrada'}
-            </h3>
-            <p className="text-muted-foreground text-center">
-              {searchTerm 
-                ? 'Tente ajustar os termos de busca.'
-                : 'Comece criando sua primeira clínica no sistema.'
-              }
+            <h3 className="text-lg font-semibold mb-2">Nenhuma clínica encontrada</h3>
+            <p className="text-muted-foreground text-center max-w-sm">
+              Não há clínicas que correspondam à sua busca.
             </p>
           </CardContent>
         </Card>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredClinics.map((clinic) => (
-            <Card key={clinic.id} className="relative">
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div>
-                    <CardTitle className="flex items-center space-x-2">
-                      <span>{clinic.name}</span>
-                      {clinic.simulation_mode && (
-                        <Badge variant="secondary">Simulação</Badge>
-                      )}
-                    </CardTitle>
-                    <CardDescription>{clinic.whatsapp_number}</CardDescription>
-                  </div>
-                  <Badge variant={clinic.status === 'active' ? 'default' : 'secondary'}>
-                    {clinic.status === 'active' ? 'Ativa' : 'Inativa'}
-                  </Badge>
-                </div>
-              </CardHeader>
-              
-              <CardContent>
-                <div className="space-y-2 text-sm">
-                  {clinic.whatsapp_id && (
-                    <div>
-                      <span className="font-medium">WhatsApp ID:</span> {clinic.whatsapp_id}
-                    </div>
-                  )}
-                  <div>
-                    <span className="font-medium">Criada em:</span>{' '}
-                    {new Date(clinic.created_at).toLocaleDateString('pt-BR')}
-                  </div>
-                  <div>
-                    <span className="font-medium">Última atualização:</span>{' '}
-                    {new Date(clinic.updated_at).toLocaleDateString('pt-BR')}
-                  </div>
-                </div>
-
-                <div className="flex justify-end space-x-2 mt-4">
-                  <Button variant="outline" size="sm" onClick={() => handleEdit(clinic)}>
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={() => handleDelete(clinic)}>
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
       )}
-    </div>
-  );
-};
 
-export default Clinics;
+      {/* Modal de Edição */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>Editar Clínica</DialogTitle>
+            <DialogDescription>
+              Altere as informações da clínica
+            </DialogDescription>
+          </DialogHeader>
+          {editingClinic && (
+            <form className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-name">Nome da Clínica</Label>
+                <Input id="edit-name" defaultValue={editingClinic.name} />
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-whatsapp">WhatsApp</Label>
+                  <Input id="edit-whatsapp" defaultValue={editingClinic.whatsappNumber} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-verify-token">WhatsApp Verify Token</Label>
+                  <Input id="edit-verify-token" placeholder="verify_token_123" />
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="edit-webhook">Meta Webhook (Opcional)</Label>
+                <Input id="edit-webhook" defaultValue={editingClinic.metaWebhook || ""} />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit-status">Status</Label>
+                <Select defaultValue={editingClinic.status}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="active">Ativa</SelectItem>
+                    <SelectItem value="inactive">Inativa</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="flex justify-end space-x-2">
+                <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+                  Cancelar
+                </Button>
+                <Button type="submit">
+                  Salvar Alterações
+                </Button>
+              </div>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de Configuração JSON */}
+      <Dialog open={isJsonDialogOpen} onOpenChange={setIsJsonDialogOpen}>
+        <DialogContent className="sm:max-w-[700px]">
+          <DialogHeader>
+            <DialogTitle>Configuração JSON - {selectedClinicForJson?.name}</DialogTitle>
+            <DialogDescription>
+              Insira a configuração JSON para esta clínica
+            </DialogDescription>
+          </DialogHeader>
+          <form className="space-y-4">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="json-config">Configuração JSON</Label>
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="file"
+                    accept=".json"
+                    onChange={handleFileUpload}
+                    className="hidden"
+                    id="file-upload"
+                  />
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => document.getElementById('file-upload')?.click()}
+                  >
+                    <Upload className="h-4 w-4 mr-2" />
+                    Carregar JSON
+                  </Button>
+                </div>
+              </div>
+              <Textarea 
+                id="json-config"
+                value={jsonConfig}
+                onChange={(e) => setJsonConfig(e.target.value)}
+                placeholder='{"key": "value", "setting": "example"}'
+                className="min-h-[300px] font-mono text-sm"
+              />
+            </div>
+            
+            <div className="flex justify-end space-x-2">
+              <Button variant="outline" onClick={() => setIsJsonDialogOpen(false)}>
+                Cancelar
+              </Button>
+              <Button type="submit">
+                Salvar Configuração
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+    </div>
+  )
+}

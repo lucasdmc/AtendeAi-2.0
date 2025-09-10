@@ -8,8 +8,8 @@ DROP TABLE IF EXISTS calendar_events CASCADE;
 -- Create appointments table for local agenda
 CREATE TABLE IF NOT EXISTS appointments (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  clinic_id UUID NOT NULL REFERENCES clinics(id) ON DELETE CASCADE,
-  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  clinic_id UUID NOT NULL REFERENCES atendeai.clinics(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES atendeai.users(id) ON DELETE CASCADE,
   patient_name VARCHAR(255) NOT NULL,
   patient_phone VARCHAR(20),
   patient_email VARCHAR(255),
@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS appointments (
 -- Create appointment_availability table for managing available slots
 CREATE TABLE IF NOT EXISTS appointment_availability (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  clinic_id UUID NOT NULL REFERENCES clinics(id) ON DELETE CASCADE,
+  clinic_id UUID NOT NULL REFERENCES atendeai.clinics(id) ON DELETE CASCADE,
   day_of_week INTEGER NOT NULL CHECK (day_of_week >= 0 AND day_of_week <= 6), -- 0 = Sunday
   start_time TIME NOT NULL,
   end_time TIME NOT NULL,
@@ -47,17 +47,17 @@ ALTER TABLE appointment_availability ENABLE ROW LEVEL SECURITY;
 -- Policy for appointments - users can only see appointments from their clinics
 CREATE POLICY "Users can view appointments from their clinics" ON appointments
   FOR SELECT USING (
-    clinic_id IN (
-      SELECT clinic_id FROM user_clinic_permissions 
-      WHERE user_id = auth.uid()
+    clinic_id = (
+      SELECT clinic_id FROM atendeai.users 
+      WHERE id = auth.uid()
     )
   );
 
 -- Policy for appointment_availability - users can view availability from their clinics
 CREATE POLICY "Users can view availability from their clinics" ON appointment_availability
   FOR SELECT USING (
-    clinic_id IN (
-      SELECT clinic_id FROM user_clinic_permissions 
-      WHERE user_id = auth.uid()
+    clinic_id = (
+      SELECT clinic_id FROM atendeai.users 
+      WHERE id = auth.uid()
     )
   );
