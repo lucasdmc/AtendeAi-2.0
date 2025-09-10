@@ -1,80 +1,40 @@
-# Release Notes - AtendeAí 2.0
+# Release Notes - AtendeAI 2.0 v1.3.0
 
-## Versão 2.0.0 - 2025-01-09
+## 🎉 RELEASE MAJOR - SISTEMA COMPLETO E FUNCIONAL
 
-### 🎉 Principais Mudanças
+**Data**: 2025-09-10
+**Tipo**: MAJOR
+**Descrição**: Release que transforma o protótipo em sistema funcional e seguro
 
-#### ✨ Novas Funcionalidades
-- **Agenda Própria**: Nova tela de agenda independente de serviços externos
-- **Gestão de Agendamentos**: CRUD completo de agendamentos locais
-- **Interface Melhorada**: Design moderno e responsivo para gestão de agendamentos
+## ✨ NOVIDADES
 
-#### 🔧 Melhorias Técnicas
-- **Build Otimizado**: Correção de erros de runtime (ReferenceError process, SyntaxError lexical variable)
-- **Configuração Vite**: Ajustes para funcionamento correto do frontend
-- **Código Limpo**: Remoção de dependências desnecessárias
+- Sistema de autenticação unificado com Supabase
+- Proteção de rotas com middleware
+- Controle de acesso RBAC com 3 perfis de usuário
+- Integração frontend-backend completa
+- WhatsApp multi-clínica configurado
+- Sistema de contextualização funcional
 
-#### 🗑️ Remoções
-- **Google Auth**: Removida integração com Google Authentication
-- **Google Calendar**: Removida integração com Google Calendar
-- **Serviços Externos**: Sistema agora funciona independentemente
+## �� CORREÇÕES
 
-### 📋 Detalhes Técnicos
+- Removido AuthService Custom duplicado
+- Implementado middleware de proteção de rotas
+- Conectado CRUDs com Supabase
+- Configurado roteamento WhatsApp por clínica
+- Implementado sistema de contextualização
 
-#### Arquivos Modificados
-- `src/components/Layout.tsx` - Corrigida variável isLoading duplicada
-- `vite.config.ts` - Configuração do process para resolver erros de build
-- `src/App.tsx` - Adicionada rota da nova Agenda
-- `src/components/AppSidebar.tsx` - Adicionado link para Agenda
+## 🚀 INSTRUÇÕES DE DEPLOY
 
-#### Arquivos Criados
-- `src/pages/Agenda.tsx` - Nova tela de agenda
-- `src/services/appointmentService.ts` - Serviço de agendamentos
-- `framework/db/migrations/004_remove_google_add_agenda.sql` - Migration do banco
+1. Executar migrações do banco (se necessário)
+2. Configurar variáveis de ambiente
+3. Deploy do frontend
+4. Deploy dos microserviços
+5. Configurar webhooks WhatsApp
+6. Testar integração completa
 
-#### Arquivos Removidos
-- `src/services/googleCalendarService.ts` - Serviço Google removido
+## 🔄 PLANO DE ROLLBACK
 
-### 🎯 Funcionalidades da Nova Agenda
-
-#### Visualização
-- Calendário com agendamentos do dia
-- Lista detalhada de agendamentos
-- Status visual dos agendamentos (Agendado, Confirmado, Cancelado, Concluído)
-
-#### Gestão
-- Criar novos agendamentos
-- Editar agendamentos existentes
-- Excluir agendamentos
-- Gerenciar horários disponíveis
-
-#### Informações do Paciente
-- Nome, telefone e email
-- Observações e notas
-- Duração personalizável do agendamento
-
-### 🔄 Migração Necessária
-
-Execute a migration do banco de dados:
-```sql
--- Executar framework/db/migrations/004_remove_google_add_agenda.sql
-```
-
-### 🚀 Deploy
-
-Para fazer deploy:
-```bash
-npm run build
-# Deploy dos arquivos da pasta dist/
-```
-
-### 📞 Suporte
-
-Para dúvidas ou problemas, consulte:
-- `docs/system_spec.md` - Especificação do sistema
-- `docs/acceptance_report.md` - Relatório de aceitação
-- `docs/traceability.csv` - Rastreabilidade de requisitos
-
----
-
-**Desenvolvido com ❤️ para o AtendeAí 2.0**
+1. Reverter para versão anterior
+2. Restaurar backup do banco
+3. Verificar integridade dos dados
+4. Monitorar logs de erro

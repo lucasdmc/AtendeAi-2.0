@@ -1,10 +1,16 @@
-const MetaAPICircuitBreaker = require('../../src/utils/circuitBreaker');
+import { describe, test, expect, beforeEach, vi } from 'vitest';
+import MetaAPICircuitBreaker from '../../src/utils/circuitBreaker';
 
 describe('MetaAPICircuitBreaker', () => {
     let circuitBreaker;
 
     beforeEach(() => {
+        vi.useFakeTimers();
         circuitBreaker = new MetaAPICircuitBreaker(3, 1000); // 3 falhas, 1 segundo de timeout
+    });
+
+    afterEach(() => {
+        vi.useRealTimers();
     });
 
     describe('constructor', () => {
@@ -24,7 +30,7 @@ describe('MetaAPICircuitBreaker', () => {
 
     describe('execute', () => {
         it('should execute operation when circuit is CLOSED', async () => {
-            const operation = jest.fn().mockResolvedValue('success');
+            const operation = vi.fn().mockResolvedValue('success');
             
             const result = await circuitBreaker.execute(operation);
             
@@ -34,7 +40,7 @@ describe('MetaAPICircuitBreaker', () => {
 
         it('should execute operation when circuit is HALF_OPEN', async () => {
             // Simular falhas para abrir o circuito
-            const failingOperation = jest.fn().mockRejectedValue(new Error('fail'));
+            const failingOperation = vi.fn().mockRejectedValue(new Error('fail'));
             
             for (let i = 0; i < 3; i++) {
                 try {
@@ -47,9 +53,9 @@ describe('MetaAPICircuitBreaker', () => {
             expect(circuitBreaker.state).toBe('OPEN');
             
             // Aguardar timeout para HALF_OPEN
-            jest.advanceTimersByTime(1000);
+            vi.advanceTimersByTime(1000);
             
-            const successOperation = jest.fn().mockResolvedValue('success');
+            const successOperation = vi.fn().mockResolvedValue('success');
             const result = await circuitBreaker.execute(successOperation);
             
             expect(result).toBe('success');
@@ -58,7 +64,7 @@ describe('MetaAPICircuitBreaker', () => {
 
         it('should reject operation when circuit is OPEN', async () => {
             // Simular falhas para abrir o circuito
-            const failingOperation = jest.fn().mockRejectedValue(new Error('fail'));
+            const failingOperation = vi.fn().mockRejectedValue(new Error('fail'));
             
             for (let i = 0; i < 3; i++) {
                 try {
@@ -70,7 +76,7 @@ describe('MetaAPICircuitBreaker', () => {
             
             expect(circuitBreaker.state).toBe('OPEN');
             
-            const operation = jest.fn().mockResolvedValue('success');
+            const operation = vi.fn().mockResolvedValue('success');
             
             await expect(circuitBreaker.execute(operation)).rejects.toThrow('Circuit breaker is OPEN');
             expect(operation).not.toHaveBeenCalled();
@@ -127,7 +133,8 @@ describe('MetaAPICircuitBreaker', () => {
 
         it('should return true after recovery timeout', () => {
             circuitBreaker.onFailure();
-            jest.advanceTimersByTime(1000);
+            // Simular passagem do tempo
+            circuitBreaker.lastFailureTime = Date.now() - 2000; // 2 segundos atrás
             
             expect(circuitBreaker.shouldAttemptReset()).toBe(true);
         });

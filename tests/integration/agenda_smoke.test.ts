@@ -6,12 +6,15 @@ import { describe, test, expect, beforeEach, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter } from 'react-router-dom';
+import React from 'react';
 import Agenda from '@/pages/Agenda';
-import { useGoogleCalendar } from '@/hooks/useGoogleCalendar';
+// Mock do hook useGoogleCalendar
+const mockUseGoogleCalendar = vi.fn();
 
 // Mock do hook useGoogleCalendar
-vi.mock('@/hooks/useGoogleCalendar');
-const mockUseGoogleCalendar = vi.mocked(useGoogleCalendar);
+vi.mock('@/hooks/useGoogleCalendar', () => ({
+  useGoogleCalendar: mockUseGoogleCalendar
+}));
 
 // Mock do useAuth
 vi.mock('@/hooks/useAuth', () => ({
@@ -39,6 +42,42 @@ vi.mock('@/sdk/googleCalendarSDK', () => ({
   }
 }));
 
+// Mock do @tanstack/react-query
+vi.mock('@tanstack/react-query', async () => {
+  const actual = await vi.importActual('@tanstack/react-query');
+  return {
+    ...actual,
+    QueryClient: vi.fn().mockImplementation((config) => ({
+      ...config,
+      getQueryData: vi.fn(),
+      setQueryData: vi.fn(),
+      invalidateQueries: vi.fn(),
+      refetchQueries: vi.fn(),
+      cancelQueries: vi.fn(),
+      removeQueries: vi.fn(),
+      clear: vi.fn(),
+      mount: vi.fn(),
+      unmount: vi.fn(),
+      isFetching: vi.fn(),
+      isMutating: vi.fn(),
+      getDefaultOptions: vi.fn(),
+      setDefaultOptions: vi.fn(),
+      getQueryCache: vi.fn(),
+      getMutationCache: vi.fn(),
+      getLogger: vi.fn(),
+      setLogger: vi.fn(),
+      defaultOptions: config?.defaultOptions || {}
+    })),
+    QueryClientProvider: ({ children }: { children: React.ReactNode }) => children,
+    useQuery: vi.fn(),
+    useMutation: vi.fn(),
+    useQueryClient: vi.fn(),
+    useInfiniteQuery: vi.fn(),
+    useIsFetching: vi.fn(),
+    useIsMutating: vi.fn()
+  };
+});
+
 const createTestWrapper = () => {
   const queryClient = new QueryClient({
     defaultOptions: {
@@ -47,13 +86,13 @@ const createTestWrapper = () => {
     }
   });
 
-  return ({ children }: { children: React.ReactNode }) => (
-    <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        {children}
-      </BrowserRouter>
-    </QueryClientProvider>
-  );
+  const TestWrapper = ({ children }: { children: React.ReactNode }) => {
+    return React.createElement(QueryClientProvider, { client: queryClient },
+      React.createElement(BrowserRouter, null, children)
+    );
+  };
+
+  return TestWrapper;
 };
 
 describe('Agenda Integration Smoke Tests', () => {
@@ -78,7 +117,8 @@ describe('Agenda Integration Smoke Tests', () => {
       status: 'disconnected'
     });
 
-    render(<Agenda />, { wrapper: createTestWrapper() });
+    const TestWrapper = createTestWrapper();
+    render(React.createElement(Agenda), { wrapper: TestWrapper });
 
     expect(screen.getByText('Agenda')).toBeInTheDocument();
     expect(screen.getByText('Carregando integração...')).toBeInTheDocument();
@@ -101,7 +141,8 @@ describe('Agenda Integration Smoke Tests', () => {
       status: 'disconnected'
     });
 
-    render(<Agenda />, { wrapper: createTestWrapper() });
+    const TestWrapper = createTestWrapper();
+    render(React.createElement(Agenda), { wrapper: TestWrapper });
 
     expect(screen.getByText('Google Calendar não conectado')).toBeInTheDocument();
     expect(screen.getByText('Conectar Google Calendar')).toBeInTheDocument();
@@ -142,7 +183,8 @@ describe('Agenda Integration Smoke Tests', () => {
       status: 'active'
     });
 
-    render(<Agenda />, { wrapper: createTestWrapper() });
+    const TestWrapper = createTestWrapper();
+    render(React.createElement(Agenda), { wrapper: TestWrapper });
 
     expect(screen.getByText('Google Calendar Conectado')).toBeInTheDocument();
     expect(screen.getByText('Test Calendar')).toBeInTheDocument();
@@ -168,7 +210,8 @@ describe('Agenda Integration Smoke Tests', () => {
       status: 'disconnected'
     });
 
-    render(<Agenda />, { wrapper: createTestWrapper() });
+    const TestWrapper = createTestWrapper();
+    render(React.createElement(Agenda), { wrapper: TestWrapper });
 
     const connectButton = screen.getByText('Conectar Google Calendar');
     fireEvent.click(connectButton);
@@ -214,7 +257,8 @@ describe('Agenda Integration Smoke Tests', () => {
       status: 'active'
     });
 
-    render(<Agenda />, { wrapper: createTestWrapper() });
+    const TestWrapper = createTestWrapper();
+    render(React.createElement(Agenda), { wrapper: TestWrapper });
 
     const syncButton = screen.getByText('Sincronizar');
     fireEvent.click(syncButton);
@@ -263,7 +307,8 @@ describe('Agenda Integration Smoke Tests', () => {
     // Mock window.confirm
     window.confirm = vi.fn(() => true);
 
-    render(<Agenda />, { wrapper: createTestWrapper() });
+    const TestWrapper = createTestWrapper();
+    render(React.createElement(Agenda), { wrapper: TestWrapper });
 
     const disconnectButton = screen.getByText('Desconectar');
     fireEvent.click(disconnectButton);
@@ -308,7 +353,8 @@ describe('Agenda Integration Smoke Tests', () => {
       status: 'expired'
     });
 
-    render(<Agenda />, { wrapper: createTestWrapper() });
+    const TestWrapper = createTestWrapper();
+    render(React.createElement(Agenda), { wrapper: TestWrapper });
 
     expect(screen.getByText('Token Expirado')).toBeInTheDocument();
     expect(screen.getByText('Expirado')).toBeInTheDocument();
@@ -349,7 +395,8 @@ describe('Agenda Integration Smoke Tests', () => {
       status: 'error'
     });
 
-    render(<Agenda />, { wrapper: createTestWrapper() });
+    const TestWrapper = createTestWrapper();
+    render(React.createElement(Agenda), { wrapper: TestWrapper });
 
     expect(screen.getByText('Erro na Integração')).toBeInTheDocument();
     expect(screen.getByText('Erro')).toBeInTheDocument();
@@ -390,7 +437,8 @@ describe('Agenda Integration Smoke Tests', () => {
       status: 'active'
     });
 
-    render(<Agenda />, { wrapper: createTestWrapper() });
+    const TestWrapper = createTestWrapper();
+    render(React.createElement(Agenda), { wrapper: TestWrapper });
 
     const iframe = screen.getByTitle('Google Calendar');
     expect(iframe).toBeInTheDocument();

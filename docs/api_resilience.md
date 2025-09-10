@@ -1,39 +1,26 @@
-# API Resilience - AtendeAí 2.0
+# API Resilience - AtendeAI 2.0
 
 ## Estratégias de Resiliência
 
-### 1. Tratamento de Erros
-- Códigos HTTP apropriados
-- Mensagens de erro claras
-- Logs detalhados para debugging
-
-### 2. Validação de Dados
+- Rate limiting por IP e usuário
 - Validação de entrada em todos os endpoints
-- Sanitização de dados
-- Verificação de permissões
+- Tratamento de erros padronizado
+- Circuit breaker para APIs externas
+- Retry com exponential backoff
+- Fallback strategies para WhatsApp
 
-### 3. Performance
-- Índices de banco otimizados
-- Paginação em listagens
-- Cache quando apropriado
+## Medidas de Segurança
 
-### 4. Segurança
-- Autenticação obrigatória
-- Autorização baseada em clínica
+- Autenticação obrigatória via Supabase
+- Autorização baseada em perfil de usuário
 - RLS (Row Level Security) no banco
+- CORS configurado adequadamente
+- Validação de webhook signatures
 
-## Endpoints Principais
+## Otimizações de Performance
 
-### /api/appointments
-- GET: Listar agendamentos com filtros
-- POST: Criar novo agendamento
-- PUT: Atualizar agendamento existente
-- DELETE: Excluir agendamento
-
-### /api/appointments/availability
-- GET: Obter horários disponíveis para agendamento
-
-## Remoções
-- Todos os endpoints relacionados ao Google Calendar
-- Endpoints de autenticação Google
-- Sincronização externa
+- Índices otimizados no banco
+- Cache Redis para dados frequentes
+- Paginação em listagens
+- Lazy loading em componentes
+- Compressão de respostas

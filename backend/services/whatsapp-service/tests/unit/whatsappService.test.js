@@ -1,14 +1,57 @@
-const WhatsAppService = require('../../src/services/whatsappService');
+import { describe, test, expect, beforeEach, vi } from 'vitest';
+import WhatsAppService from '../../src/services/whatsappService';
 
 // Mock das dependências
-jest.mock('../../src/services/metaWhatsAppAPI');
-jest.mock('../../src/utils/whatsappMessageAdapter');
-jest.mock('../../src/utils/circuitBreaker');
-jest.mock('../../src/utils/retryStrategy');
-jest.mock('../../src/utils/fallbackStrategy');
-jest.mock('../../src/clients/conversationServiceClient');
-jest.mock('../../src/clients/clinicServiceClient');
-jest.mock('../../src/config/database');
+vi.mock('../../src/services/metaWhatsAppAPI', () => ({
+  default: {
+    sendMessage: vi.fn(),
+    verifyCredentials: vi.fn()
+  }
+}));
+
+vi.mock('../../src/utils/whatsappMessageAdapter', () => ({
+  default: {
+    adaptIncomingMessage: vi.fn(),
+    adaptOutgoingMessage: vi.fn()
+  }
+}));
+
+vi.mock('../../src/utils/circuitBreaker', () => ({
+  default: vi.fn().mockImplementation(() => ({
+    execute: vi.fn()
+  }))
+}));
+
+vi.mock('../../src/utils/retryStrategy', () => ({
+  default: vi.fn().mockImplementation(() => ({
+    execute: vi.fn()
+  }))
+}));
+
+vi.mock('../../src/utils/fallbackStrategy', () => ({
+  default: vi.fn().mockImplementation(() => ({
+    getResponse: vi.fn()
+  }))
+}));
+
+vi.mock('../../src/clients/conversationServiceClient', () => ({
+  default: {
+    processMessage: vi.fn()
+  }
+}));
+
+vi.mock('../../src/clients/clinicServiceClient', () => ({
+  default: {
+    getClinicContext: vi.fn(),
+    getWhatsAppConfig: vi.fn()
+  }
+}));
+
+vi.mock('../../src/config/database', () => ({
+  default: {
+    query: vi.fn()
+  }
+}));
 
 describe('WhatsAppService', () => {
     let whatsappService;
@@ -21,62 +64,49 @@ describe('WhatsAppService', () => {
     let mockClinicService;
     let mockDatabase;
 
-    beforeEach(() => {
+    beforeEach(async () => {
         // Reset mocks
-        jest.clearAllMocks();
+        vi.clearAllMocks();
         
-        // Mock das dependências
-        mockMetaAPI = {
-            sendMessage: jest.fn(),
-            verifyCredentials: jest.fn()
-        };
-        
-        mockMessageAdapter = {
-            adaptIncomingMessage: jest.fn(),
-            adaptOutgoingMessage: jest.fn()
-        };
-        
-        mockCircuitBreaker = {
-            execute: jest.fn()
-        };
-        
-        mockRetryStrategy = {
-            execute: jest.fn()
-        };
-        
-        mockFallbackStrategy = {
-            getResponse: jest.fn()
-        };
-        
-        mockConversationService = {
-            processMessage: jest.fn()
-        };
-        
-        mockClinicService = {
-            getClinicContext: jest.fn(),
-            getWhatsAppConfig: jest.fn()
-        };
-        
-        mockDatabase = {
-            query: jest.fn()
-        };
+        // Import mocked modules
+        const { default: MetaAPI } = await import('../../src/services/metaWhatsAppAPI');
+        const { default: MessageAdapter } = await import('../../src/utils/whatsappMessageAdapter');
+        const { default: CircuitBreaker } = await import('../../src/utils/circuitBreaker');
+        const { default: RetryStrategy } = await import('../../src/utils/retryStrategy');
+        const { default: FallbackStrategy } = await import('../../src/utils/fallbackStrategy');
+        const { default: ConversationService } = await import('../../src/clients/conversationServiceClient');
+        const { default: ClinicService } = await import('../../src/clients/clinicServiceClient');
+        const { default: Database } = await import('../../src/config/database');
 
-        // Mock dos módulos
-        jest.doMock('../../src/services/metaWhatsAppAPI', () => mockMetaAPI);
-        jest.doMock('../../src/utils/whatsappMessageAdapter', () => mockMessageAdapter);
-        jest.doMock('../../src/utils/circuitBreaker', () => mockCircuitBreaker);
-        jest.doMock('../../src/utils/retryStrategy', () => mockRetryStrategy);
-        jest.doMock('../../src/utils/fallbackStrategy', () => mockFallbackStrategy);
-        jest.doMock('../../src/clients/conversationServiceClient', () => mockConversationService);
-        jest.doMock('../../src/clients/clinicServiceClient', () => mockClinicService);
-        jest.doMock('../../src/config/database', () => mockDatabase);
+        // Setup mock instances
+        mockMetaAPI = MetaAPI;
+        mockMessageAdapter = MessageAdapter;
+        mockCircuitBreaker = new CircuitBreaker();
+        mockRetryStrategy = new RetryStrategy();
+        mockFallbackStrategy = new FallbackStrategy();
+        mockConversationService = ConversationService;
+        mockClinicService = ClinicService;
+        mockDatabase = Database;
 
         whatsappService = new WhatsAppService();
     });
 
     describe('processWebhook', () => {
         it('should process webhook successfully', async () => {
-            const mockPayload = { test: 'payload' };
+            const mockPayload = {
+                entry: [{
+                    changes: [{
+                        value: {
+                            messages: [{
+                                id: 'msg-123',
+                                from: '+5511999999999',
+                                text: { body: 'Hello' },
+                                timestamp: '1234567890'
+                            }]
+                        }
+                    }]
+                }]
+            };
             const mockSignature = 'valid_signature';
             const mockClinicId = 'clinic-123';
             
@@ -118,7 +148,20 @@ describe('WhatsAppService', () => {
         });
 
         it('should handle errors during webhook processing', async () => {
-            const mockPayload = { test: 'payload' };
+            const mockPayload = {
+                entry: [{
+                    changes: [{
+                        value: {
+                            messages: [{
+                                id: 'msg-123',
+                                from: '+5511999999999',
+                                text: { body: 'Hello' },
+                                timestamp: '1234567890'
+                            }]
+                        }
+                    }]
+                }]
+            };
             const mockSignature = 'valid_signature';
             const mockClinicId = 'clinic-123';
             
@@ -241,13 +284,21 @@ describe('WhatsAppService', () => {
                 aiPersonality: 'friendly',
                 workingHours: '9-18'
             };
-
-            mockClinicService.getClinicContext.mockResolvedValue(mockContext);
-
+            
+            // Mock the clinic service method properly
+            const mockClinicServiceInstance = {
+                getClinicContext: vi.fn().mockResolvedValue(mockContext)
+            };
+            
+            // Replace the mock implementation
+            vi.doMock('../../src/clients/clinicServiceClient', () => ({
+                default: mockClinicServiceInstance
+            }));
+            
             const result = await whatsappService.getClinicContext(mockClinicId);
-
+            
             expect(result).toBe(mockContext);
-            expect(mockClinicService.getClinicContext).toHaveBeenCalledWith(mockClinicId);
+            expect(mockClinicServiceInstance.getClinicContext).toHaveBeenCalledWith(mockClinicId);
         });
 
         it('should handle clinic service errors', async () => {
@@ -268,13 +319,21 @@ describe('WhatsAppService', () => {
                 phoneNumber: '+5511888888888',
                 autoReplyEnabled: true
             };
-
-            mockClinicService.getWhatsAppConfig.mockResolvedValue(mockConfig);
-
+            
+            // Mock the clinic service method properly
+            const mockClinicServiceInstance = {
+                getWhatsAppConfig: vi.fn().mockResolvedValue(mockConfig)
+            };
+            
+            // Replace the mock implementation
+            vi.doMock('../../src/clients/clinicServiceClient', () => ({
+                default: mockClinicServiceInstance
+            }));
+            
             const result = await whatsappService.getWhatsAppConfig(mockClinicId);
-
+            
             expect(result).toBe(mockConfig);
-            expect(mockClinicService.getWhatsAppConfig).toHaveBeenCalledWith(mockClinicId);
+            expect(mockClinicServiceInstance.getWhatsAppConfig).toHaveBeenCalledWith(mockClinicId);
         });
 
         it('should handle clinic service errors', async () => {

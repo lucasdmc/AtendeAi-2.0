@@ -3,24 +3,33 @@
 // Testes unitários para autenticação
 // =====================================================
 
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
-const { body, validationResult } = require('express-validator');
+import { describe, test, expect, beforeEach, vi } from 'vitest';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+import { body, validationResult } from 'express-validator';
 
 // Mock das dependências
-jest.mock('bcryptjs', () => ({
-  hash: jest.fn(),
-  compare: jest.fn()
+vi.mock('bcryptjs', () => ({
+  default: {
+    hash: vi.fn(),
+    compare: vi.fn()
+  },
+  hash: vi.fn(),
+  compare: vi.fn()
 }));
 
-jest.mock('jsonwebtoken', () => ({
-  sign: jest.fn(),
-  verify: jest.fn()
+vi.mock('jsonwebtoken', () => ({
+  default: {
+    sign: vi.fn(),
+    verify: vi.fn()
+  },
+  sign: vi.fn(),
+  verify: vi.fn()
 }));
 
-jest.mock('express-validator', () => ({
-  body: jest.fn(),
-  validationResult: jest.fn()
+vi.mock('express-validator', () => ({
+  body: vi.fn(),
+  validationResult: vi.fn()
 }));
 
 describe('Auth Service - Unit Tests', () => {
@@ -33,15 +42,15 @@ describe('Auth Service - Unit Tests', () => {
       user: null
     };
     mockRes = {
-      status: jest.fn().mockReturnThis(),
-      json: jest.fn().mockReturnThis(),
-      send: jest.fn().mockReturnThis()
+      status: vi.fn().mockReturnThis(),
+      json: vi.fn().mockReturnThis(),
+      send: vi.fn().mockReturnThis()
     };
-    mockNext = jest.fn();
+    mockNext = vi.fn();
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe('Password Hashing', () => {

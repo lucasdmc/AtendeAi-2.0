@@ -3,27 +3,38 @@
 // Testes de integração para autenticação
 // =====================================================
 
-const request = require('supertest');
-const express = require('express');
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
+import { describe, test, expect, beforeEach, vi } from 'vitest';
+import request from 'supertest';
+import express from 'express';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
 
 // Mock das dependências externas
-jest.mock('pg', () => ({
-  Pool: jest.fn()
+vi.mock('pg', () => ({
+  Pool: vi.fn().mockImplementation(() => ({
+    query: vi.fn(),
+    connect: vi.fn(),
+    end: vi.fn()
+  }))
 }));
 
-jest.mock('redis', () => ({
-  createClient: jest.fn()
+vi.mock('redis', () => ({
+  createClient: vi.fn().mockImplementation(() => ({
+    get: vi.fn(),
+    set: vi.fn(),
+    del: vi.fn(),
+    connect: vi.fn(),
+    disconnect: vi.fn()
+  }))
 }));
 
-jest.mock('bcryptjs', () => ({
-  compare: jest.fn()
+vi.mock('bcryptjs', () => ({
+  compare: vi.fn()
 }));
 
-jest.mock('jsonwebtoken', () => ({
-  sign: jest.fn(),
-  verify: jest.fn()
+vi.mock('jsonwebtoken', () => ({
+  sign: vi.fn(),
+  verify: vi.fn()
 }));
 
 describe('Auth Service - Integration Tests', () => {
@@ -31,35 +42,36 @@ describe('Auth Service - Integration Tests', () => {
   let mockDb;
   let mockRedis;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     // Criar app Express para testes
     app = express();
     app.use(express.json());
 
     // Mock do banco de dados
     mockDb = {
-      query: jest.fn(),
-      connect: jest.fn(),
-      end: jest.fn()
+      query: vi.fn(),
+      connect: vi.fn(),
+      end: vi.fn()
     };
 
     // Mock do Redis
     mockRedis = {
-      get: jest.fn(),
-      set: jest.fn(),
-      del: jest.fn(),
-      connect: jest.fn(),
-      disconnect: jest.fn()
+      get: vi.fn(),
+      set: vi.fn(),
+      del: vi.fn(),
+      connect: vi.fn(),
+      disconnect: vi.fn()
     };
 
     // Configurar mocks
-    const { Pool } = require('pg');
-    const { createClient } = require('redis');
-    const bcrypt = require('bcryptjs');
-    const jwt = require('jsonwebtoken');
+    const { Pool } = await import('pg');
+    const { createClient } = await import('redis');
+    const bcrypt = await import('bcryptjs');
+    const jwt = await import('jsonwebtoken');
 
-    Pool.mockReturnValue(mockDb);
-    createClient.mockReturnValue(mockRedis);
+    // Mock the constructors
+    Pool.mockImplementation(() => mockDb);
+    createClient.mockImplementation(() => mockRedis);
 
     // Configurar rotas de teste
     app.post('/auth/login', (req, res) => {
@@ -172,7 +184,7 @@ describe('Auth Service - Integration Tests', () => {
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe('Authentication Endpoints', () => {

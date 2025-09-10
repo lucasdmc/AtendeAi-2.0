@@ -14,6 +14,10 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
     setupFiles: ['./src/tests/setup.ts'],
+    transformMode: {
+      web: [/\.[jt]sx?$/]
+    },
+    jsx: 'react-jsx',
     coverage: {
       reporter: ['text', 'json', 'html', 'lcov', 'xml'],
       reportsDirectory: './reports/coverage',

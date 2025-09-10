@@ -1,61 +1,47 @@
 # Especificação do Sistema AtendeAí 2.0
 
 ## Visão Geral
-Sistema de gestão de clínicas médicas com agenda própria, sem dependências externas de Google Auth ou Google Calendar.
+Sistema de gestão de clínicas médicas com agenda própria, autenticação unificada e WhatsApp multi-clínica.
 
-## Funcionalidades Principais
+## Requisitos Funcionais
 
-### 1. Autenticação e Autorização
-- Login/logout de usuários
-- Controle de acesso baseado em perfis (AdminLify, AdminClinic, User)
-- Gestão de permissões por clínica
+### REQ-001: Sistema de Autenticação Unificado
+**Descrição**: Implementar sistema de autenticação único usando Supabase Auth
+**Prioridade**: high
+**Status**: pending
+**Critérios de Aceitação**:
+- Remover AuthService Custom completamente
+- Manter apenas Supabase Auth
+- Implementar middleware de proteção de rotas
+- Configurar redirecionamento automático
 
-### 2. Gestão de Clínicas
-- CRUD completo de clínicas
-- Seleção de clínica ativa
-- Configurações específicas por clínica
+### REQ-002: Controle de Acesso por Perfil
+**Descrição**: Implementar sistema RBAC com 3 perfis de usuário
+**Prioridade**: high
+**Status**: pending
+**Critérios de Aceitação**:
+- Admin Lify: Acesso total ao sistema
+- Admin Clínica: Acesso apenas à sua clínica
+- Atendente: Acesso operacional (Dashboard, Agenda, Agendamentos, Contexto, Conversas)
+- Implementar verificação de permissões em todas as operações
 
-### 3. Gestão de Usuários
-- CRUD de usuários
-- Associação usuário-clínica
-- Controle de permissões
+### REQ-003: Integração Frontend-Backend
+**Descrição**: Conectar CRUDs com Supabase e implementar contextualização
+**Prioridade**: medium
+**Status**: pending
+**Critérios de Aceitação**:
+- Conectar CRUD de Clínicas com tabela atendeai.clinics
+- Conectar CRUD de Usuários com tabela atendeai.users
+- Implementar contextualização via context_json
+- Conectar combobox com dados reais do banco
 
-### 4. Agenda Própria (Nova Funcionalidade)
-- Visualização de agenda em calendário
-- Criação, edição e exclusão de agendamentos
-- Gestão de horários disponíveis
-- Notificações de agendamentos
+### REQ-004: WhatsApp Multi-clínica
+**Descrição**: Configurar servidor para múltiplas conexões WhatsApp
+**Prioridade**: medium
+**Status**: pending
+**Critérios de Aceitação**:
+- Configurar webhook individual por clínica
+- Implementar roteamento de mensagens por clínica
+- Conectar tela de conversas com dados reais
+- Implementar controle bot/humano por clínica
 
-### 5. Gestão de Conversas
-- Chat integrado para comunicação
-- Histórico de conversas
-- Suporte a múltiplos canais
-
-## Arquitetura Técnica
-
-### Frontend
-- React 18 + TypeScript
-- Vite como bundler
-- Tailwind CSS para estilização
-- Componentes reutilizáveis
-
-### Backend
-- Node.js com Express
-- Supabase como banco de dados
-- Serviços modulares (auth, clinic, user, conversation, appointment)
-
-### Banco de Dados
-- PostgreSQL via Supabase
-- Tabelas: users, clinics, appointments, conversations, permissions
-
-## Requisitos Não Funcionais
-- Build sem erros de runtime
-- Interface responsiva
-- Performance adequada
-- Segurança de dados
-
-## Remoções Necessárias
-- Integração Google Auth
-- Integração Google Calendar
-- Serviços externos desnecessários
-- Dependências de process.env no frontend
