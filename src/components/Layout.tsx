@@ -20,7 +20,7 @@ interface LayoutProps {
 export function Layout({ children }: LayoutProps) {
   const location = useLocation()
   const navigate = useNavigate()
-  const { user, signOut, loading } = useAuth()
+  const { user, logout, isLoading } = useAuth()
   const { 
     state: { selectedClinic, clinics, isLoading }, 
     setSelectedClinic, 
@@ -30,19 +30,19 @@ export function Layout({ children }: LayoutProps) {
 
   // Redirecionamento automático para usuários não autenticados
   useEffect(() => {
-    console.log('🔧 Layout useEffect - loading:', loading, 'user:', user)
-    if (!loading && !user) {
+    console.log('🔧 Layout useEffect - loading:', isLoading, 'user:', user)
+    if (!isLoading && !user) {
       console.log('🔧 Redirecting to /auth')
       navigate("/auth")
     }
-  }, [loading, user, navigate])
+  }, [isLoading, user, navigate])
 
   // Carregar clínicas do usuário
   useEffect(() => {
-    if (user && !loading) {
+    if (user && !isLoading) {
       loadUserClinics();
     }
-  }, [user, loading]);
+  }, [user, isLoading]);
 
   const loadUserClinics = async () => {
     if (!user?.id) return;
@@ -86,7 +86,7 @@ export function Layout({ children }: LayoutProps) {
   };
 
   // Show loading while checking auth
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -103,7 +103,7 @@ export function Layout({ children }: LayoutProps) {
   }
 
   const handleLogout = async () => {
-    await signOut()
+    await logout()
     navigate("/auth")
   }
 
