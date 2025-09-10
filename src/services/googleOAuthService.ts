@@ -53,7 +53,7 @@ class GoogleOAuthService {
   async initiateOAuth(clinicId: string, redirectUri: string): Promise<string> {
     try {
       // Usar client ID padrão se não houver configuração específica da clínica
-      const clientId = process.env.VITE_GOOGLE_CLIENT_ID || '367439444210-phr1e6oiu8hnh5vm57lpoud5lhrdda2o.apps.googleusercontent.com';
+      const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '367439444210-phr1e6oiu8hnh5vm57lpoud5lhrdda2o.apps.googleusercontent.com';
       
       const params = new URLSearchParams({
         client_id: clientId,
@@ -80,8 +80,8 @@ class GoogleOAuthService {
   ): Promise<GoogleTokens> {
     try {
       // Usar credenciais padrão se não houver configuração específica da clínica
-      const clientId = process.env.VITE_GOOGLE_CLIENT_ID || '367439444210-phr1e6oiu8hnh5vm57lpoud5lhrdda2o.apps.googleusercontent.com';
-      const clientSecret = process.env.VITE_GOOGLE_CLIENT_SECRET || 'GOCSPX-your_client_secret_here';
+      const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '367439444210-phr1e6oiu8hnh5vm57lpoud5lhrdda2o.apps.googleusercontent.com';
+      const clientSecret = import.meta.env.VITE_GOOGLE_CLIENT_SECRET || 'GOCSPX-your_client_secret_here';
 
       const response = await fetch(this.GOOGLE_TOKEN_URL, {
         method: 'POST',
@@ -154,8 +154,8 @@ class GoogleOAuthService {
       }
 
       // Usar credenciais padrão
-      const clientId = process.env.VITE_GOOGLE_CLIENT_ID || '367439444210-phr1e6oiu8hnh5vm57lpoud5lhrdda2o.apps.googleusercontent.com';
-      const clientSecret = process.env.VITE_GOOGLE_CLIENT_SECRET || 'GOCSPX-your_client_secret_here';
+      const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '367439444210-phr1e6oiu8hnh5vm57lpoud5lhrdda2o.apps.googleusercontent.com';
+      const clientSecret = import.meta.env.VITE_GOOGLE_CLIENT_SECRET || 'GOCSPX-your_client_secret_here';
 
       const response = await fetch(this.GOOGLE_TOKEN_URL, {
         method: 'POST',

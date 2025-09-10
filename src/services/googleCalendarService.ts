@@ -47,7 +47,7 @@ export interface CreateEventRequest {
 class GoogleCalendarService {
   private readonly integrationsTable = 'google_integrations';
   private readonly eventsTable = 'calendar_events';
-  private readonly baseApiUrl = process.env.GOOGLE_CALENDAR_SERVICE_URL || 'http://localhost:3008';
+  private readonly baseApiUrl = import.meta.env.VITE_GOOGLE_CALENDAR_SERVICE_URL || 'http://localhost:3008';
 
   async getAuthUrl(): Promise<string> {
     try {

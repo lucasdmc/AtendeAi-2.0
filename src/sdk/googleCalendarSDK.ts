@@ -52,7 +52,7 @@ export interface CreateEventRequest {
 }
 
 class GoogleCalendarSDK {
-  private readonly baseUrl = process.env.VITE_API_BASE_URL || 'http://localhost:8000';
+  private readonly baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
   private readonly integrationsTable = 'google_integrations';
 
   private async getAuthHeaders() {
