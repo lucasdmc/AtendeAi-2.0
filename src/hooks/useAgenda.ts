@@ -1,7 +1,9 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Agendamento, AgendaFlag, AgendaView } from '@/types/agenda';
 import { addDays, startOfWeek, format, isSameDay, isSameMonth, isSameYear, differenceInDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { useAppointments } from '@/hooks/useApi';
+import { useClinic as useClinicContext } from '@/contexts/ClinicContext';
 
 // Mock data - em produção viria do backend
 const mockFlags: AgendaFlag[] = [
@@ -39,8 +41,30 @@ const mockAgendamentos: Agendamento[] = [
 export const useAgenda = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [view, setView] = useState<AgendaView>('semana');
-  const [agendamentos, setAgendamentos] = useState<Agendamento[]>(mockAgendamentos);
   const [flags, setFlags] = useState<AgendaFlag[]>(mockFlags);
+  
+  // Contexto da clínica
+  const { selectedClinic } = useClinicContext();
+  
+  // Dados do backend
+  const { data: appointmentsData, loading: appointmentsLoading, error: appointmentsError, refetch: refetchAppointments } = useAppointments(selectedClinic?.id);
+  
+  // Converter dados do backend para o formato local
+  const agendamentos = useMemo(() => {
+    if (!appointmentsData?.data) return mockAgendamentos;
+    
+    return appointmentsData.data.map((appointment: any) => ({
+      id: appointment.id,
+      paciente_nome: appointment.patient_name,
+      data_consulta: new Date(appointment.scheduled_date + 'T' + appointment.scheduled_time),
+      horario_inicio: appointment.scheduled_time,
+      horario_fim: format(new Date(new Date(appointment.scheduled_date + 'T' + appointment.scheduled_time).getTime() + appointment.duration * 60000), 'HH:mm'),
+      flag_id: appointment.service_id, // Usar service_id como flag_id temporariamente
+      status: appointment.status,
+      created_at: new Date(appointment.created_at),
+      updated_at: new Date(appointment.updated_at),
+    }));
+  }, [appointmentsData]);
 
   // Dados para visualização da semana
   const weekData = useMemo(() => {
@@ -111,27 +135,59 @@ export const useAgenda = () => {
     });
   }, [currentDate, agendamentos]);
 
-  const addAgendamento = (agendamento: Omit<Agendamento, 'id' | 'created_at' | 'updated_at' | 'status'>) => {
-    const newAgendamento: Agendamento = {
-      ...agendamento,
-      id: Date.now().toString(),
-      status: 'agendado',
-      created_at: new Date(),
-      updated_at: new Date(),
-    };
-    setAgendamentos(prev => [...prev, newAgendamento]);
+  const addAgendamento = async (agendamento: Omit<Agendamento, 'id' | 'created_at' | 'updated_at' | 'status'>) => {
+    try {
+      // Aqui você implementaria a chamada para a API de criação de agendamento
+      // const response = await appointmentApi.createAppointment({
+      //   clinic_id: selectedClinic?.id,
+      //   patient_name: agendamento.paciente_nome,
+      //   scheduled_date: format(agendamento.data_consulta, 'yyyy-MM-dd'),
+      //   scheduled_time: agendamento.horario_inicio,
+      //   duration: 30, // ou calcular baseado no horario_fim
+      //   service_id: agendamento.flag_id,
+      // });
+      
+      // Por enquanto, usar mock
+      const newAgendamento: Agendamento = {
+        ...agendamento,
+        id: Date.now().toString(),
+        status: 'agendado',
+        created_at: new Date(),
+        updated_at: new Date(),
+      };
+      
+      // Refetch dos dados do backend
+      await refetchAppointments();
+    } catch (error) {
+      console.error('Erro ao criar agendamento:', error);
+      throw error;
+    }
   };
 
-  const updateAgendamento = (id: string, updates: Partial<Agendamento>) => {
-    setAgendamentos(prev => prev.map(agendamento => 
-      agendamento.id === id 
-        ? { ...agendamento, ...updates, updated_at: new Date() }
-        : agendamento
-    ));
+  const updateAgendamento = async (id: string, updates: Partial<Agendamento>) => {
+    try {
+      // Aqui você implementaria a chamada para a API de atualização de agendamento
+      // await appointmentApi.updateAppointment(id, updates);
+      
+      // Refetch dos dados do backend
+      await refetchAppointments();
+    } catch (error) {
+      console.error('Erro ao atualizar agendamento:', error);
+      throw error;
+    }
   };
 
-  const deleteAgendamento = (id: string) => {
-    setAgendamentos(prev => prev.filter(agendamento => agendamento.id !== id));
+  const deleteAgendamento = async (id: string) => {
+    try {
+      // Aqui você implementaria a chamada para a API de exclusão de agendamento
+      // await appointmentApi.deleteAppointment(id);
+      
+      // Refetch dos dados do backend
+      await refetchAppointments();
+    } catch (error) {
+      console.error('Erro ao excluir agendamento:', error);
+      throw error;
+    }
   };
 
   const addFlag = (flag: Omit<AgendaFlag, 'id'>) => {
@@ -171,5 +227,8 @@ export const useAgenda = () => {
     updateFlag,
     deleteFlag,
     getFlagById,
+    loading: appointmentsLoading,
+    error: appointmentsError,
+    refetch: refetchAppointments,
   };
 };

@@ -31,6 +31,15 @@ router.post('/process', [
   handleValidationErrors
 ], conversationController.processWhatsAppMessage.bind(conversationController));
 
+// POST /api/conversations/:id/messages
+// Enviar mensagem para uma conversa específica (OpenAPI endpoint)
+router.post('/:id/messages', [
+  param('id').isUUID().withMessage('id deve ser um UUID válido'),
+  body('message').isLength({ min: 1, max: 1000 }).withMessage('message deve ter entre 1 e 1000 caracteres'),
+  body('sender').isIn(['user', 'bot', 'attendant']).withMessage('sender deve ser user, bot ou attendant'),
+  handleValidationErrors
+], conversationController.sendMessage.bind(conversationController));
+
 // ===== TRANSIÇÃO CHATBOT/HUMANO =====
 
 // POST /api/conversation/:conversation_id/transition/human
@@ -114,6 +123,15 @@ router.put('/:conversation_id/assign', [
   body('attendant_id').isUUID().withMessage('attendant_id deve ser um UUID válido'),
   handleValidationErrors
 ], conversationController.assignConversation.bind(conversationController));
+
+// PUT /api/conversations/:id/assign
+// Atribuir conversa (OpenAPI endpoint)
+router.put('/:id/assign', [
+  param('id').isUUID().withMessage('id deve ser um UUID válido'),
+  body('assigned_user_id').isUUID().withMessage('assigned_user_id deve ser um UUID válido'),
+  body('mode').isIn(['manual', 'auto']).withMessage('mode deve ser manual ou auto'),
+  handleValidationErrors
+], conversationController.assignConversationOpenAPI.bind(conversationController));
 
 // PUT /api/conversation/:conversation_id/priority
 // Define prioridade da conversa

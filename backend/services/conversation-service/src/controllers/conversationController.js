@@ -852,6 +852,126 @@ class ConversationController {
     // Este método deve salvar as transições no banco de dados
     logger.info('Transition recorded', { conversation_id, transition_type, metadata });
   }
+
+  // =====================================================
+  // OPENAPI ENDPOINTS
+  // =====================================================
+
+  async sendMessage(req, res) {
+    try {
+      const { id } = req.params;
+      const { message, sender } = req.body;
+
+      logger.info('Sending message to conversation', { conversation_id: id, sender, message_length: message.length });
+
+      // Buscar conversa
+      const conversation = await Conversation.findById(id);
+      if (!conversation) {
+        return res.status(404).json({
+          success: false,
+          error: 'Conversa não encontrada'
+        });
+      }
+
+      // Criar mensagem
+      const newMessage = await Message.create({
+        conversation_id: id,
+        clinic_id: conversation.clinic_id,
+        patient_phone: conversation.patient_phone,
+        content: message,
+        type: 'text',
+        direction: sender === 'user' ? 'inbound' : 'outbound',
+        metadata: { sender }
+      });
+
+      // Atualizar última mensagem da conversa
+      await Conversation.updateLastMessage(id, message);
+
+      logger.info('Message sent successfully', { 
+        message_id: newMessage.id, 
+        conversation_id: id 
+      });
+
+      res.status(200).json({
+        success: true,
+        data: {
+          id: newMessage.id,
+          conversation_id: id,
+          message: message,
+          sender: sender,
+          timestamp: newMessage.timestamp
+        }
+      });
+
+    } catch (error) {
+      logger.error('Error sending message', { error: error.message, params: req.params, body: req.body });
+      
+      res.status(500).json({
+        success: false,
+        error: 'Internal server error sending message',
+        details: error.message
+      });
+    }
+  }
+
+  async assignConversationOpenAPI(req, res) {
+    try {
+      const { id } = req.params;
+      const { assigned_user_id, mode } = req.body;
+
+      logger.info('Assigning conversation (OpenAPI)', { 
+        conversation_id: id, 
+        assigned_user_id, 
+        mode 
+      });
+
+      // Buscar conversa
+      const conversation = await Conversation.findById(id);
+      if (!conversation) {
+        return res.status(404).json({
+          success: false,
+          error: 'Conversa não encontrada'
+        });
+      }
+
+      // Atualizar conversa com atribuição
+      const updatedConversation = await Conversation.update(id, {
+        assigned_user_id: assigned_user_id,
+        assignment_mode: mode,
+        status: 'assigned'
+      });
+
+      logger.info('Conversation assigned successfully', { 
+        conversation_id: id, 
+        assigned_user_id, 
+        mode 
+      });
+
+      res.status(200).json({
+        success: true,
+        data: {
+          id: id,
+          assigned_user_id: assigned_user_id,
+          mode: mode,
+          status: 'assigned',
+          updated_at: updatedConversation.updated_at
+        }
+      });
+
+    } catch (error) {
+      logger.error('Error assigning conversation (OpenAPI)', { 
+        error: error.message, 
+        params: req.params, 
+        body: req.body 
+      });
+      
+      res.status(500).json({
+        success: false,
+        error: 'Internal server error assigning conversation',
+        details: error.message
+      });
+    }
+  }
 }
 
 module.exports = ConversationController;
