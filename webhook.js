@@ -189,58 +189,32 @@ const server = createServer((req, res) => {
   // PROXY PARA MICROSERVIÇOS
   // =====================================================
   if (pathname.startsWith('/api/')) {
-    try {
-      // Extrair o serviço e endpoint da URL
-      const pathParts = pathname.split('/');
-      const service = pathParts[2]; // auth, clinics, conversations, etc.
-      const endpoint = '/' + pathParts.slice(3).join('/');
-      
-      // Mapear serviços para suas URLs internas
-      const serviceUrls = {
-        'auth': process.env.AUTH_SERVICE_URL || 'http://localhost:3001',
-        'users': process.env.USER_SERVICE_URL || 'http://localhost:3002',
-        'clinics': process.env.CLINIC_SERVICE_URL || 'http://localhost:3003',
-        'conversations': process.env.CONVERSATION_SERVICE_URL || 'http://localhost:3005',
-        'appointments': process.env.APPOINTMENT_SERVICE_URL || 'http://localhost:3006',
-        'whatsapp': process.env.WHATSAPP_SERVICE_URL || 'http://localhost:3007',
-        'google-calendar': process.env.GOOGLE_CALENDAR_SERVICE_URL || 'http://localhost:3008'
-      };
-      
-      const serviceUrl = serviceUrls[service];
-      if (!serviceUrl) {
-        res.writeHead(404, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'Service not found' }));
-        return;
-      }
-      
-      // Fazer proxy da requisição para o microserviço
-      const targetUrl = `${serviceUrl}${endpoint}`;
-      console.log(`🔄 Proxying ${method} ${pathname} to ${targetUrl}`);
-      
-      const proxyReq = await fetch(targetUrl, {
-        method: method,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': req.headers.authorization || '',
-          'x-clinic-id': req.headers['x-clinic-id'] || '',
-          ...req.headers
-        },
-        body: method !== 'GET' ? JSON.stringify(await getRequestBody(req)) : undefined
-      });
-      
-      const responseData = await proxyReq.text();
-      const contentType = proxyReq.headers.get('content-type') || 'application/json';
-      
-      res.writeHead(proxyReq.status, { 'Content-Type': contentType });
-      res.end(responseData);
-      return;
-      
-    } catch (error) {
-      console.error('❌ Proxy error:', error);
-      res.writeHead(500, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: 'Internal server error' }));
+    // Extrair o serviço e endpoint da URL
+    const pathParts = pathname.split('/');
+    const service = pathParts[2]; // auth, clinics, conversations, etc.
+    const endpoint = '/' + pathParts.slice(3).join('/');
+    
+    // Mapear serviços para suas URLs internas
+    const serviceUrls = {
+      'auth': process.env.AUTH_SERVICE_URL || 'http://localhost:3001',
+      'users': process.env.USER_SERVICE_URL || 'http://localhost:3002',
+      'clinics': process.env.CLINIC_SERVICE_URL || 'http://localhost:3003',
+      'conversations': process.env.CONVERSATION_SERVICE_URL || 'http://localhost:3005',
+      'appointments': process.env.APPOINTMENT_SERVICE_URL || 'http://localhost:3006',
+      'whatsapp': process.env.WHATSAPP_SERVICE_URL || 'http://localhost:3007',
+      'google-calendar': process.env.GOOGLE_CALENDAR_SERVICE_URL || 'http://localhost:3008'
+    };
+    
+    const serviceUrl = serviceUrls[service];
+    if (!serviceUrl) {
+      res.writeHead(404, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Service not found' }));
       return;
     }
+    
+    // Fazer proxy da requisição para o microserviço de forma assíncrona
+    handleProxyRequest(req, res, serviceUrl, endpoint, method);
+    return;
   }
 
   // =====================================================
@@ -307,6 +281,41 @@ async function getRequestBody(req) {
     });
     req.on('error', reject);
   });
+}
+
+async function handleProxyRequest(req, res, serviceUrl, endpoint, method) {
+  try {
+    const targetUrl = `${serviceUrl}${endpoint}`;
+    console.log(`🔄 Proxying ${method} ${req.url} to ${targetUrl}`);
+    
+    // Processar o body se necessário
+    let requestBody = null;
+    if (method !== 'GET') {
+      requestBody = await getRequestBody(req);
+    }
+    
+    const proxyReq = await fetch(targetUrl, {
+      method: method,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': req.headers.authorization || '',
+        'x-clinic-id': req.headers['x-clinic-id'] || '',
+        ...req.headers
+      },
+      body: requestBody ? JSON.stringify(requestBody) : undefined
+    });
+    
+    const responseData = await proxyReq.text();
+    const contentType = proxyReq.headers.get('content-type') || 'application/json';
+    
+    res.writeHead(proxyReq.status, { 'Content-Type': contentType });
+    res.end(responseData);
+    
+  } catch (error) {
+    console.error('❌ Proxy error:', error);
+    res.writeHead(500, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: 'Internal server error' }));
+  }
 }
 
 // =====================================================
