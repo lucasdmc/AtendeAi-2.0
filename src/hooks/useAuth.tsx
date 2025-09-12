@@ -1,8 +1,11 @@
 import { useState, useEffect, createContext, useContext, ReactNode, useMemo } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 import type { User, Session } from '@supabase/supabase-js';
+import { authApi } from '@/services/api';
 
 interface CustomUser extends User {
   clinic_id?: string;
+  role?: string;
 }
 
 interface AuthContextType {
@@ -27,78 +30,84 @@ interface AuthProviderProps {
 }
 
 export const AuthProvider = ({ children }: AuthProviderProps) => {
-  const [isLoading, setIsLoading] = useState(false);
+  const [user, setUser] = useState<CustomUser | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Mock user and session for development
-  const mockUser: CustomUser = {
-    id: '1',
-    email: 'admin@lify.com',
-    role: 'admin' as any,
-    clinic_id: '1',
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-    aud: 'authenticated',
-    app_metadata: {},
-    user_metadata: {},
-    email_confirmed_at: new Date().toISOString(),
-    phone_confirmed_at: null,
-    confirmation_sent_at: null,
-    recovery_sent_at: null,
-    email_change_sent_at: null,
-    new_email: null,
-    new_phone: null,
-    invited_at: null,
-    action_link: null,
-    last_sign_in_at: new Date().toISOString(),
-    identities: [],
-    factors: [],
-    is_anonymous: false
-  };
+  useEffect(() => {
+    // Get initial session
+    const getInitialSession = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (error) {
+          console.error('Error getting session:', error);
+          return;
+        }
+        setSession(session);
+        setUser(session?.user as CustomUser || null);
+      } catch (error) {
+        console.error('Error getting initial session:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-  const mockSession: Session = {
-    access_token: 'mock-token',
-    refresh_token: 'mock-refresh-token',
-    expires_in: 3600,
-    expires_at: Math.floor(Date.now() / 1000) + 3600,
-    token_type: 'bearer',
-    user: mockUser
-  };
+    getInitialSession();
 
-  const user = mockUser;
-  const session = mockSession;
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        setSession(session);
+        setUser(session?.user as CustomUser || null);
+        setIsLoading(false);
+      }
+    );
+
+    return () => subscription.unsubscribe();
+  }, []);
+
   const isAuthenticated = !!user;
 
   const isAdminLify = () => {
-    return user?.role === 'admin';
+    return user?.role === 'admin_lify';
   };
 
-  // Permission checks using mock values
+  // Permission checks based on user role
   const canManageUsers = useMemo(() => {
-    return user?.role === 'admin';
+    return user?.role === 'admin_lify' || user?.role === 'suporte_lify';
   }, [user]);
 
   const canManageClinics = useMemo(() => {
-    return user?.role === 'admin';
+    return user?.role === 'admin_lify' || user?.role === 'suporte_lify';
   }, [user]);
 
   const canViewDashboard = useMemo(() => {
-    return true; // Todos podem ver dashboard
+    return !!user; // Todos os usuários autenticados podem ver dashboard
   }, [user]);
 
   const canAccessConversations = useMemo(() => {
-    return true; // Todos podem acessar conversas
+    return !!user; // Todos os usuários autenticados podem acessar conversas
   }, [user]);
 
   const canAccessCalendar = useMemo(() => {
-    return true; // Todos podem acessar calendário
+    return !!user; // Todos os usuários autenticados podem acessar calendário
   }, [user]);
 
   const canAccessAppointments = useMemo(() => {
-    return true; // Todos podem acessar agendamentos
+    return !!user; // Todos os usuários autenticados podem acessar agendamentos
   }, [user]);
 
   const signOut = async (): Promise<void> => {
-    console.log('Mock sign out');
+    try {
+      setIsLoading(true);
+      await supabase.auth.signOut();
+      setUser(null);
+      setSession(null);
+    } catch (error) {
+      console.error('Error signing out:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const value: AuthContextType = {

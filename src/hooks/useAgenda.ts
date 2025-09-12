@@ -5,43 +5,18 @@ import { ptBR } from 'date-fns/locale';
 import { useAppointments } from '@/hooks/useApi';
 import { useClinic as useClinicContext } from '@/contexts/ClinicContext';
 
-// Mock data - em produção viria do backend
-const mockFlags: AgendaFlag[] = [
+// Default flags - serão carregadas do backend
+const defaultFlags: AgendaFlag[] = [
   { id: '1', name: 'Consulta Regular', color: 'text-blue-700', backgroundColor: 'bg-blue-100' },
   { id: '2', name: 'Urgência', color: 'text-red-700', backgroundColor: 'bg-red-100' },
   { id: '3', name: 'Retorno', color: 'text-green-700', backgroundColor: 'bg-green-100' },
   { id: '4', name: 'Exame', color: 'text-purple-700', backgroundColor: 'bg-purple-100' },
 ];
 
-const mockAgendamentos: Agendamento[] = [
-  {
-    id: '1',
-    paciente_nome: 'João Silva',
-    data_consulta: new Date(),
-    horario_inicio: '09:00',
-    horario_fim: '09:30',
-    flag_id: '1',
-    status: 'agendado',
-    created_at: new Date(),
-    updated_at: new Date(),
-  },
-  {
-    id: '2',
-    paciente_nome: 'Maria Santos',
-    data_consulta: addDays(new Date(), 1),
-    horario_inicio: '14:00',
-    horario_fim: '14:30',
-    flag_id: '2',
-    status: 'confirmado',
-    created_at: new Date(),
-    updated_at: new Date(),
-  },
-];
-
 export const useAgenda = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [view, setView] = useState<AgendaView>('semana');
-  const [flags, setFlags] = useState<AgendaFlag[]>(mockFlags);
+  const [flags, setFlags] = useState<AgendaFlag[]>(defaultFlags);
   
   // Contexto da clínica
   const { selectedClinic } = useClinicContext();
@@ -51,15 +26,15 @@ export const useAgenda = () => {
   
   // Converter dados do backend para o formato local
   const agendamentos = useMemo(() => {
-    if (!appointmentsData?.data) return mockAgendamentos;
+    if (!appointmentsData?.data) return [];
     
     return appointmentsData.data.map((appointment: any) => ({
       id: appointment.id,
-      paciente_nome: appointment.patient_name,
-      data_consulta: new Date(appointment.scheduled_date + 'T' + appointment.scheduled_time),
-      horario_inicio: appointment.scheduled_time,
-      horario_fim: format(new Date(new Date(appointment.scheduled_date + 'T' + appointment.scheduled_time).getTime() + appointment.duration * 60000), 'HH:mm'),
-      flag_id: appointment.service_id, // Usar service_id como flag_id temporariamente
+      paciente_nome: appointment.patient_name || appointment.customer_info?.name || 'Paciente',
+      data_consulta: new Date(appointment.datetime),
+      horario_inicio: format(new Date(appointment.datetime), 'HH:mm'),
+      horario_fim: format(new Date(new Date(appointment.datetime).getTime() + appointment.duration * 60000), 'HH:mm'),
+      flag_id: appointment.appointment_type || '1', // Usar appointment_type como flag_id
       status: appointment.status,
       created_at: new Date(appointment.created_at),
       updated_at: new Date(appointment.updated_at),
@@ -137,24 +112,29 @@ export const useAgenda = () => {
 
   const addAgendamento = async (agendamento: Omit<Agendamento, 'id' | 'created_at' | 'updated_at' | 'status'>) => {
     try {
-      // Aqui você implementaria a chamada para a API de criação de agendamento
-      // const response = await appointmentApi.createAppointment({
-      //   clinic_id: selectedClinic?.id,
-      //   patient_name: agendamento.paciente_nome,
-      //   scheduled_date: format(agendamento.data_consulta, 'yyyy-MM-dd'),
-      //   scheduled_time: agendamento.horario_inicio,
-      //   duration: 30, // ou calcular baseado no horario_fim
-      //   service_id: agendamento.flag_id,
-      // });
-      
-      // Por enquanto, usar mock
-      const newAgendamento: Agendamento = {
-        ...agendamento,
-        id: Date.now().toString(),
-        status: 'agendado',
-        created_at: new Date(),
-        updated_at: new Date(),
+      if (!selectedClinic?.id) {
+        throw new Error('Clínica não selecionada');
+      }
+
+      // Calcular duração baseada nos horários
+      const inicio = new Date(`2000-01-01T${agendamento.horario_inicio}`);
+      const fim = new Date(`2000-01-01T${agendamento.horario_fim}`);
+      const duration = Math.round((fim.getTime() - inicio.getTime()) / 60000); // em minutos
+
+      const appointmentData = {
+        clinic_id: selectedClinic.id,
+        customer_info: {
+          name: agendamento.paciente_nome,
+        },
+        appointment_type: agendamento.flag_id,
+        datetime: agendamento.data_consulta.toISOString(),
+        duration: duration,
+        status: 'scheduled',
       };
+
+      // Usar a API real de agendamentos
+      const { appointmentApi } = await import('@/services/api');
+      await appointmentApi.createAppointment(appointmentData);
       
       // Refetch dos dados do backend
       await refetchAppointments();
@@ -166,8 +146,24 @@ export const useAgenda = () => {
 
   const updateAgendamento = async (id: string, updates: Partial<Agendamento>) => {
     try {
-      // Aqui você implementaria a chamada para a API de atualização de agendamento
-      // await appointmentApi.updateAppointment(id, updates);
+      const updateData: any = {};
+      
+      if (updates.paciente_nome) {
+        updateData.customer_info = { name: updates.paciente_nome };
+      }
+      if (updates.data_consulta) {
+        updateData.datetime = updates.data_consulta.toISOString();
+      }
+      if (updates.flag_id) {
+        updateData.appointment_type = updates.flag_id;
+      }
+      if (updates.status) {
+        updateData.status = updates.status;
+      }
+
+      // Usar a API real de agendamentos
+      const { appointmentApi } = await import('@/services/api');
+      await appointmentApi.updateAppointment(id, updateData);
       
       // Refetch dos dados do backend
       await refetchAppointments();
@@ -179,8 +175,9 @@ export const useAgenda = () => {
 
   const deleteAgendamento = async (id: string) => {
     try {
-      // Aqui você implementaria a chamada para a API de exclusão de agendamento
-      // await appointmentApi.deleteAppointment(id);
+      // Usar a API real de agendamentos
+      const { appointmentApi } = await import('@/services/api');
+      await appointmentApi.deleteAppointment(id);
       
       // Refetch dos dados do backend
       await refetchAppointments();
