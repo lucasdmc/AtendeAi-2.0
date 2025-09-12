@@ -25,7 +25,7 @@ import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { Separator } from "@/components/ui/separator"
-import { useConversations, useActiveConversations } from "@/hooks/useApi"
+import { useConversations, useActiveConversations, useConversationHistory } from "@/hooks/useApi"
 import { useClinic as useClinicContext } from "@/contexts/ClinicContext"
 
 interface Message {
@@ -60,13 +60,49 @@ export default function Conversations() {
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null)
   const [newMessage, setNewMessage] = useState("")
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const [conversationMessages, setConversationMessages] = useState<Message[]>([])
+
+  // Hook para carregar mensagens da conversa selecionada
+  const { data: messagesData, loading: messagesLoading } = useConversationHistory(
+    selectedClinic?.id || '',
+    selectedConversation?.customer_phone || '',
+    50,
+    0
+  )
 
   // API hooks
-  const { data: conversationsData, loading: conversationsLoading, error: conversationsError } = useConversations(selectedClinic?.id || '')
+  const { data: conversationsData, loading: conversationsLoading, error: conversationsError, refetch: refetchConversations } = useConversations(selectedClinic?.id || '')
   const { data: activeConversationsData, loading: activeLoading } = useActiveConversations(selectedClinic?.id || '')
 
   const conversations = conversationsData?.data || []
   const activeConversations = activeConversationsData?.data || []
+
+  // Auto-refresh conversations every 30 seconds
+  useEffect(() => {
+    if (!selectedClinic?.id) return;
+    
+    const interval = setInterval(() => {
+      refetchConversations();
+    }, 30000);
+
+    return () => clearInterval(interval);
+  }, [selectedClinic?.id, refetchConversations]);
+
+  // Carregar mensagens quando uma conversa é selecionada
+  useEffect(() => {
+    if (messagesData?.data?.messages) {
+      const mappedMessages = messagesData.data.messages.map((msg: any) => ({
+        id: msg.id,
+        sender: msg.sender_type === 'customer' ? 'user' : 'bot',
+        content: msg.content,
+        timestamp: new Date(msg.timestamp).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+        status: msg.whatsapp_message_id ? 'delivered' : 'sent'
+      }));
+      setConversationMessages(mappedMessages);
+    } else {
+      setConversationMessages([]);
+    }
+  }, [messagesData]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -74,11 +110,12 @@ export default function Conversations() {
 
   useEffect(() => {
     scrollToBottom()
-  }, [selectedConversation?.messages])
+  }, [conversationMessages])
 
   const filteredConversations = conversations.filter(conversation => 
     conversation.customer_phone?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    conversation.customer_phone?.includes(searchTerm)
+    conversation.customer_phone?.includes(searchTerm) ||
+    conversation.id?.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
   const getInitials = (name: string) => {
@@ -124,12 +161,7 @@ export default function Conversations() {
         message_type: 'text'
       });
 
-      setSelectedConversation(prev => 
-        prev ? { 
-          ...prev, 
-          messages: [...(prev.messages || []), newMsg] 
-        } : null
-      )
+      setConversationMessages(prev => [...prev, newMsg])
 
       setNewMessage("")
 
@@ -144,9 +176,7 @@ export default function Conversations() {
             status: "delivered"
           }
 
-          setSelectedConversation(prev => 
-            prev ? { ...prev, messages: [...(prev.messages || []), autoReply] } : null
-          )
+          setConversationMessages(prev => [...prev, autoReply])
         }, 2000)
       }
     } catch (error) {
@@ -196,9 +226,7 @@ export default function Conversations() {
         status: "delivered"
       }
 
-      setSelectedConversation(prev => 
-        prev ? { ...prev, messages: [...(prev.messages || []), systemMessage] } : null
-      )
+      setConversationMessages(prev => [...prev, systemMessage])
     } catch (error) {
       console.error('Erro ao alterar modo da conversa:', error);
     }
@@ -287,7 +315,7 @@ export default function Conversations() {
                     
                     <div className="flex items-center justify-between">
                       <p className="text-sm text-muted-foreground truncate mr-2">
-                        {conversation.last_message || 'Nenhuma mensagem'}
+                        {conversation.status === 'active' ? 'Conversa ativa' : 'Conversa finalizada'}
                       </p>
                     </div>
                     
@@ -382,8 +410,13 @@ export default function Conversations() {
             {/* Área de mensagens */}
             <ScrollArea className="flex-1 p-4">
               <div className="space-y-4">
-                {selectedConversation.messages && selectedConversation.messages.length > 0 ? (
-                  selectedConversation.messages.map((message) => (
+                {messagesLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                    <span className="ml-2 text-muted-foreground">Carregando mensagens...</span>
+                  </div>
+                ) : conversationMessages && conversationMessages.length > 0 ? (
+                  conversationMessages.map((message) => (
                     <div
                       key={message.id}
                       className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}

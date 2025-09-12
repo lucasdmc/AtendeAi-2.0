@@ -1,6 +1,8 @@
 // API Service Layer - AtendeAI 2.0
 // Centralized API integration for all backend microservices
 
+import { z } from 'zod';
+
 // Microservices URLs - Configuração para desenvolvimento e produção
 const MICROSERVICES_URLS = {
   // URLs locais para desenvolvimento
@@ -19,6 +21,72 @@ const apiConfig = {
   },
 };
 
+// Zod schemas for validation
+export const ClinicSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string().min(1, 'Nome é obrigatório'),
+  whatsapp_number: z.string().min(1, 'Número do WhatsApp é obrigatório'),
+  meta_webhook_url: z.string().url().optional(),
+  whatsapp_id: z.string().optional(),
+  context_json: z.any().default({}),
+  simulation_mode: z.boolean().default(false),
+  status: z.enum(['active', 'inactive']).default('active'),
+  created_at: z.string().datetime(),
+  updated_at: z.string().datetime(),
+});
+
+export const UserSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string().min(1, 'Nome é obrigatório'),
+  login: z.string().email('Email inválido'),
+  role: z.enum(['admin_lify', 'suporte_lify', 'atendente', 'gestor', 'administrador']),
+  clinic_id: z.string().uuid(),
+  status: z.enum(['active', 'inactive']).default('active'),
+  created_at: z.string().datetime(),
+  updated_at: z.string().datetime(),
+});
+
+export const ConversationSchema = z.object({
+  id: z.string().uuid(),
+  clinic_id: z.string().uuid(),
+  customer_phone: z.string().min(1, 'Telefone é obrigatório'),
+  conversation_type: z.enum(['chatbot', 'human', 'mixed']),
+  status: z.enum(['active', 'paused', 'closed']),
+  bot_active: z.boolean().default(true),
+  assigned_user_id: z.string().uuid().optional(),
+  tags: z.array(z.any()).default([]),
+  created_at: z.string().datetime(),
+  updated_at: z.string().datetime(),
+});
+
+export const MessageSchema = z.object({
+  id: z.string().uuid(),
+  conversation_id: z.string().uuid(),
+  sender_type: z.enum(['customer', 'bot', 'human']),
+  content: z.string().min(1, 'Conteúdo é obrigatório'),
+  message_type: z.enum(['text', 'image', 'audio', 'video', 'document']),
+  whatsapp_message_id: z.string().optional(),
+  timestamp: z.string().datetime(),
+});
+
+export const AppointmentSchema = z.object({
+  id: z.string().uuid(),
+  clinic_id: z.string().uuid(),
+  customer_info: z.any(),
+  google_event_id: z.string().optional(),
+  google_calendar_id: z.string().optional(),
+  appointment_type: z.string().min(1, 'Tipo de agendamento é obrigatório'),
+  datetime: z.string().datetime(),
+  duration: z.number().positive('Duração deve ser positiva'),
+  status: z.enum(['scheduled', 'confirmed', 'cancelled', 'completed', 'no_show']),
+  priority: z.number().int().min(1).max(5).default(3),
+  confirmation_sent: z.boolean().default(false),
+  confirmation_received: z.boolean().default(false),
+  notes: z.string().optional(),
+  created_at: z.string().datetime(),
+  updated_at: z.string().datetime(),
+});
+
 // Generic API client for microservices
 class MicroserviceClient {
   private timeout: number;
@@ -29,6 +97,32 @@ class MicroserviceClient {
     this.headers = config.headers;
   }
 
+  private getClinicId(): string | null {
+    // Try to get from localStorage first (for admin_lify)
+    const selectedClinic = localStorage.getItem('selectedClinic');
+    if (selectedClinic) {
+      try {
+        const clinic = JSON.parse(selectedClinic);
+        return clinic.id;
+      } catch (error) {
+        console.warn('Failed to parse selectedClinic from localStorage:', error);
+      }
+    }
+
+    // Try to get from user context
+    const user = localStorage.getItem('user');
+    if (user) {
+      try {
+        const userData = JSON.parse(user);
+        return userData.clinic_id;
+      } catch (error) {
+        console.warn('Failed to parse user from localStorage:', error);
+      }
+    }
+
+    return null;
+  }
+
   private async request<T>(
     service: keyof typeof MICROSERVICES_URLS,
     endpoint: string,
@@ -37,25 +131,40 @@ class MicroserviceClient {
     const baseURL = MICROSERVICES_URLS[service];
     const url = `${baseURL}${endpoint}`;
     const token = localStorage.getItem('auth_token');
+    const clinicId = this.getClinicId();
 
     const config: RequestInit = {
       ...options,
       headers: {
         ...this.headers,
         ...(token && { Authorization: `Bearer ${token}` }),
+        ...(clinicId && { 'x-clinic-id': clinicId }),
         ...options.headers,
       },
     };
 
     try {
-      const response = await fetch(url, config);
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), this.timeout);
+
+      const response = await fetch(url, {
+        ...config,
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
       
       if (!response.ok) {
-        throw new Error(`API Error: ${response.status} ${response.statusText}`);
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(`API Error: ${response.status} ${response.statusText} - ${errorData.message || 'Unknown error'}`);
       }
 
-      return await response.json();
+      const data = await response.json();
+      return data;
     } catch (error) {
+      if (error.name === 'AbortError') {
+        throw new Error('Request timeout - servidor não respondeu a tempo');
+      }
       console.error(`API Request failed for ${service}${endpoint}:`, error);
       throw error;
     }
@@ -93,7 +202,24 @@ export interface Clinic {
   whatsapp_number: string;
   meta_webhook_url?: string;
   whatsapp_id?: string;
-  context_json: any;
+  context_json: {
+    clinica: {
+      informacoes_basicas: {
+        nome: string;
+        descricao: string;
+      };
+      localizacao: {
+        endereco_principal: string;
+      };
+      contatos: {
+        telefone_principal: string;
+        email_principal: string;
+      };
+    };
+    servicos?: any[];
+    profissionais?: any[];
+    politicas?: any;
+  };
   simulation_mode: boolean;
   status: 'active' | 'inactive';
   created_at: string;
@@ -193,23 +319,74 @@ export const authApi = {
 // Clinic Service API - Conectando com o microserviço real
 export const clinicApi = {
   async getClinics() {
-    return apiClient.get<Clinic[]>('clinics', '/api/clinics');
+    try {
+      const response = await apiClient.get<{ success: boolean; data: Clinic[] }>('clinics', '/api/clinics');
+      if (response.success) {
+        // Validate each clinic with Zod
+        const validatedClinics = response.data.map(clinic => ClinicSchema.parse(clinic));
+        return validatedClinics;
+      }
+      throw new Error('Failed to fetch clinics');
+    } catch (error) {
+      console.error('Error fetching clinics:', error);
+      throw error;
+    }
   },
 
   async getClinic(id: string) {
-    return apiClient.get<Clinic>('clinics', `/api/clinics/${id}`);
+    try {
+      const response = await apiClient.get<{ success: boolean; data: Clinic }>('clinics', `/api/clinics/${id}`);
+      if (response.success) {
+        return ClinicSchema.parse(response.data);
+      }
+      throw new Error('Failed to fetch clinic');
+    } catch (error) {
+      console.error('Error fetching clinic:', error);
+      throw error;
+    }
   },
 
   async createClinic(clinic: Partial<Clinic>) {
-    return apiClient.post<Clinic>('clinics', '/api/clinics', clinic);
+    try {
+      // Validate input data
+      const validatedData = ClinicSchema.partial().parse(clinic);
+      const response = await apiClient.post<{ success: boolean; data: Clinic }>('clinics', '/api/clinics', validatedData);
+      if (response.success) {
+        return ClinicSchema.parse(response.data);
+      }
+      throw new Error('Failed to create clinic');
+    } catch (error) {
+      console.error('Error creating clinic:', error);
+      throw error;
+    }
   },
 
   async updateClinic(id: string, clinic: Partial<Clinic>) {
-    return apiClient.put<Clinic>('clinics', `/api/clinics/${id}`, clinic);
+    try {
+      // Validate input data
+      const validatedData = ClinicSchema.partial().parse(clinic);
+      const response = await apiClient.put<{ success: boolean; data: Clinic }>('clinics', `/api/clinics/${id}`, validatedData);
+      if (response.success) {
+        return ClinicSchema.parse(response.data);
+      }
+      throw new Error('Failed to update clinic');
+    } catch (error) {
+      console.error('Error updating clinic:', error);
+      throw error;
+    }
   },
 
   async deleteClinic(id: string) {
-    return apiClient.delete<{ success: boolean }>('clinics', `/api/clinics/${id}`);
+    try {
+      const response = await apiClient.delete<{ success: boolean }>('clinics', `/api/clinics/${id}`);
+      if (!response.success) {
+        throw new Error('Failed to delete clinic');
+      }
+      return response;
+    } catch (error) {
+      console.error('Error deleting clinic:', error);
+      throw error;
+    }
   },
 
   async getClinicProfessionals(clinicId: string) {
@@ -230,6 +407,81 @@ export const clinicApi = {
 
   async updateClinicContextualization(clinicId: string, data: any) {
     return apiClient.put<any>('clinics', `/api/clinics/${clinicId}/contextualization`, data);
+  },
+};
+
+// User Service API - Conectando com o microserviço real
+export const userApi = {
+  async getUsers(clinicId?: string) {
+    try {
+      const endpoint = clinicId ? `/api/users?clinic_id=${clinicId}` : '/api/users';
+      const response = await apiClient.get<{ success: boolean; data: User[] }>('auth', endpoint);
+      if (response.success) {
+        // Validate each user with Zod
+        const validatedUsers = response.data.map(user => UserSchema.parse(user));
+        return validatedUsers;
+      }
+      throw new Error('Failed to fetch users');
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      throw error;
+    }
+  },
+
+  async getUser(id: string) {
+    try {
+      const response = await apiClient.get<{ success: boolean; data: User }>('auth', `/api/users/${id}`);
+      if (response.success) {
+        return UserSchema.parse(response.data);
+      }
+      throw new Error('Failed to fetch user');
+    } catch (error) {
+      console.error('Error fetching user:', error);
+      throw error;
+    }
+  },
+
+  async createUser(user: Partial<User>) {
+    try {
+      // Validate input data
+      const validatedData = UserSchema.partial().parse(user);
+      const response = await apiClient.post<{ success: boolean; data: User }>('auth', '/api/users', validatedData);
+      if (response.success) {
+        return UserSchema.parse(response.data);
+      }
+      throw new Error('Failed to create user');
+    } catch (error) {
+      console.error('Error creating user:', error);
+      throw error;
+    }
+  },
+
+  async updateUser(id: string, user: Partial<User>) {
+    try {
+      // Validate input data
+      const validatedData = UserSchema.partial().parse(user);
+      const response = await apiClient.put<{ success: boolean; data: User }>('auth', `/api/users/${id}`, validatedData);
+      if (response.success) {
+        return UserSchema.parse(response.data);
+      }
+      throw new Error('Failed to update user');
+    } catch (error) {
+      console.error('Error updating user:', error);
+      throw error;
+    }
+  },
+
+  async deleteUser(id: string) {
+    try {
+      const response = await apiClient.delete<{ success: boolean }>('auth', `/api/users/${id}`);
+      if (!response.success) {
+        throw new Error('Failed to delete user');
+      }
+      return response;
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      throw error;
+    }
   },
 };
 

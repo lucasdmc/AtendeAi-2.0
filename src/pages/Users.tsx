@@ -9,8 +9,9 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Label } from "@/components/ui/label"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { useAuth } from "@/hooks/useApi"
+import { useUsers } from "@/hooks/useApi"
 import { useClinic as useClinicContext } from "@/contexts/ClinicContext"
+import { useToast } from "@/hooks/use-toast"
 
 interface User {
   id: string
@@ -43,6 +44,7 @@ const roleColors = {
 
 export default function Users() {
   const { selectedClinic } = useClinicContext()
+  const { toast } = useToast()
   const [searchTerm, setSearchTerm] = useState("")
   const [roleFilter, setRoleFilter] = useState<string>("all")
   const [statusFilter, setStatusFilter] = useState<string>("all")
@@ -50,9 +52,8 @@ export default function Users() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [editingUser, setEditingUser] = useState<User | null>(null)
 
-  // API hooks - Note: We don't have a specific users API endpoint yet
-  // For now, we'll show a placeholder message
-  const users: User[] = []
+  // API hooks - Now using real API
+  const { data: users = [], loading: usersLoading, error: usersError, refetch: refetchUsers } = useUsers(selectedClinic?.id)
 
   const filteredUsers = users.filter(user => {
     const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -84,6 +85,37 @@ export default function Users() {
       <div className="flex items-center justify-center h-64">
         <Building2 className="h-8 w-8 text-muted-foreground" />
         <span className="ml-2 text-muted-foreground">Nenhuma clínica selecionada</span>
+      </div>
+    )
+  }
+
+  // Loading state
+  if (usersLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <span className="ml-2 text-muted-foreground">Carregando usuários...</span>
+      </div>
+    )
+  }
+
+  // Error state
+  if (usersError) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <AlertTriangle className="h-8 w-8 text-destructive" />
+        <div className="ml-2 text-center">
+          <p className="text-destructive font-medium">Erro ao carregar usuários</p>
+          <p className="text-sm text-muted-foreground">{usersError}</p>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => refetchUsers()}
+            className="mt-2"
+          >
+            Tentar novamente
+          </Button>
+        </div>
       </div>
     )
   }

@@ -78,6 +78,20 @@ vi.mock('@tanstack/react-query', async () => {
   };
 });
 
+// Mock do react-router-dom
+vi.mock('react-router-dom', async () => {
+  const actual = await vi.importActual('react-router-dom');
+  return {
+    ...actual,
+    BrowserRouter: ({ children }: { children: React.ReactNode }) => children,
+    useNavigate: vi.fn(),
+    useLocation: vi.fn(),
+    useParams: vi.fn(),
+    Link: ({ children, to }: { children: React.ReactNode; to: string }) => 
+      React.createElement('a', { href: to }, children)
+  };
+});
+
 const createTestWrapper = () => {
   const queryClient = new QueryClient({
     defaultOptions: {

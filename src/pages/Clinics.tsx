@@ -36,8 +36,7 @@ export default function Clinics() {
   const [jsonConfig, setJsonConfig] = useState("")
 
   // API hooks
-  const { data: clinicsData, loading: clinicsLoading, error: clinicsError } = useClinics()
-  const clinics = clinicsData?.data || []
+  const { data: clinics = [], loading: clinicsLoading, error: clinicsError, refetch: refetchClinics } = useClinics()
 
   const filteredClinics = clinics.filter(clinic =>
     clinic.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -91,7 +90,18 @@ export default function Clinics() {
     return (
       <div className="flex items-center justify-center h-64">
         <AlertTriangle className="h-8 w-8 text-destructive" />
-        <span className="ml-2 text-destructive">Erro ao carregar clínicas: {clinicsError}</span>
+        <div className="ml-2 text-center">
+          <p className="text-destructive font-medium">Erro ao carregar clínicas</p>
+          <p className="text-sm text-muted-foreground">{clinicsError}</p>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => refetchClinics()}
+            className="mt-2"
+          >
+            Tentar novamente
+          </Button>
+        </div>
       </div>
     )
   }

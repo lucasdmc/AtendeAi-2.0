@@ -5,7 +5,56 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { vi } from 'vitest';
 import { ClinicSelector } from '../components/ClinicSelector';
 import { ClinicProvider } from '../contexts/ClinicContext';
-import { AuthProvider } from '../hooks/useAuth';
+
+// Mock do React Query
+vi.mock('@tanstack/react-query', async () => {
+  const actual = await vi.importActual('@tanstack/react-query');
+  return {
+    ...actual,
+    QueryClient: vi.fn().mockImplementation((config) => ({
+      ...config,
+      getQueryData: vi.fn(),
+      setQueryData: vi.fn(),
+      invalidateQueries: vi.fn(),
+      refetchQueries: vi.fn(),
+      cancelQueries: vi.fn(),
+      removeQueries: vi.fn(),
+      clear: vi.fn(),
+      mount: vi.fn(),
+      unmount: vi.fn(),
+      isFetching: vi.fn(),
+      isMutating: vi.fn(),
+      getDefaultOptions: vi.fn(),
+      setDefaultOptions: vi.fn(),
+      getQueryCache: vi.fn(),
+      getMutationCache: vi.fn(),
+      getLogger: vi.fn(),
+      setLogger: vi.fn(),
+      defaultOptions: config?.defaultOptions || {}
+    })),
+    QueryClientProvider: ({ children }: { children: React.ReactNode }) => children,
+    useQuery: vi.fn(),
+    useMutation: vi.fn(),
+    useQueryClient: vi.fn(),
+    useInfiniteQuery: vi.fn(),
+    useIsFetching: vi.fn(),
+    useIsMutating: vi.fn()
+  };
+});
+
+// Mock do React Router
+vi.mock('react-router-dom', async () => {
+  const actual = await vi.importActual('react-router-dom');
+  return {
+    ...actual,
+    BrowserRouter: ({ children }: { children: React.ReactNode }) => children,
+    useNavigate: vi.fn(),
+    useLocation: vi.fn(),
+    useParams: vi.fn(),
+    Link: ({ children, to }: { children: React.ReactNode; to: string }) => 
+      React.createElement('a', { href: to }, children)
+  };
+});
 
 // Mock do useAuth para simular admin lify
 const mockUseAuth = {
@@ -44,11 +93,9 @@ const TestWrapper = ({ children }: { children: React.ReactNode }) => {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
-        <AuthProvider>
-          <ClinicProvider>
-            {children}
-          </ClinicProvider>
-        </AuthProvider>
+        <ClinicProvider>
+          {children}
+        </ClinicProvider>
       </BrowserRouter>
     </QueryClientProvider>
   );
@@ -162,7 +209,10 @@ describe('ClinicSelector - Permissões', () => {
       isAdminLify: () => false,
     };
 
-    vi.mocked(require('../hooks/useAuth').useAuth).mockReturnValue(mockUseAuthNonAdmin);
+    // Temporariamente substituir o mock
+    vi.doMock('../hooks/useAuth', () => ({
+      useAuth: () => mockUseAuthNonAdmin,
+    }));
 
     render(
       <TestWrapper>

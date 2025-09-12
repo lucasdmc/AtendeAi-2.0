@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { 
   clinicApi, 
+  userApi,
   conversationApi, 
   appointmentApi, 
   authApi, 
@@ -62,6 +63,15 @@ export function useClinicProfessionals(clinicId: string) {
 
 export function useClinicServices(clinicId: string) {
   return useApiCall(() => clinicApi.getClinicServices(clinicId), [clinicId]);
+}
+
+// User hooks
+export function useUsers(clinicId?: string) {
+  return useApiCall(() => userApi.getUsers(clinicId), [clinicId]);
+}
+
+export function useUser(id: string) {
+  return useApiCall(() => userApi.getUser(id), [id]);
 }
 
 // Conversation hooks

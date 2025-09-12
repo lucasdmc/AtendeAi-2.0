@@ -24,7 +24,7 @@ class Clinic {
     this.phone = data.phone;
     this.working_hours = data.working_hours;
     this.timezone = data.timezone || 'America/Sao_Paulo';
-    this.contextualization_json = data.contextualization_json;
+    this.context_json = data.context_json || data.contextualization_json || {};
     this.ai_personality = data.ai_personality;
     this.ai_behavior = data.ai_behavior;
     this.appointment_policies = data.appointment_policies;
@@ -283,7 +283,7 @@ class Clinic {
       phone: this.phone,
       working_hours: this.working_hours,
       timezone: this.timezone,
-      contextualization_json: this.contextualization_json,
+      context_json: this.context_json,
       ai_personality: this.ai_personality,
       ai_behavior: this.ai_behavior,
       appointment_policies: this.appointment_policies,

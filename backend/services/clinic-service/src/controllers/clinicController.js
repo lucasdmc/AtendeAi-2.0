@@ -43,44 +43,29 @@ class ClinicController {
   async getClinic(req, res) {
     try {
       const { id } = req.params;
+      const clinicId = req.clinicId; // Do middleware withTenant
       
-      // Verificar isolamento multi-tenant
-      if (req.user.roles.includes('admin_lify')) {
-        // Admin Lify pode acessar qualquer clínica
-        const clinic = await Clinic.findById(id);
-        if (!clinic) {
-          return res.status(404).json({
-            success: false,
-            message: 'Clinic not found'
-          });
-        }
-        
-        res.status(200).json({
-          success: true,
-          data: clinic.toJSON()
-        });
-      } else {
-        // Usuários normais só podem acessar sua própria clínica
-        if (id !== req.user.clinicId) {
-          return res.status(403).json({
-            success: false,
-            message: 'Access denied to clinic'
-          });
-        }
-        
-        const clinic = await Clinic.findById(id);
-        if (!clinic) {
-          return res.status(404).json({
-            success: false,
-            message: 'Clinic not found'
-          });
-        }
-        
-        res.status(200).json({
-          success: true,
-          data: clinic.toJSON()
+      // Verificar se o ID da clínica na URL corresponde ao tenant
+      if (id !== clinicId) {
+        return res.status(403).json({
+          success: false,
+          message: 'Access denied to this clinic'
         });
       }
+      
+      const clinic = await Clinic.findById(id);
+      
+      if (!clinic) {
+        return res.status(404).json({
+          success: false,
+          message: 'Clinic not found'
+        });
+      }
+      
+      res.status(200).json({
+        success: true,
+        data: clinic.toJSON()
+      });
     } catch (error) {
       logger.error('Error getting clinic:', error);
       res.status(500).json({
@@ -143,54 +128,37 @@ class ClinicController {
     try {
       const { id } = req.params;
       const updateData = req.body;
+      const clinicId = req.clinicId; // Do middleware withTenant
       
-      // Verificar isolamento multi-tenant
-      if (req.user.roles.includes('admin_lify')) {
-        // Admin Lify pode atualizar qualquer clínica
-        const clinic = await Clinic.update(id, updateData);
-        
-        logger.info('Clinic updated successfully', { 
-          clinicId: id,
-          updatedFields: Object.keys(updateData),
-          updatedBy: req.user.id
-        });
-        
-        res.status(200).json({
-          success: true,
-          message: 'Clinic updated successfully',
-          data: clinic.toJSON()
-        });
-      } else {
-        // Usuários normais só podem atualizar sua própria clínica
-        if (id !== req.user.clinicId) {
-          return res.status(403).json({
-            success: false,
-            message: 'Access denied to clinic'
-          });
-        }
-        
-        // Verificar se o usuário tem permissão para atualizar
-        if (!req.user.roles.includes('admin_clinic')) {
-          return res.status(403).json({
-            success: false,
-            message: 'Insufficient permissions to update clinic'
-          });
-        }
-        
-        const clinic = await Clinic.update(id, updateData);
-        
-        logger.info('Clinic updated successfully', { 
-          clinicId: id,
-          updatedFields: Object.keys(updateData),
-          updatedBy: req.user.id
-        });
-        
-        res.status(200).json({
-          success: true,
-          message: 'Clinic updated successfully',
-          data: clinic.toJSON()
+      // Verificar se o ID da clínica na URL corresponde ao tenant
+      if (id !== clinicId) {
+        return res.status(403).json({
+          success: false,
+          message: 'Access denied to this clinic'
         });
       }
+      
+      // Verificar se o usuário tem permissão para atualizar
+      if (!req.user.roles.includes('admin_lify') && !req.user.roles.includes('admin_clinic')) {
+        return res.status(403).json({
+          success: false,
+          message: 'Insufficient permissions to update clinic'
+        });
+      }
+      
+      const clinic = await Clinic.update(id, updateData);
+      
+      logger.info('Clinic updated successfully', { 
+        clinicId: id,
+        updatedFields: Object.keys(updateData),
+        updatedBy: req.user.id
+      });
+      
+      res.status(200).json({
+        success: true,
+        message: 'Clinic updated successfully',
+        data: clinic.toJSON()
+      });
     } catch (error) {
       logger.error('Error updating clinic:', error);
       
@@ -309,12 +277,13 @@ class ClinicController {
     try {
       const { id } = req.params;
       const { forceRefresh = false } = req.query;
+      const clinicId = req.clinicId; // Do middleware withTenant
       
-      // Verificar isolamento multi-tenant
-      if (!req.user.roles.includes('admin_lify') && id !== req.user.clinicId) {
+      // Verificar se o ID da clínica na URL corresponde ao tenant
+      if (id !== clinicId) {
         return res.status(403).json({
           success: false,
-          message: 'Access denied to clinic'
+          message: 'Access denied to this clinic'
         });
       }
       
@@ -348,12 +317,13 @@ class ClinicController {
     try {
       const { id } = req.params;
       const contextualizationData = req.body;
+      const clinicId = req.clinicId; // Do middleware withTenant
       
-      // Verificar isolamento multi-tenant
-      if (!req.user.roles.includes('admin_lify') && id !== req.user.clinicId) {
+      // Verificar se o ID da clínica na URL corresponde ao tenant
+      if (id !== clinicId) {
         return res.status(403).json({
           success: false,
-          message: 'Access denied to clinic'
+          message: 'Access denied to this clinic'
         });
       }
       

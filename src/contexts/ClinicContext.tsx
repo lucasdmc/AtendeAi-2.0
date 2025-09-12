@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { useAuth } from '@/hooks/useAuth';
 
 interface Clinic {
   id: string;
@@ -20,6 +21,9 @@ interface Clinic {
         email_principal: string;
       };
     };
+    servicos?: any[];
+    profissionais?: any[];
+    politicas?: any;
   };
   simulation_mode: boolean;
   status: 'active' | 'inactive';
@@ -34,6 +38,8 @@ interface ClinicContextType {
   setClinics: (clinics: Clinic[]) => void;
   isLoading: boolean;
   setIsLoading: (loading: boolean) => void;
+  canSelectClinic: boolean;
+  availableClinics: Clinic[];
 }
 
 const ClinicContext = createContext<ClinicContextType | undefined>(undefined);
@@ -43,9 +49,18 @@ interface ClinicProviderProps {
 }
 
 export const ClinicProvider = ({ children }: ClinicProviderProps) => {
+  const { user, isAdminLify } = useAuth();
   const [selectedClinic, setSelectedClinic] = useState<Clinic | null>(null);
   const [clinics, setClinics] = useState<Clinic[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Determine if user can select clinic (admin_lify can see all clinics)
+  const canSelectClinic = isAdminLify();
+  
+  // Available clinics based on user role
+  const availableClinics = canSelectClinic 
+    ? clinics.filter(clinic => clinic.status === 'active')
+    : clinics.filter(clinic => clinic.id === user?.clinic_id && clinic.status === 'active');
 
   // Carregar clínicas da API real do microserviço
   useEffect(() => {
@@ -55,10 +70,20 @@ export const ClinicProvider = ({ children }: ClinicProviderProps) => {
         const { clinicApi } = await import('../services/api');
         const data = await clinicApi.getClinics();
         setClinics(data);
-        // Selecionar primeira clínica ativa por padrão
-        const firstActiveClinic = data.find((clinic: Clinic) => clinic.status === 'active');
-        if (firstActiveClinic) {
-          setSelectedClinic(firstActiveClinic);
+        
+        // Selecionar clínica baseada no role do usuário
+        if (canSelectClinic) {
+          // Admin_lify: selecionar primeira clínica ativa
+          const firstActiveClinic = data.find((clinic: Clinic) => clinic.status === 'active');
+          if (firstActiveClinic) {
+            setSelectedClinic(firstActiveClinic);
+          }
+        } else {
+          // Usuário normal: selecionar sua própria clínica
+          const userClinic = data.find((clinic: Clinic) => clinic.id === user?.clinic_id);
+          if (userClinic) {
+            setSelectedClinic(userClinic);
+          }
         }
       } catch (error) {
         console.error('Erro ao carregar clínicas:', error);
@@ -97,6 +122,8 @@ export const ClinicProvider = ({ children }: ClinicProviderProps) => {
     setClinics,
     isLoading,
     setIsLoading,
+    canSelectClinic,
+    availableClinics,
   };
 
   return (

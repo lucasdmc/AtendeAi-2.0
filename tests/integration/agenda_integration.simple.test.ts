@@ -77,7 +77,7 @@ const MockAgenda = () => {
   const googleCalendar = mockUseGoogleCalendar();
   
   if (googleCalendar.isLoading) {
-    return <div>Carregando integracao...</div>;
+    return <div>Carregando integração...</div>;
   }
   
   if (!googleCalendar.isConnected) {
@@ -118,7 +118,7 @@ describe('Agenda Integration Tests (Simplified)', () => {
     render(React.createElement(MockAgenda));
 
     expect(screen.getByText('Agenda')).toBeInTheDocument();
-    expect(screen.getByText('Carregando integracao...')).toBeInTheDocument();
+    expect(screen.getByText('Carregando integração...')).toBeInTheDocument();
   });
 
   test('should render disconnected state with connect button', () => {

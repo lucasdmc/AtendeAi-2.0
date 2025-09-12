@@ -1,13 +1,6 @@
 import { describe, test, expect, beforeEach, vi } from 'vitest';
-// Mock supertest
-const mockRequest = {
-  post: vi.fn().mockReturnThis(),
-  get: vi.fn().mockReturnThis(),
-  send: vi.fn().mockReturnThis(),
-  set: vi.fn().mockReturnThis(),
-  expect: vi.fn().mockReturnThis()
-};
 import express from 'express';
+import request from 'supertest';
 
 // Mock das dependências
 vi.mock('pg', () => ({

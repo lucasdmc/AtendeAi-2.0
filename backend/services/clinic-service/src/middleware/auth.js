@@ -6,6 +6,7 @@ const authenticateToken = (req, res, next) => {
   try {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
+    const xClinicId = req.headers['x-clinic-id'];
     
     if (!token) {
       return res.status(401).json({
@@ -28,11 +29,39 @@ const authenticateToken = (req, res, next) => {
       }
       
       req.user = decoded;
-      req.clinicId = decoded.clinic_id;
+      
+      // Determinar clinic_id baseado no header x-clinic-id ou token
+      if (xClinicId) {
+        // Admin_lify pode especificar clínica via header
+        if (decoded.roles && decoded.roles.includes('admin_lify')) {
+          req.clinicId = xClinicId;
+          logger.debug('Admin_lify using x-clinic-id header', { 
+            userId: decoded.user_id,
+            requestedClinicId: xClinicId,
+            requestId: req.id 
+          });
+        } else {
+          // Usuário normal só pode acessar sua própria clínica
+          req.clinicId = decoded.clinic_id;
+          logger.debug('Regular user using token clinic_id', { 
+            userId: decoded.user_id,
+            clinicId: decoded.clinic_id,
+            requestId: req.id 
+          });
+        }
+      } else {
+        // Usar clinic_id do token
+        req.clinicId = decoded.clinic_id;
+        logger.debug('Using token clinic_id', { 
+          userId: decoded.user_id,
+          clinicId: decoded.clinic_id,
+          requestId: req.id 
+        });
+      }
       
       logger.debug('Token authenticated successfully', { 
         userId: decoded.user_id,
-        clinicId: decoded.clinic_id,
+        clinicId: req.clinicId,
         requestId: req.id 
       });
       
@@ -172,9 +201,81 @@ const optionalAuth = (req, res, next) => {
   }
 };
 
+const withTenant = (req, res, next) => {
+  try {
+    if (!req.clinicId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Clinic ID required for tenant isolation'
+      });
+    }
+
+    // Adicionar clinic_id a todas as queries automaticamente
+    req.tenantFilter = {
+      clinic_id: req.clinicId
+    };
+
+    logger.debug('Tenant isolation applied', { 
+      clinicId: req.clinicId,
+      requestId: req.id 
+    });
+
+    next();
+    
+  } catch (error) {
+    logger.error('Tenant middleware error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Tenant isolation error'
+    });
+  }
+};
+
+const requireAdminLify = (req, res, next) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Authentication required'
+      });
+    }
+    
+    const userRoles = req.user.roles || [];
+    
+    if (!userRoles.includes('admin_lify')) {
+      logger.warn('Admin_lify access denied', { 
+        userId: req.user.user_id,
+        userRoles: userRoles,
+        requestId: req.id 
+      });
+      
+      return res.status(403).json({
+        success: false,
+        message: 'Admin_lify access required'
+      });
+    }
+    
+    logger.debug('Admin_lify access granted', { 
+      userId: req.user.user_id,
+      requestId: req.id 
+    });
+    
+    next();
+    
+  } catch (error) {
+    logger.error('Admin_lify middleware error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Authorization error'
+    });
+  }
+};
+
 module.exports = {
   authenticateToken,
   requireRole,
   requireClinicAccess,
-  optionalAuth
+  optionalAuth,
+  withTenant,
+  requireAdminLify
 };
