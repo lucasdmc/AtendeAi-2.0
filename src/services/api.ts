@@ -5,12 +5,12 @@ import { z } from 'zod';
 
 // Microservices URLs - Configuração para produção no Railway
 const MICROSERVICES_URLS = {
-  // URLs para produção no Railway - usando variáveis de ambiente
-  auth: import.meta.env.VITE_AUTH_SERVICE_URL || 'https://atendeai-20-production.up.railway.app:3001',
-  clinics: import.meta.env.VITE_CLINIC_SERVICE_URL || 'https://atendeai-20-production.up.railway.app:3003',
-  conversations: import.meta.env.VITE_CONVERSATION_SERVICE_URL || 'https://atendeai-20-production.up.railway.app:3005',
-  appointments: import.meta.env.VITE_APPOINTMENT_SERVICE_URL || 'https://atendeai-20-production.up.railway.app:3006',
-  whatsapp: import.meta.env.VITE_WHATSAPP_SERVICE_URL || 'https://atendeai-20-production.up.railway.app:3007',
+  // URLs para produção no Railway - usando proxy interno
+  auth: import.meta.env.VITE_AUTH_SERVICE_URL || 'https://atendeai-20-production.up.railway.app/api/auth',
+  clinics: import.meta.env.VITE_CLINIC_SERVICE_URL || 'https://atendeai-20-production.up.railway.app/api/clinics',
+  conversations: import.meta.env.VITE_CONVERSATION_SERVICE_URL || 'https://atendeai-20-production.up.railway.app/api/conversations',
+  appointments: import.meta.env.VITE_APPOINTMENT_SERVICE_URL || 'https://atendeai-20-production.up.railway.app/api/appointments',
+  whatsapp: import.meta.env.VITE_WHATSAPP_SERVICE_URL || 'https://atendeai-20-production.up.railway.app/api/whatsapp',
 };
 
 // API Configuration
