@@ -1,0 +1,40 @@
+{
+  "version": "1.1",
+  "items": [
+    {
+      "id": "contracts-valid",
+      "desc": "Contracts validated (OpenAPI/GraphQL)",
+      "pass": false
+    },
+    {
+      "id": "tests-pass",
+      "desc": "All tests pass & coverage >= minimum",
+      "pass": false
+    },
+    {
+      "id": "security-scan",
+      "desc": "Secrets scan + SAST/DAST checks clean or accepted",
+      "pass": false
+    },
+    {
+      "id": "observability",
+      "desc": "Logs, metrics, traces added",
+      "pass": false
+    },
+    {
+      "id": "perf-budgets",
+      "desc": "No P95 regressions beyond budget",
+      "pass": false
+    },
+    {
+      "id": "migrations-rollback",
+      "desc": "Migrations reversible and rollback plan present",
+      "pass": false
+    },
+    {
+      "id": "housekeeping-reviewed",
+      "desc": "Housekeeping report reviewed/applied",
+      "pass": false
+    }
+  ]
+}

@@ -1,0 +1,106 @@
+# orchestrator.runbook.yaml
+version: "1.1"
+description: State machine with optional ARCH layer (API_ARCH, DB_ARCH) between SPEC and DEV.
+defaults:
+  max_attempts: 3
+  backoff_seconds: 30
+  time_budget_minutes: 60
+  artifacts_required: true
+flags:
+  include_arch_layer: auto   # values: auto|always|never
+states:
+  SPEC:
+    on_enter:
+      - action: specification_agent.specify
+    guards:
+      - condition: files_exist(["docs/system_spec.md"])
+      - condition: schema_optional() OR schema_valid("api/openapi.yaml")
+    on_success: ARCH_DECISION
+    on_failure: SPEC
+
+  ARCH_DECISION:
+    on_enter:
+      - action: context_manager.decide_arch_layer   # decides whether to include ARCH based on repo needs
+    on_success: API_ARCH
+    on_skip: DB_ARCH
+    on_bypass: DEV
+
+  API_ARCH:
+    on_enter:
+      - action: api_architect.design_api
+    guards:
+      - condition: schema_valid("api/openapi.yaml")
+      - condition: contracts_versioned("api/openapi.yaml")
+    on_success: DB_ARCH
+    on_failure: API_ARCH
+
+  DB_ARCH:
+    on_enter:
+      - action: database_architect.design_db
+    guards:
+      - condition: db_migrations_valid("db/migrations")
+      - condition: rollback_plan_present("db/migrations")
+    on_success: DEV
+    on_failure: DB_ARCH
+
+  DEV:
+    on_enter:
+      - action: expert_developer.implement
+    guards:
+      - condition: git_diff_non_empty()
+    on_success: TEST
+    on_failure: DEV
+
+  TEST:
+    on_enter:
+      - action: test_engineer.test
+    guards:
+      - condition: reports_pass("reports/{cycle_id}/test_report.json")
+    on_success: REVIEW
+    on_failure: DEV
+
+  REVIEW:
+    on_enter:
+      - action: delivery_reviewer.review
+    guards:
+      - condition: checklist_pass("reports/{cycle_id}/review_checklist.json")
+    on_success: HOUSEKEEPING
+    on_failure: DEV
+
+  HOUSEKEEPING:
+    on_enter:
+      - action: repository_manager.housekeeping
+    guards:
+      - condition: file_exists("reports/{cycle_id}/housekeeping_report.json")
+    on_success: DONE
+    on_failure: HOUSEKEEPING
+
+  DONE:
+    on_enter:
+      - action: context_manager.snapshot_close
+
+transitions:
+  - from: SPEC
+    to: ARCH_DECISION
+  - from: ARCH_DECISION
+    to: API_ARCH
+  - from: ARCH_DECISION
+    to: DB_ARCH
+  - from: ARCH_DECISION
+    to: DEV
+  - from: API_ARCH
+    to: DB_ARCH
+  - from: DB_ARCH
+    to: DEV
+  - from: DEV
+    to: TEST
+  - from: TEST
+    to: REVIEW
+  - from: REVIEW
+    to: HOUSEKEEPING
+  - from: HOUSEKEEPING
+    to: DONE
+
+policies:
+  ask_user_when_blocked: true
+  require_evidence: true

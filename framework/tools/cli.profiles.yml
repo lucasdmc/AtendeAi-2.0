@@ -1,0 +1,28 @@
+version: "1.0"
+detect:
+  order: [node, python, go]
+node:
+  when: file_exists("package.json")
+  package_manager: pnpm
+  install: ["pnpm install --frozen-lockfile"]
+  build: ["pnpm build"]
+  test: ["pnpm test --reporter=json --reporter-option output=reports/{cycle_id}/test_report.json"]
+  lint: ["pnpm lint"]
+python:
+  when: any_file_exists(["pyproject.toml","requirements.txt"])
+  install: ["pip install -U pip", "pip install -r requirements.txt || true", "pip install -e . || true"]
+  test: ["pytest -q --maxfail=1 --disable-warnings --json-report --json-report-file=reports/{cycle_id}/test_report.json"]
+  lint: ["ruff check ."]
+go:
+  when: file_exists("go.mod")
+  install: ["go mod tidy"]
+  test: ["go test ./... -json > reports/{cycle_id}/test_report.json"]
+  lint: ["golangci-lint run --out-format json --issues-exit-code 0 > reports/{cycle_id}/lint_report.json"]
+common:
+  openapi_validate: ["npx @redocly/cli lint api/openapi.yaml || npx @redocly/cli lint openapi.yaml"]
+  spectral_validate: ["npx @stoplight/spectral-cli lint api/openapi.yaml || true"]
+  git_diff: ["git diff --patch > reports/{cycle_id}/git.patch || true"]
+  coverage_minimum: 0.70
+logs:
+  dir: reports/{cycle_id}/cli_logs
+  capture: true
