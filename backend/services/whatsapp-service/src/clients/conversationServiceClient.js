@@ -1,3 +1,5 @@
+const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
+
 class ConversationServiceClient {
     constructor() {
         this.baseURL = process.env.CONVERSATION_SERVICE_URL || 'http://localhost:3005';

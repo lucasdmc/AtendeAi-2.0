@@ -1,0 +1,178 @@
+{
+  "project_name": "AtendeAI 2.0",
+  "project_type": "full-stack",
+  "description": "Sistema de microserviços para gestão de clínicas com IA conversacional e agendamentos inteligentes",
+  "version": "2.0.0",
+  "status": "development",
+  "tech_stack": {
+    "frontend": {
+      "framework": "React 18",
+      "language": "TypeScript",
+      "build_tool": "Vite",
+      "styling": "Tailwind CSS",
+      "ui_components": "Shadcn/ui",
+      "state_management": "React Context",
+      "routing": "React Router v6"
+    },
+    "backend": {
+      "architecture": "Microservices",
+      "language": "JavaScript/Node.js",
+      "framework": "Express.js",
+      "database": "PostgreSQL",
+      "cache": "Redis",
+      "auth": "Supabase Auth",
+      "api_gateway": "Kong + HAProxy"
+    },
+    "integrations": {
+      "whatsapp": "WhatsApp Business API",
+      "calendar": "Google Calendar API",
+      "ai": "OpenAI API",
+      "monitoring": "Prometheus + Grafana"
+    }
+  },
+  "features": [
+    {
+      "name": "Authentication System",
+      "description": "Sistema de autenticação com Supabase Auth, JWT tokens e controle de acesso por perfis",
+      "priority": "high",
+      "status": "implemented",
+      "components": [
+        "Login/Logout",
+        "User Registration",
+        "Role-based Access Control",
+        "Session Management"
+      ]
+    },
+    {
+      "name": "Clinic Management",
+      "description": "Gestão completa de clínicas multi-tenant com contextualização JSON avançada",
+      "priority": "high",
+      "status": "implemented",
+      "components": [
+        "CRUD de Clínicas",
+        "Multi-tenancy",
+        "Contextualização JSON",
+        "Configurações por Clínica"
+      ]
+    },
+    {
+      "name": "Appointment System",
+      "description": "Sistema completo de agendamentos com integração Google Calendar",
+      "priority": "high",
+      "status": "implemented",
+      "components": [
+        "Agendamento de Consultas",
+        "Calendário Interativo",
+        "Integração Google Calendar",
+        "Gestão de Horários"
+      ]
+    },
+    {
+      "name": "WhatsApp Integration",
+      "description": "Integração completa com WhatsApp Business API para atendimento automatizado",
+      "priority": "high",
+      "status": "implemented",
+      "components": [
+        "Webhook de Mensagens",
+        "Respostas Automáticas",
+        "Processamento de Mídia",
+        "Circuit Breaker"
+      ]
+    },
+    {
+      "name": "AI Conversation System",
+      "description": "Sistema de IA conversacional com detecção de intenções e respostas contextuais",
+      "priority": "high",
+      "status": "implemented",
+      "components": [
+        "Detecção de Intenções",
+        "Respostas Contextuais",
+        "Memória Conversacional",
+        "LLM Orchestrator"
+      ]
+    },
+    {
+      "name": "User Management",
+      "description": "Sistema de gestão de usuários com controle de permissões e roles",
+      "priority": "medium",
+      "status": "implemented",
+      "components": [
+        "CRUD de Usuários",
+        "Gestão de Perfis",
+        "Controle de Permissões"
+      ]
+    },
+    {
+      "name": "Professional Management",
+      "description": "Gestão de profissionais com especialidades e horários de trabalho",
+      "priority": "medium",
+      "status": "implemented",
+      "components": [
+        "CRUD de Profissionais",
+        "Especialidades",
+        "Horários de Trabalho"
+      ]
+    },
+    {
+      "name": "Service Management",
+      "description": "Gestão de serviços oferecidos pelas clínicas com preços e convênios",
+      "priority": "medium",
+      "status": "implemented",
+      "components": [
+        "CRUD de Serviços",
+        "Categorias",
+        "Preços e Convênios"
+      ]
+    }
+  ],
+  "critical_issues": [
+    {
+      "issue": "Sistema de Autenticação Duplicado",
+      "description": "Dois sistemas de auth funcionando em paralelo (Supabase + AuthService Custom)",
+      "priority": "critical",
+      "impact": "Confusão, bugs e manutenção duplicada"
+    },
+    {
+      "issue": "Proteção de Rotas Ausente",
+      "description": "Usuários podem acessar qualquer rota sem autenticação",
+      "priority": "critical",
+      "impact": "Sistema completamente inseguro"
+    },
+    {
+      "issue": "Integração Frontend-Backend Incompleta",
+      "description": "Dados mockados, APIs não chamadas",
+      "priority": "critical",
+      "impact": "Sistema funciona apenas como protótipo"
+    },
+    {
+      "issue": "Combobox de Clínicas Não Funcional",
+      "description": "Hardcoded, sem lógica de filtro por usuário",
+      "priority": "high",
+      "impact": "Funcionalidade central multi-tenant quebrada"
+    }
+  ],
+  "testing_requirements": {
+    "frontend": {
+      "unit_tests": "Componentes React, hooks, utilitários",
+      "integration_tests": "Integração com APIs, autenticação",
+      "e2e_tests": "Fluxos completos de usuário",
+      "accessibility_tests": "Conformidade WCAG",
+      "performance_tests": "Carregamento e responsividade"
+    },
+    {
+      "backend": {
+        "unit_tests": "Controladores, serviços, utilitários",
+        "integration_tests": "Integração entre microserviços",
+        "api_tests": "Endpoints REST, validação de dados",
+        "security_tests": "Autenticação, autorização, validação",
+        "performance_tests": "Carga, latência, throughput"
+      }
+    }
+  },
+  "deployment": {
+    "environment": "production",
+    "infrastructure": "Docker + Railway",
+    "monitoring": "Prometheus + Grafana",
+    "logging": "Winston + Centralized Logging"
+  }
+}

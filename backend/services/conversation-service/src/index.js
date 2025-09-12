@@ -59,6 +59,17 @@ app.use((req, res, next) => {
 // Rotas da API
 app.use('/api/conversation', conversationRoutes);
 
+// Health check simples
+app.get('/health', (req, res) => {
+  res.json({
+    success: true,
+    service: 'conversation-service',
+    status: 'healthy',
+    timestamp: new Date().toISOString(),
+    version: '1.0.0'
+  });
+});
+
 // Rota raiz
 app.get('/', (req, res) => {
   res.json({

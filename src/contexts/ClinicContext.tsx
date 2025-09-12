@@ -47,22 +47,18 @@ export const ClinicProvider = ({ children }: ClinicProviderProps) => {
   const [clinics, setClinics] = useState<Clinic[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Carregar clínicas da API
+  // Carregar clínicas da API real do microserviço
   useEffect(() => {
     const fetchClinics = async () => {
       setIsLoading(true);
       try {
-        const response = await fetch('/api/clinics');
-        if (response.ok) {
-          const data = await response.json();
-          setClinics(data);
-          // Selecionar primeira clínica ativa por padrão
-          const firstActiveClinic = data.find((clinic: Clinic) => clinic.status === 'active');
-          if (firstActiveClinic) {
-            setSelectedClinic(firstActiveClinic);
-          }
-        } else {
-          console.error('Erro ao carregar clínicas:', response.statusText);
+        const { clinicApi } = await import('../services/api');
+        const data = await clinicApi.getClinics();
+        setClinics(data);
+        // Selecionar primeira clínica ativa por padrão
+        const firstActiveClinic = data.find((clinic: Clinic) => clinic.status === 'active');
+        if (firstActiveClinic) {
+          setSelectedClinic(firstActiveClinic);
         }
       } catch (error) {
         console.error('Erro ao carregar clínicas:', error);

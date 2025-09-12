@@ -1,46 +1,173 @@
 {
-  "timestamp": "2025-09-10T16:02:12.965483",
-  "commit_hash": "9a2cf09",
-  "current_state": "mock_data_removed",
-  "pending_features": [
-    {
-      "feature": "Envio de mensagens",
-      "location": "src/pages/Conversations.tsx",
-      "status": "interface_ready",
-      "api_needed": "POST /api/conversations/:id/messages"
-    },
-    {
-      "feature": "Atribui\u00e7\u00e3o manual",
-      "location": "src/pages/Conversations.tsx",
-      "status": "interface_ready",
-      "api_needed": "PUT /api/conversations/:id/assign"
-    },
-    {
-      "feature": "Cria\u00e7\u00e3o/Edi\u00e7\u00e3o de cl\u00ednicas",
-      "location": "src/pages/Clinics.tsx",
-      "status": "forms_ready",
-      "api_needed": "POST/PUT /api/clinics"
-    },
-    {
-      "feature": "Autentica\u00e7\u00e3o",
-      "location": "src/hooks/useAuth.tsx",
-      "status": "structure_ready",
-      "api_needed": "POST /api/auth/login"
-    }
-  ],
-  "backend_services": [
-    "whatsapp-service (porta 3001)",
-    "conversation-service (porta 3002)",
-    "clinic-service (porta 3003)",
-    "appointment-service (porta 3004)",
-    "auth-service (porta 3005)"
-  ],
-  "database_tables": [
-    "atendeai.clinics",
-    "atendeai.users",
-    "conversation.conversations",
-    "conversation.messages",
-    "appointment.appointments"
-  ],
-  "next_phase": "implement_api_integrations"
+  "timestamp": "2025-09-12T15:14:50.201Z",
+  "project_structure": {
+    "backend_services": [
+      {
+        "name": "appointment-service",
+        "path": "backend/services/appointment-service",
+        "hasPackageJson": true,
+        "hasEnv": true,
+        "hasIndex": true
+      },
+      {
+        "name": "auth-service",
+        "path": "backend/services/auth-service",
+        "hasPackageJson": true,
+        "hasEnv": true,
+        "hasIndex": true
+      },
+      {
+        "name": "clinic-service",
+        "path": "backend/services/clinic-service",
+        "hasPackageJson": true,
+        "hasEnv": true,
+        "hasIndex": true
+      },
+      {
+        "name": "conversation-service",
+        "path": "backend/services/conversation-service",
+        "hasPackageJson": true,
+        "hasEnv": true,
+        "hasIndex": true
+      },
+      {
+        "name": "google-calendar-service",
+        "path": "backend/services/google-calendar-service",
+        "hasPackageJson": true,
+        "hasEnv": false,
+        "hasIndex": true
+      },
+      {
+        "name": "health-service",
+        "path": "backend/services/health-service",
+        "hasPackageJson": true,
+        "hasEnv": false,
+        "hasIndex": false
+      },
+      {
+        "name": "user-service",
+        "path": "backend/services/user-service",
+        "hasPackageJson": true,
+        "hasEnv": false,
+        "hasIndex": false
+      },
+      {
+        "name": "whatsapp-service",
+        "path": "backend/services/whatsapp-service",
+        "hasPackageJson": true,
+        "hasEnv": true,
+        "hasIndex": true
+      }
+    ],
+    "frontend_files": [
+      "src/App.css",
+      "src/App.tsx",
+      "src/components/AppSidebar.tsx",
+      "src/components/ClinicSelector.tsx",
+      "src/components/Layout.tsx",
+      "src/components/ProfileRestriction.tsx",
+      "src/components/agenda/AgendaHeader.tsx",
+      "src/components/agenda/AgendamentoModal.tsx",
+      "src/components/agenda/MonthView.tsx",
+      "src/components/agenda/WeekView.tsx",
+      "src/components/agenda/YearView.tsx",
+      "src/components/ui/accordion.tsx",
+      "src/components/ui/alert-dialog.tsx",
+      "src/components/ui/alert.tsx",
+      "src/components/ui/aspect-ratio.tsx",
+      "src/components/ui/avatar.tsx",
+      "src/components/ui/badge.tsx",
+      "src/components/ui/breadcrumb.tsx",
+      "src/components/ui/button.tsx",
+      "src/components/ui/calendar.tsx",
+      "src/components/ui/card.tsx",
+      "src/components/ui/carousel.tsx",
+      "src/components/ui/chart.tsx",
+      "src/components/ui/checkbox.tsx",
+      "src/components/ui/collapsible.tsx",
+      "src/components/ui/command.tsx",
+      "src/components/ui/context-menu.tsx",
+      "src/components/ui/dialog.tsx",
+      "src/components/ui/drawer.tsx",
+      "src/components/ui/dropdown-menu.tsx",
+      "src/components/ui/form.tsx",
+      "src/components/ui/hover-card.tsx",
+      "src/components/ui/input-otp.tsx",
+      "src/components/ui/input.tsx",
+      "src/components/ui/label.tsx",
+      "src/components/ui/menubar.tsx",
+      "src/components/ui/navigation-menu.tsx",
+      "src/components/ui/pagination.tsx",
+      "src/components/ui/popover.tsx",
+      "src/components/ui/progress.tsx",
+      "src/components/ui/radio-group.tsx",
+      "src/components/ui/resizable.tsx",
+      "src/components/ui/scroll-area.tsx",
+      "src/components/ui/select.tsx",
+      "src/components/ui/separator.tsx",
+      "src/components/ui/sheet.tsx",
+      "src/components/ui/sidebar.tsx",
+      "src/components/ui/skeleton.tsx",
+      "src/components/ui/slider.tsx",
+      "src/components/ui/sonner.tsx",
+      "src/components/ui/switch.tsx",
+      "src/components/ui/table.tsx",
+      "src/components/ui/tabs.tsx",
+      "src/components/ui/textarea.tsx",
+      "src/components/ui/toast.tsx",
+      "src/components/ui/toaster.tsx",
+      "src/components/ui/toggle-group.tsx",
+      "src/components/ui/toggle.tsx",
+      "src/components/ui/tooltip.tsx",
+      "src/components/ui/use-toast.ts",
+      "src/contexts/ClinicContext.tsx",
+      "src/hooks/use-mobile.tsx",
+      "src/hooks/use-toast.ts",
+      "src/hooks/useAgenda.ts",
+      "src/hooks/useApi.ts",
+      "src/hooks/useAuth.tsx",
+      "src/index.css",
+      "src/integrations/supabase/client.ts",
+      "src/integrations/supabase/types.ts",
+      "src/lib/utils.ts",
+      "src/main.tsx",
+      "src/pages/Agenda.tsx",
+      "src/pages/Appointments.tsx",
+      "src/pages/Auth.tsx",
+      "src/pages/Clinics.tsx",
+      "src/pages/Context.tsx",
+      "src/pages/ContextPage.tsx",
+      "src/pages/Conversations.tsx",
+      "src/pages/Index.tsx",
+      "src/pages/NotFound.tsx",
+      "src/pages/Users.tsx",
+      "src/services/api.ts",
+      "src/tests/ClinicSelector.test.tsx",
+      "src/tests/setup.ts",
+      "src/types/agenda.ts",
+      "src/vite-env.d.ts"
+    ],
+    "database_files": [],
+    "config_files": [],
+    "documentation": [
+      "acceptance_report.md",
+      "api_resilience.md",
+      "assumptions.md",
+      "calendar-to-agenda-implementation-report.md",
+      "db_model.md",
+      "frontend_integration.md",
+      "google-oauth-setup.md",
+      "system_spec.md",
+      "system_spec_cleanup.md",
+      "templates",
+      "traceability.csv",
+      "traceability_cleanup.csv"
+    ]
+  },
+  "issues_found": [],
+  "next_steps": [
+    "specification_agent",
+    "database_architect",
+    "api_architect"
+  ]
 }

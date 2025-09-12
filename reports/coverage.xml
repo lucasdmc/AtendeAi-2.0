@@ -1,9 +1,65 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<coverage>
-  <timestamp>2025-09-10T13:56:16.412709</timestamp>
-  <total_tests>85</total_tests>
-  <passed_tests>85</passed_tests>
-  <failed_tests>0</failed_tests>
-  <coverage_percentage>87.3</coverage_percentage>
-  <status>PASSED</status>
-</coverage>
+# Test Coverage Report - AtendeAí 2.0
+
+## Análise de Testes
+
+### Arquivos de Teste Encontrados
+- **agenda_integration.simple.test.ts**: 6330 bytes, javascript
+- **agenda_smoke.test.ts**: 13682 bytes, javascript
+- **auth_integration.simple.test.ts**: 7221 bytes, javascript
+- **simple_integration.test.ts**: 2515 bytes, javascript
+- **appointment_001_Appointment_Creation.py**: 3131 bytes, python
+- **appointment_002_Calendar_View.py**: 3008 bytes, python
+- **auth_001_Login_Functionality.py**: 2727 bytes, python
+- **auth_002_Route_Protection.py**: 4615 bytes, python
+- **clinic_001_Clinic_Management_CRUD.py**: 3114 bytes, python
+- **clinic_002_Clinic_Selector_Functionality.py**: 3692 bytes, python
+- **context_001_Context_Management.py**: 13458 bytes, python
+- **conversation_001_Conversation_Interface.py**: 2592 bytes, python
+- **integration_001_API_Integration.py**: 3184 bytes, python
+- **responsive_001_Responsive_Design.py**: 5263 bytes, python
+- **ui_001_UI_Component_Library.py**: 24184 bytes, python
+- **user_001_User_Management.py**: 20491 bytes, python
+
+### Configurações de Teste
+- **vitest.config.ts**: ✅ Encontrado
+
+### Scripts de Teste Disponíveis
+- **test**: vitest
+- **test:run**: vitest run
+- **test:coverage**: vitest run --coverage
+- **test:ui**: vitest --ui
+- **test:watch**: vitest --watch
+- **test:integration**: vitest run src/tests/integration.test.ts
+- **test:auth**: vitest run src/tests/auth.test.ts
+- **test:whatsapp**: vitest run src/tests/whatsapp-integration.test.ts
+- **test:permissions**: vitest run src/tests/permissions.test.ts
+- **test:clinic-isolation**: vitest run src/tests/clinic-isolation.test.ts
+- **test:google-calendar**: vitest run src/tests/google-calendar.test.ts
+- **test:api-contract**: vitest run src/tests/api-contract.test.ts
+- **test:performance**: vitest run src/tests/performance.test.ts
+- **test:e2e**: npm run test:integration && npm run test:api-contract
+
+### Relatórios de Cobertura
+- **reports/coverage.xml**: ✅ Encontrado
+- **test_scripts**: ❌ Ausente
+
+## Problemas Críticos Identificados
+
+
+
+## Issues de Teste
+
+
+
+## Recomendações
+
+1. **Criar testes unitários**: Implementar testes para todas as funções críticas
+2. **Criar testes de integração**: Testar comunicação entre microserviços
+3. **Criar testes E2E**: Testar fluxos completos do usuário
+4. **Configurar cobertura**: Estabelecer métricas de cobertura mínima
+5. **Automatizar testes**: Integrar testes no pipeline de CI/CD
+6. **Mockar dependências**: Isolar testes de dependências externas
+7. **Testar APIs**: Validar endpoints e respostas
+8. **Testar frontend**: Validar componentes e interações
+9. **Testar integrações**: Validar WhatsApp e Google Calendar
+10. **Monitorar cobertura**: Acompanhar métricas de qualidade

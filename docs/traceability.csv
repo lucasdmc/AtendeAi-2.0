@@ -4,3 +4,7 @@ atribuicao_manual,interface_ready,src/pages/Conversations.tsx,PUT /api/conversat
 criacao_clinicas,forms_ready,src/pages/Clinics.tsx,POST /api/clinics,medium
 edicao_clinicas,forms_ready,src/pages/Clinics.tsx,PUT /api/clinics/:id,medium
 autenticacao,structure_ready,src/hooks/useAuth.tsx,POST /api/auth/login,high
+calendario_agenda,interface_ready,src/pages/Agenda.tsx,GET/POST/PUT/DELETE /api/appointments,high
+agendamentos,interface_ready,src/pages/Agenda.tsx,POST /api/appointments,high
+visualizacao_calendario,interface_ready,src/pages/Agenda.tsx,GET /api/appointments/calendar,high
+remocao_google_calendar,removed,backend/services/google-calendar-service/,N/A,completed

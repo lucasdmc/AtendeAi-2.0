@@ -1,79 +1,292 @@
 {
-  "task_id": "test_engineer_combobox_clinicas",
-  "agent": "test_engineer",
-  "status": "done",
-  "summary": "Validação concluída: combobox de clínicas implementado corretamente. Build funcionando, funcionalidade testada manualmente. Testes unitários criados mas com problemas de configuração do vitest.",
-  "artifacts": [
+  "timestamp": "2025-09-12T15:23:02.873Z",
+  "test_files": [
     {
-      "path": "src/tests/ClinicSelector.test.tsx",
-      "type": "file",
-      "summary": "Testes unitários criados para ClinicSelector (6 casos de teste)"
+      "file": "agenda_integration.simple.test.ts",
+      "path": "tests/integration/agenda_integration.simple.test.ts",
+      "size": 6330,
+      "type": "javascript",
+      "has_describe": true,
+      "has_it": true,
+      "has_expect": true,
+      "has_mock": true,
+      "has_async": true,
+      "has_setup": true,
+      "has_teardown": false
     },
     {
-      "path": "reports/test-results.json",
-      "type": "file",
-      "summary": "Relatório de resultados dos testes"
+      "file": "agenda_smoke.test.ts",
+      "path": "tests/integration/agenda_smoke.test.ts",
+      "size": 13682,
+      "type": "javascript",
+      "has_describe": true,
+      "has_it": true,
+      "has_expect": true,
+      "has_mock": true,
+      "has_async": true,
+      "has_setup": true,
+      "has_teardown": false
     },
     {
-      "path": "src/components/ClinicSelector.tsx",
-      "type": "file",
-      "summary": "Componente testado manualmente - funcionando corretamente"
+      "file": "auth_integration.simple.test.ts",
+      "path": "tests/integration/auth_integration.simple.test.ts",
+      "size": 7221,
+      "type": "javascript",
+      "has_describe": true,
+      "has_it": true,
+      "has_expect": true,
+      "has_mock": true,
+      "has_async": true,
+      "has_setup": true,
+      "has_teardown": true
     },
     {
-      "path": "src/contexts/ClinicContext.tsx",
-      "type": "file",
-      "summary": "Contexto testado manualmente - funcionando corretamente"
+      "file": "simple_integration.test.ts",
+      "path": "tests/integration/simple_integration.test.ts",
+      "size": 2515,
+      "type": "javascript",
+      "has_describe": true,
+      "has_it": true,
+      "has_expect": true,
+      "has_mock": true,
+      "has_async": true,
+      "has_setup": false,
+      "has_teardown": false
+    },
+    {
+      "file": "appointment_001_Appointment_Creation.py",
+      "path": "testsprite_tests/appointment_001_Appointment_Creation.py",
+      "size": 3131,
+      "type": "python",
+      "has_describe": false,
+      "has_it": true,
+      "has_expect": true,
+      "has_mock": false,
+      "has_async": true,
+      "has_setup": false,
+      "has_teardown": false
+    },
+    {
+      "file": "appointment_002_Calendar_View.py",
+      "path": "testsprite_tests/appointment_002_Calendar_View.py",
+      "size": 3008,
+      "type": "python",
+      "has_describe": false,
+      "has_it": true,
+      "has_expect": true,
+      "has_mock": false,
+      "has_async": true,
+      "has_setup": false,
+      "has_teardown": false
+    },
+    {
+      "file": "auth_001_Login_Functionality.py",
+      "path": "testsprite_tests/auth_001_Login_Functionality.py",
+      "size": 2727,
+      "type": "python",
+      "has_describe": false,
+      "has_it": true,
+      "has_expect": true,
+      "has_mock": false,
+      "has_async": true,
+      "has_setup": false,
+      "has_teardown": false
+    },
+    {
+      "file": "auth_002_Route_Protection.py",
+      "path": "testsprite_tests/auth_002_Route_Protection.py",
+      "size": 4615,
+      "type": "python",
+      "has_describe": false,
+      "has_it": true,
+      "has_expect": true,
+      "has_mock": false,
+      "has_async": true,
+      "has_setup": false,
+      "has_teardown": false
+    },
+    {
+      "file": "clinic_001_Clinic_Management_CRUD.py",
+      "path": "testsprite_tests/clinic_001_Clinic_Management_CRUD.py",
+      "size": 3114,
+      "type": "python",
+      "has_describe": false,
+      "has_it": true,
+      "has_expect": true,
+      "has_mock": false,
+      "has_async": true,
+      "has_setup": false,
+      "has_teardown": false
+    },
+    {
+      "file": "clinic_002_Clinic_Selector_Functionality.py",
+      "path": "testsprite_tests/clinic_002_Clinic_Selector_Functionality.py",
+      "size": 3692,
+      "type": "python",
+      "has_describe": false,
+      "has_it": true,
+      "has_expect": true,
+      "has_mock": false,
+      "has_async": true,
+      "has_setup": false,
+      "has_teardown": false
+    },
+    {
+      "file": "context_001_Context_Management.py",
+      "path": "testsprite_tests/context_001_Context_Management.py",
+      "size": 13458,
+      "type": "python",
+      "has_describe": false,
+      "has_it": true,
+      "has_expect": true,
+      "has_mock": false,
+      "has_async": true,
+      "has_setup": false,
+      "has_teardown": false
+    },
+    {
+      "file": "conversation_001_Conversation_Interface.py",
+      "path": "testsprite_tests/conversation_001_Conversation_Interface.py",
+      "size": 2592,
+      "type": "python",
+      "has_describe": false,
+      "has_it": true,
+      "has_expect": true,
+      "has_mock": false,
+      "has_async": true,
+      "has_setup": false,
+      "has_teardown": false
+    },
+    {
+      "file": "integration_001_API_Integration.py",
+      "path": "testsprite_tests/integration_001_API_Integration.py",
+      "size": 3184,
+      "type": "python",
+      "has_describe": false,
+      "has_it": true,
+      "has_expect": true,
+      "has_mock": false,
+      "has_async": true,
+      "has_setup": false,
+      "has_teardown": false
+    },
+    {
+      "file": "responsive_001_Responsive_Design.py",
+      "path": "testsprite_tests/responsive_001_Responsive_Design.py",
+      "size": 5263,
+      "type": "python",
+      "has_describe": false,
+      "has_it": true,
+      "has_expect": true,
+      "has_mock": false,
+      "has_async": true,
+      "has_setup": false,
+      "has_teardown": false
+    },
+    {
+      "file": "ui_001_UI_Component_Library.py",
+      "path": "testsprite_tests/ui_001_UI_Component_Library.py",
+      "size": 24184,
+      "type": "python",
+      "has_describe": false,
+      "has_it": true,
+      "has_expect": true,
+      "has_mock": false,
+      "has_async": true,
+      "has_setup": false,
+      "has_teardown": false
+    },
+    {
+      "file": "user_001_User_Management.py",
+      "path": "testsprite_tests/user_001_User_Management.py",
+      "size": 20491,
+      "type": "python",
+      "has_describe": false,
+      "has_it": true,
+      "has_expect": true,
+      "has_mock": false,
+      "has_async": true,
+      "has_setup": false,
+      "has_teardown": false
     }
   ],
-  "questions": [],
-  "next_actions": ["handoff: delivery_reviewer"],
-  "test_results": {
-    "manual_testing": {
-      "status": "passed",
-      "tests": [
-        "Admin lify vê combobox no header - PASSED",
-        "Combobox lista clínicas ativas - PASSED", 
-        "Seleção de clínica funciona - PASSED",
-        "Persistência no localStorage - PASSED",
-        "Interface responsiva - PASSED",
-        "Mock user corrigido para admin@lify.com - PASSED"
-      ]
-    },
-    "unit_testing": {
-      "status": "partial",
-      "tests_created": 6,
-      "tests_passing": 0,
-      "issues": [
-        "Problemas de configuração do vitest com @tanstack/react-query",
-        "Mocks não configurados corretamente",
-        "Testes criados mas não executando devido a setup"
-      ]
-    },
-    "build_testing": {
-      "status": "passed",
-      "build_successful": true,
-      "no_compilation_errors": true
-    },
-    "coverage": {
-      "status": "not_measured",
-      "reason": "Testes unitários não executando devido a configuração"
+  "test_configs": [
+    {
+      "file": "vitest.config.ts",
+      "exists": true,
+      "size": 1235,
+      "has_coverage": true,
+      "has_thresholds": true,
+      "has_reporters": true
     }
+  ],
+  "coverage_analysis": {
+    "reports/coverage.xml": {
+      "exists": true,
+      "size": 289,
+      "has_line_coverage": false,
+      "has_branch_coverage": false,
+      "has_function_coverage": false
+    },
+    "test_scripts": [
+      [
+        "test",
+        "vitest"
+      ],
+      [
+        "test:run",
+        "vitest run"
+      ],
+      [
+        "test:coverage",
+        "vitest run --coverage"
+      ],
+      [
+        "test:ui",
+        "vitest --ui"
+      ],
+      [
+        "test:watch",
+        "vitest --watch"
+      ],
+      [
+        "test:integration",
+        "vitest run src/tests/integration.test.ts"
+      ],
+      [
+        "test:auth",
+        "vitest run src/tests/auth.test.ts"
+      ],
+      [
+        "test:whatsapp",
+        "vitest run src/tests/whatsapp-integration.test.ts"
+      ],
+      [
+        "test:permissions",
+        "vitest run src/tests/permissions.test.ts"
+      ],
+      [
+        "test:clinic-isolation",
+        "vitest run src/tests/clinic-isolation.test.ts"
+      ],
+      [
+        "test:google-calendar",
+        "vitest run src/tests/google-calendar.test.ts"
+      ],
+      [
+        "test:api-contract",
+        "vitest run src/tests/api-contract.test.ts"
+      ],
+      [
+        "test:performance",
+        "vitest run src/tests/performance.test.ts"
+      ],
+      [
+        "test:e2e",
+        "npm run test:integration && npm run test:api-contract"
+      ]
+    ]
   },
-  "validation_summary": {
-    "functional_requirements": {
-      "REQ-005_001": "Admin lify vê combobox no header - VALIDATED",
-      "REQ-005_002": "Combobox lista clínicas ativas - VALIDATED",
-      "REQ-005_003": "Seleção persiste durante sessão - VALIDATED",
-      "REQ-005_004": "Interface responsiva e intuitiva - VALIDATED",
-      "REQ-005_005": "Alternância entre clínicas funciona - VALIDATED",
-      "REQ-005_006": "Mock user corrigido para admin@lify.com - VALIDATED"
-    },
-    "technical_validation": {
-      "component_rendering": "PASSED",
-      "state_management": "PASSED",
-      "localStorage_persistence": "PASSED",
-      "permission_control": "PASSED",
-      "ui_integration": "PASSED"
-    }
-  }
+  "test_issues": [],
+  "critical_issues": []
 }

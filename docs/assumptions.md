@@ -9,11 +9,16 @@
 ## Assumptions de Negócio
 - Usuários terão acesso às clínicas baseado em roles
 - Conversas serão atribuídas automaticamente ou manualmente
-- Agendamentos serão sincronizados com Google Calendar
+- Agendamentos usarão calendário próprio na tela de Agenda
 - WhatsApp será o canal principal de comunicação
+- Calendário interno será responsável por toda gestão de horários
 
 ## Dependências Externas
 - Meta WhatsApp Business API
-- Google Calendar API
 - Supabase (banco de dados)
 - Railway (deploy)
+
+## Integrações Removidas
+- Google Calendar API (removido)
+- Google OAuth (removido)
+- Qualquer serviço Google (removido)

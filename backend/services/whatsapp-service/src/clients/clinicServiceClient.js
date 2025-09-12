@@ -1,6 +1,8 @@
+const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
+
 class ClinicServiceClient {
     constructor() {
-        this.baseURL = process.env.CLINIC_SERVICE_URL || 'http://localhost:3003';
+        this.baseURL = process.env.CLINIC_SERVICE_URL || 'http://localhost:3002';
         this.timeout = 10000;
     }
 

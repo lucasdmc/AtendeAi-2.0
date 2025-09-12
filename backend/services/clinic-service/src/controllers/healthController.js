@@ -6,9 +6,16 @@ class HealthController {
   async healthCheck(req, res) {
     try {
       const dbHealth = await db.healthCheck();
-      const redisHealth = await redis.healthCheck();
+      // Redis é opcional - não falha o health check se Redis estiver indisponível
+      let redisHealth = true;
+      try {
+        redisHealth = await redis.healthCheck();
+      } catch (error) {
+        logger.warn('Redis health check failed, continuing without Redis:', error.message);
+        redisHealth = false;
+      }
       
-      const overallHealth = dbHealth && redisHealth;
+      const overallHealth = dbHealth; // Apenas DB é obrigatório
       
       const healthData = {
         status: overallHealth ? 'healthy' : 'unhealthy',

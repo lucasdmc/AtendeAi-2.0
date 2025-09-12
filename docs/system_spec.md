@@ -1,9 +1,66 @@
 # Especificação do Sistema - AtendeAí 2.0
 
-## Estado Atual
-- ✅ Dados mock removidos completamente
-- ✅ Interfaces prontas para integração
-- ⚠️ APIs backend necessárias para funcionalidades pendentes
+## Visão Geral
+- **Projeto**: AtendeAí 2.0
+- **Versão**: 2.0.0
+- **Última Atualização**: 2024-12-19
+
+## Arquitetura
+
+### Backend Services
+- **whatsapp-service** (porta 3001) - Integração WhatsApp
+- **conversation-service** (porta 3002) - Gestão de conversas
+- **clinic-service** (porta 3003) - Gestão de clínicas
+- **appointment-service** (porta 3004) - Agendamentos
+- **auth-service** (porta 3005) - Autenticação
+- **user-service** (porta 3006) - Gestão de usuários
+
+### Frontend
+- **Framework**: React + Vite
+- **Calendário**: Próprio (sem integração Google)
+- **Agenda**: Tela dedicada com calendário interno
+
+### Database
+- **Provider**: Supabase
+- **Migrações**: Aplicadas
+
+### Deployment
+- **Platform**: Railway
+- **Config Status**: Configurado
+
+## Features Principais
+
+### 1. Sistema de Autenticação
+- Login/logout de usuários
+- Gestão de sessões
+- Controle de acesso
+
+### 2. Gestão de Clínicas
+- Criação/edição de clínicas
+- Configuração de WhatsApp
+- Contexto personalizado
+
+### 3. Agendamento de Consultas
+- **Calendário Próprio**: Sem integração Google
+- **Tela de Agenda**: Interface dedicada
+- **Funcionalidades**:
+  - Visualização mensal/semanal/diária
+  - Criação de agendamentos
+  - Edição de horários
+  - Cancelamento de consultas
+  - Notificações via WhatsApp
+
+### 4. Integração WhatsApp
+- Recebimento de mensagens
+- Envio de respostas automáticas
+- Notificações de agendamento
+- Atribuição manual de conversas
+
+### 5. Sistema de Conversas
+- Interface de chat
+- Atribuição automática/manual
+- Histórico de mensagens
+- Status de conversas
 
 ## Funcionalidades Pendentes
 
@@ -33,14 +90,39 @@
 - **Endpoint**: POST /api/auth/login
 - **Payload**: { login, password }
 
-## Backend Services Necessários
-- whatsapp-service (porta 3001)
-- conversation-service (porta 3002)
-- clinic-service (porta 3003)
-- appointment-service (porta 3004)
-- auth-service (porta 3005)
+### 5. Calendário de Agenda
+- **Localização**: src/pages/Agenda.tsx
+- **Status**: Interface pronta, funcionalidades pendentes
+- **Funcionalidades**:
+  - Visualização de calendário
+  - Criação de agendamentos
+  - Edição de horários
+  - Integração com appointment-service
+
+## Especificações Técnicas
+
+### Calendário Próprio
+- **Sem integração Google Calendar**
+- **Interface nativa** na tela de Agenda
+- **Funcionalidades**:
+  - Visualização mensal/semanal/diária
+  - Drag & drop para agendamentos
+  - Filtros por clínica/profissional
+  - Exportação de relatórios
+
+### Integrações Removidas
+- ❌ Google Calendar API
+- ❌ Google OAuth
+- ❌ Qualquer serviço Google
+
+### Integrações Mantidas
+- ✅ WhatsApp Business API
+- ✅ Supabase (banco de dados)
+- ✅ Railway (deploy)
 
 ## Próximos Passos
-1. Implementar chamadas reais para APIs
-2. Testar integração com backend
-3. Validar funcionalidades end-to-end
+1. Remover serviço Google Calendar do backend
+2. Implementar calendário próprio na tela de Agenda
+3. Implementar chamadas reais para APIs
+4. Testar integração com backend
+5. Validar funcionalidades end-to-end

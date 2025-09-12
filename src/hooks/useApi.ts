@@ -101,15 +101,16 @@ export function useAuth() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const login = useCallback(async (email: string, password: string) => {
+  const login = useCallback(async (email: string, password: string, clinicId: string) => {
     setLoading(true);
     setError(null);
     
     try {
-      const result = await authApi.login(email, password);
+      const result = await authApi.login(email, password, clinicId);
       if (result.success) {
-        localStorage.setItem('auth_token', result.accessToken);
-        setUser(result.user);
+        localStorage.setItem('auth_token', result.data.accessToken);
+        localStorage.setItem('refresh_token', result.data.refreshToken);
+        setUser(result.data.user);
         return result;
       }
     } catch (err) {
@@ -123,12 +124,17 @@ export function useAuth() {
 
   const logout = useCallback(async () => {
     try {
-      await authApi.logout();
+      const refreshToken = localStorage.getItem('refresh_token');
+      const clinicId = user?.clinic_id;
+      if (refreshToken && clinicId) {
+        await authApi.logout(refreshToken, clinicId);
+      }
     } finally {
       localStorage.removeItem('auth_token');
+      localStorage.removeItem('refresh_token');
       setUser(null);
     }
-  }, []);
+  }, [user]);
 
   const checkAuth = useCallback(async () => {
     const token = localStorage.getItem('auth_token');
@@ -139,12 +145,17 @@ export function useAuth() {
 
     setLoading(true);
     try {
-      const result = await authApi.getMe();
-      if (result.success) {
-        setUser(result.user);
+      const result = await authApi.validateToken();
+      if (result.success && result.data.valid) {
+        setUser(result.data.user);
+      } else {
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('refresh_token');
+        setUser(null);
       }
     } catch (err) {
       localStorage.removeItem('auth_token');
+      localStorage.removeItem('refresh_token');
       setUser(null);
     } finally {
       setLoading(false);

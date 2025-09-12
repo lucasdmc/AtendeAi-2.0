@@ -11,7 +11,7 @@ module.exports = {
     name: process.env.DB_NAME || 'atendeai',
     user: process.env.DB_USER || 'postgres',
     password: process.env.DB_PASSWORD || 'postgres',
-    ssl: process.env.DB_SSL === 'true',
+    ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
     max: 20,
     idleTimeoutMillis: 30000,
     connectionTimeoutMillis: 2000

@@ -23,9 +23,8 @@ class RedisClient {
         return;
       }
 
-      this.client = createClient({
+      const redisConfig = {
         url: config.redis.url,
-        password: config.redis.password,
         database: config.redis.db,
         retryDelayOnFailover: config.redis.retryDelayOnFailover,
         maxRetriesPerRequest: config.redis.maxRetriesPerRequest,
@@ -33,7 +32,14 @@ class RedisClient {
           connectTimeout: 10000,
           keepAlive: 5000,
         },
-      });
+      };
+
+      // Só adiciona senha se ela estiver definida e não vazia
+      if (config.redis.password && config.redis.password.trim() !== '') {
+        redisConfig.password = config.redis.password;
+      }
+
+      this.client = createClient(redisConfig);
 
       // Event listeners
       this.client.on('connect', () => {

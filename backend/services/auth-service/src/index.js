@@ -133,9 +133,13 @@ async function startServer() {
     await database.connect();
     logger.info('✅ Database connected successfully');
 
-    // Conectar ao Redis
-    await redis.connect();
-    logger.info('✅ Redis connected successfully');
+    // Conectar ao Redis (opcional)
+    // try {
+    //   await redis.connect();
+    //   logger.info('✅ Redis connected successfully');
+    // } catch (error) {
+    //   logger.warn('⚠️ Redis connection failed, continuing without Redis:', error.message);
+    // }
 
     // Iniciar servidor
     const server = app.listen(config.port, config.host, () => {

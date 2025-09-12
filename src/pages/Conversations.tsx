@@ -102,7 +102,7 @@ export default function Conversations() {
     }
   }
 
-  const sendMessage = () => {
+  const sendMessage = async () => {
     if (!newMessage.trim() || !selectedConversation) return
 
     const newMsg: Message = {
@@ -113,65 +113,95 @@ export default function Conversations() {
       status: "sent"
     }
 
-    // TODO: Implementar API call para enviar mensagem
-    console.log('Sending message:', newMsg, 'to conversation:', selectedConversation.id)
+    try {
+      // Enviar mensagem via API real
+      const { conversationApi } = await import('../services/api');
+      
+      await conversationApi.processMessage({
+        clinic_id: selectedClinic?.id || '',
+        patient_phone: selectedConversation.customer_phone,
+        message_content: newMessage,
+        message_type: 'text'
+      });
 
-    setSelectedConversation(prev => 
-      prev ? { 
-        ...prev, 
-        messages: [...(prev.messages || []), newMsg] 
-      } : null
-    )
+      setSelectedConversation(prev => 
+        prev ? { 
+          ...prev, 
+          messages: [...(prev.messages || []), newMsg] 
+        } : null
+      )
 
-    setNewMessage("")
+      setNewMessage("")
 
-    // Simular resposta automática apenas se não estiver em modo manual
-    if (!selectedConversation.assigned_user_id) {
-      setTimeout(() => {
-        const autoReply: Message = {
-          id: (Date.now() + 1).toString(),
-          sender: "bot",
-          content: "Esta é uma resposta automática do assistente virtual. Para atendimento personalizado, um de nossos atendentes pode assumir esta conversa.",
-          timestamp: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
-          status: "delivered"
-        }
+      // Simular resposta automática apenas se não estiver em modo manual
+      if (!selectedConversation.assigned_user_id) {
+        setTimeout(() => {
+          const autoReply: Message = {
+            id: (Date.now() + 1).toString(),
+            sender: "bot",
+            content: "Esta é uma resposta automática do assistente virtual. Para atendimento personalizado, um de nossos atendentes pode assumir esta conversa.",
+            timestamp: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+            status: "delivered"
+          }
 
-        setSelectedConversation(prev => 
-          prev ? { ...prev, messages: [...(prev.messages || []), autoReply] } : null
-        )
-      }, 2000)
+          setSelectedConversation(prev => 
+            prev ? { ...prev, messages: [...(prev.messages || []), autoReply] } : null
+          )
+        }, 2000)
+      }
+    } catch (error) {
+      console.error('Erro ao enviar mensagem:', error);
     }
   }
 
-  const toggleManualMode = () => {
+  const toggleManualMode = async () => {
     if (!selectedConversation) return
 
     const newManualMode = !selectedConversation.assigned_user_id
     const agentName = "Atendente" // Nome do atendente logado (seria obtido do contexto de autenticação)
 
-    // TODO: Implementar API call para assumir/liberar conversa
-    console.log('Toggle manual mode:', newManualMode, 'for conversation:', selectedConversation.id)
+    try {
+      const { conversationApi } = await import('../services/api');
+      
+      if (newManualMode) {
+        // Assumir conversa
+        await conversationApi.transitionToHuman(
+          selectedConversation.id, 
+          'current-user-id', 
+          'Atendente assumiu a conversa manualmente'
+        );
+      } else {
+        // Retornar para bot
+        await conversationApi.transitionToBot(
+          selectedConversation.id, 
+          'Conversa retornada para atendimento automático'
+        );
+      }
 
-    setSelectedConversation(prev => 
-      prev ? { 
-        ...prev, 
-        assigned_user_id: newManualMode ? 'current-user-id' : undefined
-      } : null
-    )
+      setSelectedConversation(prev => 
+        prev ? { 
+          ...prev, 
+          assigned_user_id: newManualMode ? 'current-user-id' : undefined
+        } : null
+      )
 
-    // Adicionar mensagem do sistema informando a mudança
-    const systemMessage: Message = {
-      id: Date.now().toString(),
-      sender: "bot",
-      content: newManualMode 
-        ? `🧑‍💼 Atendente ${agentName} assumiu esta conversa. Agora você será atendido por uma pessoa.`
-        : `🤖 Conversa retornada para atendimento automático.`,
-      timestamp: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
-      status: "delivered"
+      // Adicionar mensagem do sistema informando a mudança
+      const systemMessage: Message = {
+        id: Date.now().toString(),
+        sender: "bot",
+        content: newManualMode 
+          ? `🧑‍💼 Atendente ${agentName} assumiu esta conversa. Agora você será atendido por uma pessoa.`
+          : `🤖 Conversa retornada para atendimento automático.`,
+        timestamp: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+        status: "delivered"
+      }
+
+      setSelectedConversation(prev => 
+        prev ? { ...prev, messages: [...(prev.messages || []), systemMessage] } : null
+      )
+    } catch (error) {
+      console.error('Erro ao alterar modo da conversa:', error);
     }
-
-    // TODO: Implementar persistência da mensagem do sistema
-    console.log('System message:', systemMessage)
   }
 
   const handleKeyPress = (e: React.KeyboardEvent) => {

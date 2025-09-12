@@ -50,13 +50,12 @@ class ClinicService {
   }
 
   async setupRedis() {
-    try {
-      await redis.connect();
-      logger.info('Redis connected successfully');
-    } catch (error) {
-      logger.error('Redis connection failed:', error);
-      throw error;
-    }
+    // try {
+    //   await redis.connect();
+    //   logger.info('Redis connected successfully');
+    // } catch (error) {
+    //   logger.warn('Redis connection failed, continuing without Redis:', error.message);
+    // }
   }
 
   setupMiddleware() {

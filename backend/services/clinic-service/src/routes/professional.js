@@ -10,12 +10,7 @@ router.use(rateLimiter);
 router.use(authenticateToken);
 
 // Rotas de Profissionais
-router.post('/:clinicId/professionals', validateProfessionalData, professionalController.createProfessional);
-router.get('/:clinicId/professionals', professionalController.getProfessionalsByClinic);
-router.get('/:clinicId/professionals/specialty/:specialty', professionalController.getProfessionalsBySpecialty);
-router.get('/:clinicId/professionals/available', professionalController.getAvailableProfessionals);
-router.get('/:clinicId/professionals/:id', professionalController.getProfessionalById);
-router.put('/:clinicId/professionals/:id', validateProfessionalData, professionalController.updateProfessional);
-router.delete('/:clinicId/professionals/:id', professionalController.deleteProfessional);
+router.get('/:clinicId/professionals', professionalController.getProfessionals);
+router.get('/:clinicId/professionals/:id', professionalController.getProfessional);
 
 module.exports = router;
