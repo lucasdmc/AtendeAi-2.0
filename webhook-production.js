@@ -142,6 +142,7 @@ async function handleAuthRoutes(req, res, pathname) {
       });
       
       // Buscar usuário
+      console.log('🔍 Buscando usuário:', { email, clinicId });
       const userResult = await pool.query(`
         SELECT u.id, u.email, u.password_hash, u.first_name, u.last_name, u.status, u.clinic_id,
                array_agg(r.name) as roles
@@ -152,7 +153,10 @@ async function handleAuthRoutes(req, res, pathname) {
         GROUP BY u.id, u.email, u.password_hash, u.first_name, u.last_name, u.status, u.clinic_id
       `, [email, clinicId]);
       
+      console.log('📊 Resultado da query:', userResult.rows.length, 'usuários encontrados');
+      
       if (userResult.rows.length === 0) {
+        console.log('❌ Usuário não encontrado');
         sendJSONResponse(res, 401, {
           success: false,
           error: 'Invalid credentials',
@@ -164,8 +168,12 @@ async function handleAuthRoutes(req, res, pathname) {
       const user = userResult.rows[0];
       
       // Verificar senha
+      console.log('🔐 Verificando senha para usuário:', user.email);
       const isValidPassword = await bcrypt.compare(password, user.password_hash);
+      console.log('🔐 Resultado da verificação de senha:', isValidPassword);
+      
       if (!isValidPassword) {
+        console.log('❌ Senha inválida');
         sendJSONResponse(res, 401, {
           success: false,
           error: 'Invalid credentials',
