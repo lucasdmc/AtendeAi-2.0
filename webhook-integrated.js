@@ -132,54 +132,107 @@ async function handleAuthRoutes(req, res, pathname) {
       const body = await getRequestBody(req);
       const { email, password, clinicId } = body;
       
-      // Simulação de login (em produção, conectar com banco real)
-      if (email === 'admin@lify.com' && password === 'admin123') {
-        const accessToken = jwt.sign(
-          {
-            sub: '1',
-            email: email,
-            clinicId: clinicId || '1',
-            roles: ['admin_lify'],
-            type: 'access',
-          },
-          config.jwt.secret,
-          { expiresIn: config.jwt.accessTokenExpiry }
-        );
-
-        const refreshToken = jwt.sign(
-          {
-            sub: '1',
-            email: email,
-            clinicId: clinicId || '1',
-            type: 'refresh',
-          },
-          config.jwt.secret,
-          { expiresIn: config.jwt.refreshTokenExpiry }
-        );
-
-        sendJSONResponse(res, 200, {
-          success: true,
-          data: {
-            accessToken,
-            refreshToken,
-            user: {
-              id: '1',
-              email: email,
-              firstName: 'Admin',
-              lastName: 'Lify',
-              roles: ['admin_lify'],
-              clinicId: clinicId || '1',
-            },
-          },
-          message: 'Login successful',
-        });
-      } else {
+      // Login real com banco de dados
+      const { Pool } = require('pg');
+      const pool = new Pool({
+        connectionString: config.database.url,
+        ssl: { rejectUnauthorized: false }
+      });
+      
+      // Buscar usuário
+      const userResult = await pool.query(`
+        SELECT u.id, u.email, u.password_hash, u.first_name, u.last_name, u.status, u.clinic_id,
+               array_agg(r.name) as roles
+        FROM atendeai.users u
+        LEFT JOIN atendeai.user_roles ur ON u.id = ur.user_id
+        LEFT JOIN atendeai.roles r ON ur.role_id = r.id
+        WHERE u.email = $1 AND u.clinic_id = $2
+        GROUP BY u.id, u.email, u.password_hash, u.first_name, u.last_name, u.status, u.clinic_id
+      `, [email, clinicId]);
+      
+      if (userResult.rows.length === 0) {
         sendJSONResponse(res, 401, {
           success: false,
           error: 'Invalid credentials',
         });
+        await pool.end();
+        return;
       }
+      
+      const user = userResult.rows[0];
+      
+      // Verificar senha
+      const isValidPassword = await bcrypt.compare(password, user.password_hash);
+      if (!isValidPassword) {
+        sendJSONResponse(res, 401, {
+          success: false,
+          error: 'Invalid credentials',
+        });
+        await pool.end();
+        return;
+      }
+      
+      // Verificar se usuário está ativo
+      if (user.status !== 'active') {
+        sendJSONResponse(res, 401, {
+          success: false,
+          error: 'User account is inactive',
+        });
+        await pool.end();
+        return;
+      }
+      
+      // Gerar tokens
+      const accessToken = jwt.sign(
+        {
+          sub: user.id,
+          email: user.email,
+          clinicId: user.clinic_id,
+          roles: user.roles.filter(r => r !== null),
+          type: 'access',
+        },
+        config.jwt.secret,
+        { expiresIn: config.jwt.accessTokenExpiry }
+      );
+
+      const refreshToken = jwt.sign(
+        {
+          sub: user.id,
+          email: user.email,
+          clinicId: user.clinic_id,
+          type: 'refresh',
+        },
+        config.jwt.secret,
+        { expiresIn: config.jwt.refreshTokenExpiry }
+      );
+
+      // Atualizar último login
+      await pool.query(`
+        UPDATE atendeai.users 
+        SET last_login_at = NOW() 
+        WHERE id = $1
+      `, [user.id]);
+
+      sendJSONResponse(res, 200, {
+        success: true,
+        data: {
+          accessToken,
+          refreshToken,
+          user: {
+            id: user.id,
+            email: user.email,
+            firstName: user.first_name,
+            lastName: user.last_name,
+            roles: user.roles.filter(r => r !== null),
+            clinicId: user.clinic_id,
+          },
+        },
+        message: 'Login successful',
+      });
+      
+      await pool.end();
     } catch (error) {
+      console.error('Login error:', error);
       sendJSONResponse(res, 500, {
         success: false,
         error: 'Internal server error',
@@ -214,6 +267,106 @@ async function handleAuthRoutes(req, res, pathname) {
       service: 'Auth Service',
       version: '1.0.0',
     });
+  } else if (method === 'GET' && pathname === '/api/users') {
+    // Listar usuários - versão simplificada para teste
+    try {
+      const users = [
+        {
+          id: '75b43b69-7c38-4f5a-af1f-8a47ed0c7e64',
+          name: 'Lucas Cantoni',
+          login: 'lucas@lify.com',
+          role: 'admin_lify',
+          clinic_id: 'cf0b8ee4-b5ca-4f9d-a7bc-0cf9df8447c1',
+          status: 'active',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }
+      ];
+      
+      sendJSONResponse(res, 200, {
+        success: true,
+        data: users
+      });
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      sendJSONResponse(res, 500, {
+        success: false,
+        error: 'Internal server error'
+      });
+    }
+  } else if (method === 'POST' && pathname === '/api/users') {
+    // Criar usuário - versão simplificada para teste
+    try {
+      const body = await getRequestBody(req);
+      const { email, first_name, last_name, clinic_id, role } = body;
+      
+      const newUser = {
+        id: require('crypto').randomUUID(),
+        name: `${first_name} ${last_name}`,
+        login: email,
+        role: role || 'atendente',
+        clinic_id: clinic_id,
+        status: 'active',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+      
+      sendJSONResponse(res, 201, {
+        success: true,
+        data: newUser
+      });
+    } catch (error) {
+      console.error('Error creating user:', error);
+      sendJSONResponse(res, 500, {
+        success: false,
+        error: 'Internal server error'
+      });
+    }
+  } else if (method === 'PUT' && pathname.startsWith('/api/users/')) {
+    // Atualizar usuário - versão simplificada para teste
+    try {
+      const userId = pathname.split('/')[3];
+      const body = await getRequestBody(req);
+      const { email, first_name, last_name, status, role } = body;
+      
+      const updatedUser = {
+        id: userId,
+        name: `${first_name || 'User'} ${last_name || 'Name'}`,
+        login: email || 'user@example.com',
+        role: role || 'atendente',
+        clinic_id: 'cf0b8ee4-b5ca-4f9d-a7bc-0cf9df8447c1',
+        status: status || 'active',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+      
+      sendJSONResponse(res, 200, {
+        success: true,
+        data: updatedUser
+      });
+    } catch (error) {
+      console.error('Error updating user:', error);
+      sendJSONResponse(res, 500, {
+        success: false,
+        error: 'Internal server error'
+      });
+    }
+  } else if (method === 'DELETE' && pathname.startsWith('/api/users/')) {
+    // Deletar usuário - versão simplificada para teste
+    try {
+      const userId = pathname.split('/')[3];
+      
+      sendJSONResponse(res, 200, {
+        success: true,
+        message: 'User deleted successfully'
+      });
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      sendJSONResponse(res, 500, {
+        success: false,
+        error: 'Internal server error'
+      });
+    }
   } else {
     sendJSONResponse(res, 404, { error: 'Endpoint not found' });
   }
@@ -799,6 +952,9 @@ const server = createServer((req, res) => {
   // ROTAS DOS MICROSERVIÇOS INTEGRADOS
   // =====================================================
   if (pathname.startsWith('/api/auth/')) {
+    handleAuthRoutes(req, res, pathname);
+    return;
+  } else if (pathname.startsWith('/api/users')) {
     handleAuthRoutes(req, res, pathname);
     return;
   } else if (pathname.startsWith('/api/clinics')) {
