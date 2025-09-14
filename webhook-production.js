@@ -287,7 +287,40 @@ async function handleClinicRoutes(req, res, pathname) {
 async function handleConversationRoutes(req, res, pathname) {
   const method = req.method;
   
-  if (method === 'POST' && pathname === '/api/conversations/process') {
+  if (method === 'GET' && pathname === '/api/conversations') {
+    // Endpoint simples para listar conversas ativas
+    const conversationList = [];
+    for (const [phoneNumber, conversation] of conversations.entries()) {
+      if (conversation.messages.length > 0) {
+        const lastMessage = conversation.messages[conversation.messages.length - 1];
+        conversationList.push({
+          id: `conv_${phoneNumber}`,
+          clinic_id: '1',
+          customer_phone: phoneNumber,
+          conversation_type: 'chatbot',
+          status: 'active',
+          bot_active: true,
+          assigned_user_id: null,
+          tags: [],
+          created_at: new Date(conversation.lastActivity).toISOString(),
+          updated_at: new Date(conversation.lastActivity).toISOString(),
+          last_message: lastMessage.text,
+          message_count: conversation.messages.length,
+          unread_count: 0
+        });
+      }
+    }
+    
+    sendJSONResponse(res, 200, {
+      success: true,
+      data: conversationList,
+      pagination: {
+        total: conversationList.length,
+        limit: 50,
+        offset: 0
+      }
+    });
+  } else if (method === 'POST' && pathname === '/api/conversations/process') {
     try {
       const body = await getRequestBody(req);
       const { clinic_id, patient_phone, message_content, patient_name } = body;
@@ -307,13 +340,35 @@ async function handleConversationRoutes(req, res, pathname) {
     }
   } else if (method === 'GET' && pathname.startsWith('/api/conversations/clinic/')) {
     const clinicId = pathname.split('/')[4];
-    const conversations = [];
+    
+    // Converter conversas da memória para o formato esperado pelo frontend
+    const conversationList = [];
+    for (const [phoneNumber, conversation] of conversations.entries()) {
+      if (conversation.messages.length > 0) {
+        const lastMessage = conversation.messages[conversation.messages.length - 1];
+        conversationList.push({
+          id: `conv_${phoneNumber}`,
+          clinic_id: clinicId,
+          customer_phone: phoneNumber,
+          conversation_type: 'chatbot',
+          status: 'active',
+          bot_active: true,
+          assigned_user_id: null,
+          tags: [],
+          created_at: new Date(conversation.lastActivity).toISOString(),
+          updated_at: new Date(conversation.lastActivity).toISOString(),
+          last_message: lastMessage.text,
+          message_count: conversation.messages.length,
+          unread_count: 0
+        });
+      }
+    }
     
     sendJSONResponse(res, 200, {
       success: true,
-      data: conversations,
+      data: conversationList,
       pagination: {
-        total: 0,
+        total: conversationList.length,
         limit: 50,
         offset: 0
       }
@@ -389,6 +444,89 @@ async function handleWhatsAppRoutes(req, res, pathname) {
       status: 'healthy',
       timestamp: new Date().toISOString(),
       service: 'WhatsApp Service',
+      version: '1.0.0',
+    });
+  } else {
+    sendJSONResponse(res, 404, { error: 'Endpoint not found' });
+  }
+}
+
+// User Service Handlers
+async function handleUserRoutes(req, res, pathname) {
+  const method = req.method;
+  
+  if (method === 'GET' && pathname === '/api/users') {
+    // Simulação de dados de usuários
+    const users = [
+      {
+        id: '1',
+        name: 'Admin Lify',
+        login: 'admin@lify.com',
+        role: 'admin_lify',
+        clinic_id: '1',
+        status: 'active',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      },
+      {
+        id: '2',
+        name: 'Atendente João',
+        login: 'joao@atendeai.com',
+        role: 'atendente',
+        clinic_id: '1',
+        status: 'active',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      }
+    ];
+    
+    sendJSONResponse(res, 200, {
+      success: true,
+      data: users
+    });
+  } else if (method === 'GET' && pathname.startsWith('/api/users/')) {
+    const userId = pathname.split('/')[3];
+    const user = {
+      id: userId,
+      name: 'Usuário Teste',
+      login: 'teste@atendeai.com',
+      role: 'atendente',
+      clinic_id: '1',
+      status: 'active',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+    
+    sendJSONResponse(res, 200, {
+      success: true,
+      data: user
+    });
+  } else if (method === 'POST' && pathname === '/api/users') {
+    try {
+      const body = await getRequestBody(req);
+      const user = {
+        id: uuidv4(),
+        ...body,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        status: 'active'
+      };
+      
+      sendJSONResponse(res, 201, {
+        success: true,
+        data: user
+      });
+    } catch (error) {
+      sendJSONResponse(res, 500, {
+        success: false,
+        error: 'Internal server error',
+      });
+    }
+  } else if (method === 'GET' && pathname === '/api/users/health') {
+    sendJSONResponse(res, 200, {
+      status: 'healthy',
+      timestamp: new Date().toISOString(),
+      service: 'User Service',
       version: '1.0.0',
     });
   } else {
@@ -805,7 +943,7 @@ const server = createServer((req, res) => {
   } else if (pathname.startsWith('/api/clinics')) {
     handleClinicRoutes(req, res, pathname);
     return;
-  } else if (pathname.startsWith('/api/conversations/')) {
+  } else if (pathname.startsWith('/api/conversations')) {
     handleConversationRoutes(req, res, pathname);
     return;
   } else if (pathname.startsWith('/api/appointments/')) {
@@ -813,6 +951,9 @@ const server = createServer((req, res) => {
     return;
   } else if (pathname.startsWith('/api/whatsapp/')) {
     handleWhatsAppRoutes(req, res, pathname);
+    return;
+  } else if (pathname.startsWith('/api/users')) {
+    handleUserRoutes(req, res, pathname);
     return;
   }
 

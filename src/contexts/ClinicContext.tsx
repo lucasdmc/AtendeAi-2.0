@@ -55,7 +55,7 @@ export const ClinicProvider = ({ children }: ClinicProviderProps) => {
   const [isLoading, setIsLoading] = useState(false);
 
   // Determine if user can select clinic (admin_lify can see all clinics)
-  const canSelectClinic = isAdminLify();
+  const canSelectClinic = user?.role === 'admin_lify' || user?.role === 'suporte_lify';
   
   // Available clinics based on user role
   const availableClinics = canSelectClinic 
@@ -73,10 +73,32 @@ export const ClinicProvider = ({ children }: ClinicProviderProps) => {
         
         // Selecionar clínica baseada no role do usuário
         if (canSelectClinic) {
-          // Admin_lify: selecionar primeira clínica ativa
-          const firstActiveClinic = data.find((clinic: Clinic) => clinic.status === 'active');
-          if (firstActiveClinic) {
-            setSelectedClinic(firstActiveClinic);
+          // Admin_lify: selecionar primeira clínica ativa se não houver seleção anterior
+          const savedClinic = localStorage.getItem('selectedClinic');
+          if (savedClinic) {
+            try {
+              const parsedClinic = JSON.parse(savedClinic);
+              const clinicExists = data.find((clinic: Clinic) => clinic.id === parsedClinic.id);
+              if (clinicExists) {
+                setSelectedClinic(clinicExists);
+              } else {
+                const firstActiveClinic = data.find((clinic: Clinic) => clinic.status === 'active');
+                if (firstActiveClinic) {
+                  setSelectedClinic(firstActiveClinic);
+                }
+              }
+            } catch (error) {
+              console.error('Erro ao carregar clínica salva:', error);
+              const firstActiveClinic = data.find((clinic: Clinic) => clinic.status === 'active');
+              if (firstActiveClinic) {
+                setSelectedClinic(firstActiveClinic);
+              }
+            }
+          } else {
+            const firstActiveClinic = data.find((clinic: Clinic) => clinic.status === 'active');
+            if (firstActiveClinic) {
+              setSelectedClinic(firstActiveClinic);
+            }
           }
         } else {
           // Usuário normal: selecionar sua própria clínica
