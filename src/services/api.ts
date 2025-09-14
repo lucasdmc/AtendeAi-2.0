@@ -3,9 +3,9 @@
 
 import { z } from 'zod';
 
-// Microservices URLs - Configuração para produção no Railway
+// Microservices URLs - Servidor Integrado (Produção)
 const MICROSERVICES_URLS = {
-  // URLs para produção no Railway - usando proxy interno
+  // URLs para servidor integrado - produção no Railway
   auth: import.meta.env.VITE_AUTH_SERVICE_URL || 'https://atendeai-20-production.up.railway.app/api/auth',
   clinics: import.meta.env.VITE_CLINIC_SERVICE_URL || 'https://atendeai-20-production.up.railway.app/api/clinics',
   conversations: import.meta.env.VITE_CONVERSATION_SERVICE_URL || 'https://atendeai-20-production.up.railway.app/api/conversations',
@@ -278,7 +278,7 @@ export interface Appointment {
   updated_at: string;
 }
 
-// Auth Service API - Conectando com o microserviço real
+// Auth Service API - Conectando com o servidor integrado
 export const authApi = {
   async login(email: string, password: string, clinicId: string) {
     return apiClient.post<{
@@ -288,7 +288,7 @@ export const authApi = {
         refreshToken: string;
         user: User;
       };
-    }>('auth', '/api/v1/auth/login', { email, password, clinicId });
+    }>('auth', '/login', { email, password, clinicId });
   },
 
   async refreshToken(refreshToken: string, clinicId: string) {
@@ -298,7 +298,7 @@ export const authApi = {
         accessToken: string;
         refreshToken: string;
       };
-    }>('auth', '/api/v1/auth/refresh', { refreshToken, clinicId });
+    }>('auth', '/refresh', { refreshToken, clinicId });
   },
 
   async validateToken() {
@@ -308,11 +308,11 @@ export const authApi = {
         valid: boolean;
         user: User;
       };
-    }>('auth', '/api/v1/auth/validate');
+    }>('auth', '/validate');
   },
 
   async logout(refreshToken: string, clinicId: string) {
-    return apiClient.post('auth', '/api/v1/auth/logout', { refreshToken, clinicId });
+    return apiClient.post('auth', '/logout', { refreshToken, clinicId });
   },
 };
 
@@ -320,7 +320,7 @@ export const authApi = {
 export const clinicApi = {
   async getClinics() {
     try {
-      const response = await apiClient.get<{ success: boolean; data: Clinic[] }>('clinics', '/api/clinics');
+      const response = await apiClient.get<{ success: boolean; data: Clinic[] }>('clinics', '');
       if (response.success) {
         // Validate each clinic with Zod
         const validatedClinics = response.data.map(clinic => ClinicSchema.parse(clinic));
@@ -335,7 +335,7 @@ export const clinicApi = {
 
   async getClinic(id: string) {
     try {
-      const response = await apiClient.get<{ success: boolean; data: Clinic }>('clinics', `/api/clinics/${id}`);
+      const response = await apiClient.get<{ success: boolean; data: Clinic }>('clinics', `/${id}`);
       if (response.success) {
         return ClinicSchema.parse(response.data);
       }
