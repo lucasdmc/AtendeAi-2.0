@@ -2,7 +2,15 @@ const { Pool } = require('pg');
 const config = require('./index');
 const logger = require('../utils/logger');
 
-const pool = new Pool(config.database);
+const pool = new Pool({
+  connectionString: config.database.url,
+  max: config.database.max,
+  idleTimeoutMillis: config.database.idleTimeoutMillis,
+  connectionTimeoutMillis: config.database.connectionTimeoutMillis,
+  ssl: config.database.url.includes('supabase') ? {
+    rejectUnauthorized: false
+  } : false,
+});
 
 pool.on('connect', (client) => {
   logger.info('New client connected to whatsapp service database');

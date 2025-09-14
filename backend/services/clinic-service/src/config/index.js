@@ -6,14 +6,10 @@ module.exports = {
   
   // Database
   database: {
-    host: process.env.DB_HOST || 'localhost',
-    port: process.env.DB_PORT || 5432,
-    name: process.env.DB_NAME || 'atendeai',
-    user: process.env.DB_USER || 'postgres',
-    password: process.env.DB_PASSWORD || 'postgres',
-    ssl: process.env.DB_SSL === 'true',
-    maxConnections: parseInt(process.env.DB_MAX_CONNECTIONS) || 20,
-    idleTimeoutMillis: parseInt(process.env.DB_IDLE_TIMEOUT) || 30000
+    url: process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/atendeai',
+    maxConnections: parseInt(process.env.DB_MAX_CONNECTIONS, 10) || 20,
+    idleTimeoutMillis: parseInt(process.env.DB_IDLE_TIMEOUT, 10) || 30000,
+    connectionTimeoutMillis: parseInt(process.env.DB_CONNECTION_TIMEOUT, 10) || 2000,
   },
   
   // Redis

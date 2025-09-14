@@ -6,12 +6,7 @@ module.exports = {
     host: process.env.APPOINTMENT_SERVICE_HOST || '0.0.0.0'
   },
   database: {
-    host: process.env.DB_HOST || 'localhost',
-    port: process.env.DB_PORT || 5432,
-    name: process.env.DB_NAME || 'atendeai',
-    user: process.env.DB_USER || 'postgres',
-    password: process.env.DB_PASSWORD || 'postgres',
-    ssl: process.env.DB_SSL === 'true',
+    url: process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/atendeai',
     max: 20,
     idleTimeoutMillis: 30000,
     connectionTimeoutMillis: 2000

@@ -11,17 +11,13 @@ class Database {
   async connect() {
     try {
       this.pool = new Pool({
-        host: config.database.host,
-        port: config.database.port,
-        database: config.database.name,
-        user: config.database.user,
-        password: config.database.password,
-        ssl: config.database.ssl ? { rejectUnauthorized: false } : false,
+        connectionString: config.database.url,
         max: config.database.maxConnections,
         idleTimeoutMillis: config.database.idleTimeoutMillis,
-        connectionTimeoutMillis: 10000,
-        statement_timeout: 30000,
-        query_timeout: 30000
+        connectionTimeoutMillis: config.database.connectionTimeoutMillis,
+        ssl: config.database.url.includes('supabase') ? {
+          rejectUnauthorized: false
+        } : false,
       });
 
       // Test connection
