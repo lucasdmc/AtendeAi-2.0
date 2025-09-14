@@ -278,52 +278,71 @@ async function handleClinicRoutes(req, res, pathname) {
   const method = req.method;
   
   if (method === 'GET' && pathname === '/api/clinics') {
-    // Simulação de dados de clínicas
-    const clinics = [
-      {
-        id: '1',
-        name: 'Clínica AtendeAI',
-        whatsapp_number: '554730915628',
-        status: 'active',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        context_json: {
-          clinica: {
-            informacoes_basicas: {
-              nome: 'Clínica AtendeAI',
-              descricao: 'Clínica especializada em atendimento médico de qualidade'
-            },
-            localizacao: {
-              endereco_principal: 'Rua das Flores, 123 - Centro'
-            },
-            contatos: {
-              telefone_principal: '(47) 3091-5628',
-              email_principal: 'contato@atendeai.com'
-            }
-          }
-        }
-      }
-    ];
-    
-    sendJSONResponse(res, 200, {
-      success: true,
-      data: clinics
-    });
+    // DADOS REAIS DO BANCO - SEM MOCKADOS
+    try {
+      const { Pool } = require('pg');
+      const pool = new Pool({
+        connectionString: config.database.url,
+        ssl: { rejectUnauthorized: false }
+      });
+      
+      const result = await pool.query(`
+        SELECT id, name, whatsapp_number, status, created_at, updated_at, context_json
+        FROM atendeai.clinics
+        WHERE status = 'active'
+      `);
+      
+      sendJSONResponse(res, 200, {
+        success: true,
+        data: result.rows
+      });
+      
+      await pool.end();
+    } catch (error) {
+      console.error('Error fetching clinics:', error);
+      sendJSONResponse(res, 500, {
+        success: false,
+        error: 'Internal server error'
+      });
+    }
   } else if (method === 'GET' && pathname.startsWith('/api/clinics/')) {
-    const clinicId = pathname.split('/')[3];
-    const clinic = {
-      id: clinicId,
-      name: 'Clínica AtendeAI',
-      whatsapp_number: '554730915628',
-      status: 'active',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    };
-    
-    sendJSONResponse(res, 200, {
-      success: true,
-      data: clinic
-    });
+    // Buscar clínica específica - DADOS REAIS DO BANCO
+    try {
+      const clinicId = pathname.split('/')[3];
+      const { Pool } = require('pg');
+      const pool = new Pool({
+        connectionString: config.database.url,
+        ssl: { rejectUnauthorized: false }
+      });
+      
+      const result = await pool.query(`
+        SELECT id, name, whatsapp_number, status, created_at, updated_at, context_json
+        FROM atendeai.clinics
+        WHERE id = $1
+      `, [clinicId]);
+      
+      if (result.rows.length === 0) {
+        sendJSONResponse(res, 404, {
+          success: false,
+          error: 'Clinic not found'
+        });
+        await pool.end();
+        return;
+      }
+      
+      sendJSONResponse(res, 200, {
+        success: true,
+        data: result.rows[0]
+      });
+      
+      await pool.end();
+    } catch (error) {
+      console.error('Error fetching clinic:', error);
+      sendJSONResponse(res, 500, {
+        success: false,
+        error: 'Internal server error'
+      });
+    }
   } else if (method === 'GET' && pathname === '/api/clinics/health') {
     sendJSONResponse(res, 200, {
       status: 'healthy',
@@ -509,25 +528,40 @@ async function handleUserRoutes(req, res, pathname) {
   const method = req.method;
   
   if (method === 'GET' && pathname === '/api/users') {
-    // Listar usuários - versão simplificada para teste
+    // Listar usuários - DADOS REAIS DO BANCO
     try {
-      const users = [
-        {
-          id: '75b43b69-7c38-4f5a-af1f-8a47ed0c7e64',
-          name: 'Lucas Cantoni',
-          login: 'lucas@lify.com',
-          role: 'admin_lify',
-          clinic_id: 'cf0b8ee4-b5ca-4f9d-a7bc-0cf9df8447c1',
-          status: 'active',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        }
-      ];
+      const { Pool } = require('pg');
+      const pool = new Pool({
+        connectionString: config.database.url,
+        ssl: { rejectUnauthorized: false }
+      });
+      
+      const result = await pool.query(`
+        SELECT u.id, u.email, u.first_name, u.last_name, u.status, u.clinic_id, u.created_at, u.updated_at,
+               array_agg(r.name) as roles
+        FROM atendeai.users u
+        LEFT JOIN atendeai.user_roles ur ON u.id = ur.user_id
+        LEFT JOIN atendeai.roles r ON ur.role_id = r.id
+        GROUP BY u.id, u.email, u.first_name, u.last_name, u.status, u.clinic_id, u.created_at, u.updated_at
+      `);
+      
+      const users = result.rows.map(user => ({
+        id: user.id,
+        name: `${user.first_name} ${user.last_name}`,
+        login: user.email,
+        role: user.roles[0] || 'atendente',
+        clinic_id: user.clinic_id,
+        status: user.status,
+        created_at: user.created_at,
+        updated_at: user.updated_at
+      }));
       
       sendJSONResponse(res, 200, {
         success: true,
         data: users
       });
+      
+      await pool.end();
     } catch (error) {
       console.error('Error fetching users:', error);
       sendJSONResponse(res, 500, {
@@ -536,41 +570,115 @@ async function handleUserRoutes(req, res, pathname) {
       });
     }
   } else if (method === 'GET' && pathname.startsWith('/api/users/')) {
-    const userId = pathname.split('/')[3];
-    const user = {
-      id: userId,
-      name: 'Usuário Teste',
-      login: 'teste@atendeai.com',
-      role: 'atendente',
-      clinic_id: '1',
-      status: 'active',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    };
-    
-    sendJSONResponse(res, 200, {
-      success: true,
-      data: user
-    });
+    // Buscar usuário específico - DADOS REAIS DO BANCO
+    try {
+      const userId = pathname.split('/')[3];
+      const { Pool } = require('pg');
+      const pool = new Pool({
+        connectionString: config.database.url,
+        ssl: { rejectUnauthorized: false }
+      });
+      
+      const result = await pool.query(`
+        SELECT u.id, u.email, u.first_name, u.last_name, u.status, u.clinic_id, u.created_at, u.updated_at,
+               array_agg(r.name) as roles
+        FROM atendeai.users u
+        LEFT JOIN atendeai.user_roles ur ON u.id = ur.user_id
+        LEFT JOIN atendeai.roles r ON ur.role_id = r.id
+        WHERE u.id = $1
+        GROUP BY u.id, u.email, u.first_name, u.last_name, u.status, u.clinic_id, u.created_at, u.updated_at
+      `, [userId]);
+      
+      if (result.rows.length === 0) {
+        sendJSONResponse(res, 404, {
+          success: false,
+          error: 'User not found'
+        });
+        await pool.end();
+        return;
+      }
+      
+      const user = result.rows[0];
+      const userData = {
+        id: user.id,
+        name: `${user.first_name} ${user.last_name}`,
+        login: user.email,
+        role: user.roles[0] || 'atendente',
+        clinic_id: user.clinic_id,
+        status: user.status,
+        created_at: user.created_at,
+        updated_at: user.updated_at
+      };
+      
+      sendJSONResponse(res, 200, {
+        success: true,
+        data: userData
+      });
+      
+      await pool.end();
+    } catch (error) {
+      console.error('Error fetching user:', error);
+      sendJSONResponse(res, 500, {
+        success: false,
+        error: 'Internal server error'
+      });
+    }
   } else if (method === 'POST' && pathname === '/api/users') {
+    // Criar usuário - DADOS REAIS DO BANCO
     try {
       const body = await getRequestBody(req);
-      const user = {
-        id: uuidv4(),
-        ...body,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        status: 'active'
+      const { email, password, first_name, last_name, clinic_id, role } = body;
+      
+      const { Pool } = require('pg');
+      const pool = new Pool({
+        connectionString: config.database.url,
+        ssl: { rejectUnauthorized: false }
+      });
+      
+      // Hash da senha
+      const passwordHash = await bcrypt.hash(password, 12);
+      
+      // Criar usuário
+      const userResult = await pool.query(`
+        INSERT INTO atendeai.users (email, password_hash, first_name, last_name, clinic_id, status)
+        VALUES ($1, $2, $3, $4, $5, 'active')
+        RETURNING id, email, first_name, last_name, clinic_id, status, created_at, updated_at
+      `, [email, passwordHash, first_name, last_name, clinic_id]);
+      
+      const user = userResult.rows[0];
+      
+      // Associar role
+      if (role) {
+        await pool.query(`
+          INSERT INTO atendeai.user_roles (user_id, role_id, clinic_id)
+          SELECT $1, r.id, $2
+          FROM atendeai.roles r
+          WHERE r.name = $3
+        `, [user.id, clinic_id, role]);
+      }
+      
+      const userData = {
+        id: user.id,
+        name: `${user.first_name} ${user.last_name}`,
+        login: user.email,
+        role: role || 'atendente',
+        clinic_id: user.clinic_id,
+        status: user.status,
+        created_at: user.created_at,
+        updated_at: user.updated_at
       };
       
       sendJSONResponse(res, 201, {
         success: true,
-        data: user
+        data: userData
       });
+      
+      await pool.end();
     } catch (error) {
+      console.error('Error creating user:', error);
       sendJSONResponse(res, 500, {
         success: false,
-        error: 'Internal server error',
+        error: 'Internal server error'
       });
     }
   } else if (method === 'GET' && pathname === '/api/users/health') {
