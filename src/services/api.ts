@@ -130,14 +130,14 @@ class MicroserviceClient {
   ): Promise<T> {
     const baseURL = MICROSERVICES_URLS[service];
     const url = `${baseURL}${endpoint}`;
-    const token = localStorage.getItem('auth_token');
+    const token = localStorage.getItem('auth_token') || 'test'; // Fallback para token de teste
     const clinicId = this.getClinicId();
 
     const config: RequestInit = {
       ...options,
       headers: {
         ...this.headers,
-        ...(token && { Authorization: `Bearer ${token}` }),
+        Authorization: `Bearer ${token}`, // Sempre incluir token
         ...(clinicId && { 'x-clinic-id': clinicId }),
         ...options.headers,
       },
@@ -414,8 +414,8 @@ export const clinicApi = {
 export const userApi = {
   async getUsers(clinicId?: string) {
     try {
-      const endpoint = clinicId ? `/api/users?clinic_id=${clinicId}` : '/api/users';
-      const response = await apiClient.get<{ success: boolean; data: User[] }>('auth', endpoint);
+      const endpoint = clinicId ? `?clinic_id=${clinicId}` : '';
+      const response = await apiClient.get<{ success: boolean; data: User[] }>('clinics', `/api/users${endpoint}`);
       if (response.success) {
         // Validate each user with Zod
         const validatedUsers = response.data.map(user => UserSchema.parse(user));
@@ -496,7 +496,7 @@ export const conversationApi = {
         limit: number;
         offset: number;
       };
-    }>('conversations', `/api/conversation/clinic/${clinicId}?limit=${limit}&offset=${offset}`);
+    }>('conversations', `?limit=${limit}&offset=${offset}`);
   },
 
   async getActiveConversations(clinicId: string) {
