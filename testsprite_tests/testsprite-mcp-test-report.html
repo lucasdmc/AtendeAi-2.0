@@ -1,0 +1,207 @@
+
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <title>Markdown Preview</title>
+      <style>
+        body {
+          font-family: sans-serif;
+          padding: 40px;
+          line-height: 1.6;
+          background: #fdfdfd;
+          color: #333;
+        }
+        pre {
+          background: #f4f4f4;
+          padding: 10px;
+          border-radius: 5px;
+          overflow-x: auto;
+        }
+        code {
+          font-family: monospace;
+          background: #eee;
+          padding: 2px 4px;
+        }
+        table {
+          border-collapse: collapse;
+          width: 100%;
+          margin-top: 20px;
+        }
+        th, td {
+          border: 1px solid #ccc;
+          padding: 8px 12px;
+          text-align: left;
+        }
+        th {
+          background-color: #f2f2f2;
+          font-weight: bold;
+        }
+      </style>
+    </head>
+    <body>
+      <h1>Relatório de Testes - AtendeAí 2.0</h1>
+<h2>Resumo Executivo</h2>
+<p><strong>Data do Teste:</strong> 12 de Janeiro de 2025<br>
+<strong>Versão Testada:</strong> 1.2.0<br>
+<strong>Tipo de Aplicação:</strong> Fullstack (React + Express.js)<br>
+<strong>Total de Testes:</strong> 111<br>
+<strong>Testes Aprovados:</strong> 83 (74.8%)<br>
+<strong>Testes Falharam:</strong> 28 (25.2%)</p>
+<h2>Status Geral</h2>
+<p>✅ <strong>APROVADO COM RESSALVAS</strong> - A aplicação possui funcionalidades básicas funcionando, mas há problemas significativos que precisam ser corrigidos.</p>
+<h2>Análise Detalhada</h2>
+<h3>✅ Funcionalidades Funcionando</h3>
+<ol>
+<li>
+<p><strong>Sistema de Autenticação Básico</strong></p>
+<ul>
+<li>Validação de tokens de verificação</li>
+<li>Geração de assinaturas</li>
+<li>Testes de integração simples</li>
+</ul>
+</li>
+<li>
+<p><strong>Componentes UI Básicos</strong></p>
+<ul>
+<li>Renderização de componentes</li>
+<li>Estrutura básica do ClinicSelector</li>
+</ul>
+</li>
+<li>
+<p><strong>Testes de Integração Simples</strong></p>
+<ul>
+<li>Mock de autenticação</li>
+<li>Mock de respostas de API</li>
+<li>Mock de operações de banco de dados</li>
+</ul>
+</li>
+</ol>
+<h3>❌ Problemas Identificados</h3>
+<h4>1. <strong>Problemas de Testes Frontend (6 falhas)</strong></h4>
+<p><strong>ClinicSelector Component:</strong></p>
+<ul>
+<li>Falha ao listar clínicas ativas</li>
+<li>Falha na seleção de clínicas</li>
+<li>Falha na persistência no localStorage</li>
+<li>Falha no controle de permissões</li>
+</ul>
+<p><strong>Causa Raiz:</strong> Os testes esperam dados mockados que não estão sendo carregados corretamente.</p>
+<h4>2. <strong>Problemas de Testes de Integração (9 falhas)</strong></h4>
+<p><strong>Agenda Integration:</strong></p>
+<ul>
+<li>Falha na renderização da página de agenda</li>
+<li>Falha no estado de carregamento</li>
+<li>Falha na conexão/desconexão</li>
+<li>Erro: <code>useClinic must be used within a ClinicProvider</code></li>
+</ul>
+<p><strong>Causa Raiz:</strong> Falta de contexto de clínica nos testes.</p>
+<h4>3. <strong>Problemas de Testes Backend (13 falhas)</strong></h4>
+<p><strong>WhatsApp Service:</strong></p>
+<ul>
+<li>Falha no circuit breaker</li>
+<li>Falha no processamento de webhook</li>
+<li>Falha na adaptação de mensagens</li>
+<li>Falha na persistência de mensagens</li>
+<li>Falha na obtenção de contexto de clínica</li>
+</ul>
+<p><strong>Auth Service:</strong></p>
+<ul>
+<li>Falha nos mocks de bcryptjs</li>
+<li>Falha nos mocks de jsonwebtoken</li>
+<li>Falha na autenticação de usuários</li>
+<li>Falha na validação de tokens</li>
+</ul>
+<h2>Recomendações de Correção</h2>
+<h3>🔧 Correções Prioritárias</h3>
+<ol>
+<li>
+<p><strong>Corrigir Mocks de Dependências</strong></p>
+<pre><code class="language-javascript">// Corrigir mocks de bcryptjs e jsonwebtoken
+vi.mock(&quot;bcryptjs&quot;, async (importOriginal) =&gt; {
+  const actual = await importOriginal()
+  return {
+    ...actual,
+    compare: vi.fn()
+  }
+})
+</code></pre>
+</li>
+<li>
+<p><strong>Adicionar Context Providers nos Testes</strong></p>
+<pre><code class="language-jsx">// Envolver componentes com providers necessários
+&lt;ClinicProvider&gt;
+  &lt;AuthProvider&gt;
+    &lt;ComponentUnderTest /&gt;
+  &lt;/AuthProvider&gt;
+&lt;/ClinicProvider&gt;
+</code></pre>
+</li>
+<li>
+<p><strong>Corrigir Dados Mockados</strong></p>
+<ul>
+<li>Garantir que os dados mockados sejam carregados antes dos testes</li>
+<li>Verificar se os mocks estão retornando os dados esperados</li>
+</ul>
+</li>
+<li>
+<p><strong>Corrigir Circuit Breaker</strong></p>
+<ul>
+<li>Implementar lógica correta de estado do circuit breaker</li>
+<li>Adicionar testes para todos os estados (CLOSED, OPEN, HALF_OPEN)</li>
+</ul>
+</li>
+</ol>
+<h3>🔧 Correções Secundárias</h3>
+<ol>
+<li>
+<p><strong>Melhorar Cobertura de Testes</strong></p>
+<ul>
+<li>Adicionar testes para cenários de erro</li>
+<li>Adicionar testes de integração mais robustos</li>
+</ul>
+</li>
+<li>
+<p><strong>Corrigir Problemas de Sintaxe</strong></p>
+<ul>
+<li>Corrigir caracteres especiais em strings de teste</li>
+<li>Verificar imports de dependências</li>
+</ul>
+</li>
+<li>
+<p><strong>Melhorar Estrutura de Testes</strong></p>
+<ul>
+<li>Organizar melhor os arquivos de teste</li>
+<li>Padronizar nomenclatura e estrutura</li>
+</ul>
+</li>
+</ol>
+<h2>Plano de Ação</h2>
+<h3>Fase 1: Correções Críticas (1-2 dias)</h3>
+<ul>
+<li>[ ] Corrigir mocks de dependências</li>
+<li>[ ] Adicionar context providers nos testes</li>
+<li>[ ] Corrigir dados mockados do ClinicSelector</li>
+</ul>
+<h3>Fase 2: Correções de Integração (2-3 dias)</h3>
+<ul>
+<li>[ ] Corrigir testes de agenda</li>
+<li>[ ] Corrigir circuit breaker</li>
+<li>[ ] Corrigir processamento de webhook</li>
+</ul>
+<h3>Fase 3: Melhorias Gerais (3-5 dias)</h3>
+<ul>
+<li>[ ] Melhorar cobertura de testes</li>
+<li>[ ] Corrigir problemas de sintaxe</li>
+<li>[ ] Padronizar estrutura de testes</li>
+</ul>
+<h2>Conclusão</h2>
+<p>A aplicação AtendeAí 2.0 possui uma base sólida com funcionalidades principais implementadas, mas requer correções significativas nos testes para garantir qualidade e confiabilidade. As funcionalidades core (autenticação, gestão de clínicas, chatbot WhatsApp) estão implementadas, mas os testes precisam ser corrigidos para validar adequadamente essas funcionalidades.</p>
+<p><strong>Recomendação:</strong> Proceder com as correções prioritárias antes de considerar a aplicação pronta para produção.</p>
+<hr>
+<p><em>Relatório gerado automaticamente pelo sistema de testes em 12/01/2025</em></p>
+
+    </body>
+    </html>
+  

@@ -8,6 +8,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter } from 'react-router-dom';
 import React from 'react';
 import Agenda from '@/pages/Agenda';
+import { ClinicProvider } from '@/contexts/ClinicContext';
 // Mock do hook useGoogleCalendar
 const mockUseGoogleCalendar = vi.fn();
 
@@ -19,7 +20,8 @@ vi.mock('@/hooks/useGoogleCalendar', () => ({
 // Mock do useAuth
 vi.mock('@/hooks/useAuth', () => ({
   useAuth: () => ({
-    user: { id: 'test-user-id', email: 'test@example.com' }
+    user: { id: 'test-user-id', email: 'test@example.com' },
+    isAdminLify: () => true
   })
 }));
 
@@ -102,7 +104,9 @@ const createTestWrapper = () => {
 
   const TestWrapper = ({ children }: { children: React.ReactNode }) => {
     return React.createElement(QueryClientProvider, { client: queryClient },
-      React.createElement(BrowserRouter, null, children)
+      React.createElement(BrowserRouter, null,
+        React.createElement(ClinicProvider, null, children)
+      )
     );
   };
 

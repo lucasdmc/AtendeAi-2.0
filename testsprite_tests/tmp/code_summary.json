@@ -1,0 +1,164 @@
+{
+  "tech_stack": [
+    "TypeScript",
+    "React",
+    "Vite",
+    "Express.js",
+    "Supabase",
+    "PostgreSQL",
+    "Tailwind CSS",
+    "Radix UI",
+    "React Router",
+    "OpenAI API",
+    "WhatsApp API",
+    "Node.js"
+  ],
+  "features": [
+    {
+      "name": "Authentication System",
+      "description": "Sistema completo de autenticação com Supabase, incluindo login, cadastro, logout e controle de permissões baseado em roles",
+      "files": [
+        "src/hooks/useAuth.tsx",
+        "src/pages/Auth.tsx",
+        "src/integrations/supabase/client.ts"
+      ]
+    },
+    {
+      "name": "Layout System",
+      "description": "Sistema de layout responsivo com sidebar colapsível, navegação e seletor de clínicas",
+      "files": [
+        "src/components/Layout.tsx",
+        "src/components/AppSidebar.tsx",
+        "src/components/ClinicSelector.tsx"
+      ]
+    },
+    {
+      "name": "Dashboard",
+      "description": "Página principal com módulos de navegação para diferentes funcionalidades do sistema",
+      "files": [
+        "src/pages/Index.tsx"
+      ]
+    },
+    {
+      "name": "Clinic Management",
+      "description": "Gestão completa de clínicas com configurações, profissionais, serviços e horários",
+      "files": [
+        "src/pages/Context.tsx",
+        "src/hooks/useApi.ts"
+      ]
+    },
+    {
+      "name": "Appointment Management",
+      "description": "Sistema de agendamentos com visualização e gerenciamento de consultas",
+      "files": [
+        "src/pages/Appointments.tsx"
+      ]
+    },
+    {
+      "name": "Conversation Management",
+      "description": "Monitoramento e gestão de conversas do chatbot WhatsApp",
+      "files": [
+        "src/pages/Conversations.tsx"
+      ]
+    },
+    {
+      "name": "WhatsApp Integration",
+      "description": "Integração completa com WhatsApp Business API para webhooks e envio de mensagens",
+      "files": [
+        "server.js",
+        "webhook-production.js",
+        "webhook-integrated.js"
+      ]
+    },
+    {
+      "name": "AI Chatbot",
+      "description": "Sistema de chatbot inteligente usando OpenAI GPT para atendimento automatizado",
+      "files": [
+        "server.js"
+      ]
+    },
+    {
+      "name": "UI Components",
+      "description": "Biblioteca completa de componentes UI reutilizáveis baseados em Radix UI",
+      "files": [
+        "src/components/ui/button.tsx",
+        "src/components/ui/card.tsx",
+        "src/components/ui/input.tsx",
+        "src/components/ui/tabs.tsx",
+        "src/components/ui/sidebar.tsx",
+        "src/components/ui/dropdown-menu.tsx",
+        "src/components/ui/avatar.tsx",
+        "src/components/ui/badge.tsx",
+        "src/components/ui/select.tsx",
+        "src/components/ui/toaster.tsx"
+      ]
+    },
+    {
+      "name": "Toast Notifications",
+      "description": "Sistema de notificações toast para feedback do usuário",
+      "files": [
+        "src/hooks/use-toast.ts",
+        "src/components/ui/toaster.tsx"
+      ]
+    },
+    {
+      "name": "Mobile Responsiveness",
+      "description": "Hook para detectar dispositivos móveis e adaptar a interface",
+      "files": [
+        "src/hooks/use-mobile.tsx"
+      ]
+    },
+    {
+      "name": "API Services",
+      "description": "Serviços de API para comunicação com backend e integração de dados",
+      "files": [
+        "src/services/api.ts",
+        "src/hooks/useApi.ts"
+      ]
+    },
+    {
+      "name": "Context Management",
+      "description": "Gerenciamento de contexto global da aplicação, incluindo seleção de clínicas",
+      "files": [
+        "src/contexts/ClinicContext.tsx"
+      ]
+    },
+    {
+      "name": "Health Monitoring",
+      "description": "Sistema de monitoramento de saúde da aplicação com endpoints de status",
+      "files": [
+        "server.js"
+      ]
+    },
+    {
+      "name": "Error Handling",
+      "description": "Sistema robusto de tratamento de erros com páginas 404 e fallbacks",
+      "files": [
+        "src/pages/NotFound.tsx",
+        "server.js"
+      ]
+    },
+    {
+      "name": "Security Features",
+      "description": "Recursos de segurança incluindo CORS, headers de segurança e rate limiting",
+      "files": [
+        "server.js"
+      ]
+    },
+    {
+      "name": "Testing Infrastructure",
+      "description": "Infraestrutura completa de testes com Vitest, Testing Library e testes E2E",
+      "files": [
+        "src/tests/integration.test.ts",
+        "src/tests/auth.test.ts",
+        "src/tests/whatsapp-integration.test.ts",
+        "src/tests/permissions.test.ts",
+        "src/tests/clinic-isolation.test.ts",
+        "src/tests/google-calendar.test.ts",
+        "src/tests/api-contract.test.ts",
+        "src/tests/performance.test.ts",
+        "vitest.config.ts"
+      ]
+    }
+  ]
+}

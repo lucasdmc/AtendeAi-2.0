@@ -33,7 +33,15 @@ vi.mock('@tanstack/react-query', async () => {
       defaultOptions: config?.defaultOptions || {}
     })),
     QueryClientProvider: ({ children }: { children: React.ReactNode }) => children,
-    useQuery: vi.fn(),
+    useQuery: vi.fn().mockReturnValue({
+      data: [
+        { id: '1', name: 'Clínica Saúde Total', status: 'active' },
+        { id: '2', name: 'Centro Médico Bem Estar', status: 'active' },
+        { id: '3', name: 'Clínica Inativa', status: 'inactive' }
+      ],
+      isLoading: false,
+      error: null
+    }),
     useMutation: vi.fn(),
     useQueryClient: vi.fn(),
     useInfiniteQuery: vi.fn(),
@@ -79,6 +87,21 @@ const mockUseAuth = {
 
 vi.mock('../hooks/useAuth', () => ({
   useAuth: () => mockUseAuth,
+}));
+
+// Mock do ClinicContext
+vi.mock('../contexts/ClinicContext', () => ({
+  ClinicProvider: ({ children }: { children: React.ReactNode }) => children,
+  useClinic: () => ({
+    selectedClinic: null,
+    setSelectedClinic: vi.fn(),
+    canSelectClinic: true,
+    availableClinics: [
+      { id: '1', name: 'Clínica Saúde Total', status: 'active', whatsapp_number: '+5511999999999' },
+      { id: '2', name: 'Centro Médico Bem Estar', status: 'active', whatsapp_number: '+5511888888888' },
+      { id: '3', name: 'Clínica Inativa', status: 'inactive', whatsapp_number: '+5511777777777' }
+    ]
+  })
 }));
 
 const TestWrapper = ({ children }: { children: React.ReactNode }) => {

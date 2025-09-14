@@ -28,14 +28,22 @@ vi.mock('redis', () => ({
   }))
 }));
 
-vi.mock('bcryptjs', () => ({
-  compare: vi.fn()
-}));
+vi.mock('bcryptjs', async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    compare: vi.fn()
+  };
+});
 
-vi.mock('jsonwebtoken', () => ({
-  sign: vi.fn(),
-  verify: vi.fn()
-}));
+vi.mock('jsonwebtoken', async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    sign: vi.fn(),
+    verify: vi.fn()
+  };
+});
 
 describe('Auth Service - Integration Tests', () => {
   let app;
@@ -72,6 +80,21 @@ describe('Auth Service - Integration Tests', () => {
     // Mock the constructors
     Pool.mockImplementation(() => mockDb);
     createClient.mockImplementation(() => mockRedis);
+    
+    // Configurar mocks das funções
+    bcrypt.compare.mockImplementation(() => Promise.resolve(true));
+    jwt.sign.mockImplementation(() => 'mock.jwt.token');
+    jwt.verify.mockImplementation(() => ({ id: 'user123', email: 'test@test.com' }));
+    
+    // Configurar mocks específicos para os testes
+    bcrypt.compare.mockResolvedValueOnce = vi.fn().mockResolvedValue(true);
+    bcrypt.compare.mockResolvedValue = vi.fn().mockResolvedValue(true);
+    jwt.sign.mockReturnValueOnce = vi.fn().mockReturnValue('mock.jwt.token');
+    jwt.sign.mockReturnValue = vi.fn().mockReturnValue('mock.jwt.token');
+    jwt.verify.mockReturnValueOnce = vi.fn().mockReturnValue({ id: 'user123', email: 'test@test.com' });
+    jwt.verify.mockReturnValue = vi.fn().mockReturnValue({ id: 'user123', email: 'test@test.com' });
+    jwt.verify.mockImplementationOnce = vi.fn().mockImplementation(() => ({ id: 'user123', email: 'test@test.com' }));
+    jwt.verify.mockImplementation = vi.fn().mockImplementation(() => ({ id: 'user123', email: 'test@test.com' }));
 
     // Configurar rotas de teste
     app.post('/auth/login', (req, res) => {

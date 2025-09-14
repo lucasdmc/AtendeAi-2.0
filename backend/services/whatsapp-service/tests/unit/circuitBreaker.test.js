@@ -55,6 +55,9 @@ describe('MetaAPICircuitBreaker', () => {
             // Aguardar timeout para HALF_OPEN
             vi.advanceTimersByTime(1000);
             
+            // Verificar se o estado mudou para HALF_OPEN
+            expect(circuitBreaker.shouldAttemptReset()).toBe(true);
+            
             const successOperation = vi.fn().mockResolvedValue('success');
             const result = await circuitBreaker.execute(successOperation);
             

@@ -1,0 +1,201 @@
+{
+  "test_plan": {
+    "project_name": "AtendeAí 2.0",
+    "project_type": "frontend",
+    "test_cases": [
+      {
+        "id": "auth_001",
+        "name": "Login Page Load",
+        "description": "Verificar se a página de login carrega corretamente",
+        "steps": [
+          "Navegar para /auth",
+          "Verificar se o formulário de login está visível",
+          "Verificar se os campos email e senha estão presentes",
+          "Verificar se o botão de login está presente"
+        ],
+        "expected_result": "Página de login carrega com todos os elementos visíveis"
+      },
+      {
+        "id": "auth_002", 
+        "name": "User Login",
+        "description": "Testar login com credenciais válidas",
+        "steps": [
+          "Navegar para /auth",
+          "Preencher campo email com credencial válida",
+          "Preencher campo senha com credencial válida",
+          "Clicar no botão de login",
+          "Verificar redirecionamento para dashboard"
+        ],
+        "expected_result": "Login bem-sucedido e redirecionamento para dashboard"
+      },
+      {
+        "id": "auth_003",
+        "name": "User Registration",
+        "description": "Testar cadastro de novo usuário",
+        "steps": [
+          "Navegar para /auth",
+          "Clicar na aba 'Cadastro'",
+          "Preencher campos obrigatórios",
+          "Clicar no botão de cadastro",
+          "Verificar mensagem de sucesso"
+        ],
+        "expected_result": "Cadastro realizado com sucesso"
+      },
+      {
+        "id": "dashboard_001",
+        "name": "Dashboard Load",
+        "description": "Verificar se o dashboard carrega corretamente",
+        "steps": [
+          "Fazer login no sistema",
+          "Verificar se a página principal carrega",
+          "Verificar se os módulos estão visíveis",
+          "Verificar se a sidebar está presente"
+        ],
+        "expected_result": "Dashboard carrega com todos os módulos visíveis"
+      },
+      {
+        "id": "navigation_001",
+        "name": "Sidebar Navigation",
+        "description": "Testar navegação pela sidebar",
+        "steps": [
+          "Fazer login no sistema",
+          "Clicar em 'Gestão de Clínicas'",
+          "Verificar navegação para /clinics",
+          "Clicar em 'Gestão de Usuários'",
+          "Verificar navegação para /users",
+          "Clicar em 'Agendamentos'",
+          "Verificar navegação para /appointments"
+        ],
+        "expected_result": "Navegação funciona corretamente entre todas as páginas"
+      },
+      {
+        "id": "clinics_001",
+        "name": "Clinic Management Page",
+        "description": "Testar página de gestão de clínicas",
+        "steps": [
+          "Fazer login no sistema",
+          "Navegar para /clinics",
+          "Verificar se a página carrega",
+          "Verificar se o seletor de clínicas está presente",
+          "Verificar se as informações da clínica são exibidas"
+        ],
+        "expected_result": "Página de gestão de clínicas carrega corretamente"
+      },
+      {
+        "id": "appointments_001",
+        "name": "Appointments Page",
+        "description": "Testar página de agendamentos",
+        "steps": [
+          "Fazer login no sistema",
+          "Navegar para /appointments",
+          "Verificar se a página carrega",
+          "Verificar se a lista de agendamentos está presente",
+          "Verificar se os filtros estão funcionando"
+        ],
+        "expected_result": "Página de agendamentos carrega com dados"
+      },
+      {
+        "id": "conversations_001",
+        "name": "Conversations Page",
+        "description": "Testar página de conversas",
+        "steps": [
+          "Fazer login no sistema",
+          "Navegar para /conversations",
+          "Verificar se a página carrega",
+          "Verificar se a lista de conversas está presente",
+          "Verificar se é possível visualizar conversas"
+        ],
+        "expected_result": "Página de conversas carrega com dados"
+      },
+      {
+        "id": "context_001",
+        "name": "Context Configuration",
+        "description": "Testar página de configuração de contexto",
+        "steps": [
+          "Fazer login no sistema",
+          "Navegar para /context",
+          "Verificar se a página carrega",
+          "Verificar se as abas estão presentes",
+          "Verificar se as configurações da clínica são exibidas"
+        ],
+        "expected_result": "Página de contexto carrega com configurações"
+      },
+      {
+        "id": "responsive_001",
+        "name": "Mobile Responsiveness",
+        "description": "Testar responsividade em dispositivos móveis",
+        "steps": [
+          "Fazer login no sistema",
+          "Redimensionar janela para mobile",
+          "Verificar se a sidebar colapsa",
+          "Verificar se o conteúdo se adapta",
+          "Testar navegação em mobile"
+        ],
+        "expected_result": "Interface se adapta corretamente para mobile"
+      },
+      {
+        "id": "api_001",
+        "name": "API Health Check",
+        "description": "Testar endpoints da API",
+        "steps": [
+          "Acessar /health",
+          "Verificar resposta de status OK",
+          "Acessar /api/info",
+          "Verificar informações da API",
+          "Acessar /api/menu",
+          "Verificar menu de opções"
+        ],
+        "expected_result": "Todos os endpoints da API respondem corretamente"
+      },
+      {
+        "id": "whatsapp_001",
+        "name": "WhatsApp Webhook",
+        "description": "Testar webhook do WhatsApp",
+        "steps": [
+          "Acessar /webhook/whatsapp com parâmetros de verificação",
+          "Verificar resposta de verificação",
+          "Testar POST para /webhook/whatsapp",
+          "Verificar processamento da mensagem"
+        ],
+        "expected_result": "Webhook do WhatsApp funciona corretamente"
+      },
+      {
+        "id": "error_001",
+        "name": "Error Handling",
+        "description": "Testar tratamento de erros",
+        "steps": [
+          "Acessar rota inexistente",
+          "Verificar se página 404 é exibida",
+          "Testar login com credenciais inválidas",
+          "Verificar mensagem de erro apropriada"
+        ],
+        "expected_result": "Erros são tratados adequadamente"
+      },
+      {
+        "id": "permissions_001",
+        "name": "User Permissions",
+        "description": "Testar controle de permissões",
+        "steps": [
+          "Fazer login como usuário comum",
+          "Verificar acesso às funcionalidades permitidas",
+          "Tentar acessar funcionalidades restritas",
+          "Verificar se o acesso é negado"
+        ],
+        "expected_result": "Sistema de permissões funciona corretamente"
+      },
+      {
+        "id": "ui_001",
+        "name": "UI Components",
+        "description": "Testar componentes da interface",
+        "steps": [
+          "Fazer login no sistema",
+          "Verificar se botões funcionam",
+          "Verificar se formulários são válidos",
+          "Verificar se modais abrem/fecham",
+          "Verificar se toasts são exibidos"
+        ],
+        "expected_result": "Todos os componentes UI funcionam corretamente"
+      }
+    ]
+  }
+}

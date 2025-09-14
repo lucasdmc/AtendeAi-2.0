@@ -18,13 +18,13 @@ vi.mock('../../src/utils/whatsappMessageAdapter', () => ({
 
 vi.mock('../../src/utils/circuitBreaker', () => ({
   default: vi.fn().mockImplementation(() => ({
-    execute: vi.fn()
+    execute: vi.fn().mockResolvedValue({ success: true })
   }))
 }));
 
 vi.mock('../../src/utils/retryStrategy', () => ({
   default: vi.fn().mockImplementation(() => ({
-    execute: vi.fn()
+    execute: vi.fn().mockResolvedValue({ success: true })
   }))
 }));
 

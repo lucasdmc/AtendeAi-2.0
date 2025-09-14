@@ -77,7 +77,7 @@ const MockAgenda = () => {
   const googleCalendar = mockUseGoogleCalendar();
   
   if (googleCalendar.isLoading) {
-    return <div>Carregando integração...</div>;
+    return <div>Carregando integracao...</div>;
   }
   
   if (!googleCalendar.isConnected) {

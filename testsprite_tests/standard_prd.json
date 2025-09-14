@@ -1,0 +1,123 @@
+{
+  "product_requirements_document": {
+    "project_name": "AtendeAí 2.0",
+    "version": "1.2.0",
+    "description": "Sistema de gestão de clínicas médicas com chatbot inteligente via WhatsApp",
+    "business_objectives": [
+      "Automatizar atendimento inicial de pacientes via WhatsApp",
+      "Centralizar gestão de clínicas e profissionais",
+      "Facilitar agendamento de consultas",
+      "Melhorar experiência do paciente",
+      "Reduzir carga de trabalho administrativo"
+    ],
+    "target_users": [
+      "Administradores de clínicas",
+      "Profissionais de saúde",
+      "Pacientes",
+      "Equipe de suporte"
+    ],
+    "core_features": [
+      {
+        "name": "Sistema de Autenticação",
+        "description": "Login seguro com controle de permissões baseado em roles",
+        "acceptance_criteria": [
+          "Usuários podem fazer login com email e senha",
+          "Sistema diferencia entre admin, suporte e usuários comuns",
+          "Sessões são mantidas de forma segura",
+          "Logout funciona corretamente"
+        ]
+      },
+      {
+        "name": "Gestão de Clínicas",
+        "description": "Cadastro e configuração de clínicas e profissionais",
+        "acceptance_criteria": [
+          "Administradores podem cadastrar novas clínicas",
+          "Configuração de horários de funcionamento",
+          "Cadastro de profissionais e especialidades",
+          "Configuração de serviços e preços"
+        ]
+      },
+      {
+        "name": "Sistema de Agendamentos",
+        "description": "Visualização e gerenciamento de consultas agendadas",
+        "acceptance_criteria": [
+          "Lista de agendamentos com filtros",
+          "Visualização de detalhes da consulta",
+          "Status dos agendamentos",
+          "Integração com calendário"
+        ]
+      },
+      {
+        "name": "Chatbot WhatsApp",
+        "description": "Atendimento automatizado via WhatsApp Business API",
+        "acceptance_criteria": [
+          "Recebe mensagens do WhatsApp",
+          "Processa mensagens com IA (OpenAI)",
+          "Responde automaticamente aos pacientes",
+          "Coleta informações para agendamento",
+          "Integra com sistema de clínicas"
+        ]
+      },
+      {
+        "name": "Gestão de Conversas",
+        "description": "Monitoramento e histórico de conversas do chatbot",
+        "acceptance_criteria": [
+          "Lista de conversas ativas",
+          "Histórico de mensagens",
+          "Status das conversas",
+          "Intervenção manual quando necessário"
+        ]
+      },
+      {
+        "name": "Configuração de Contexto",
+        "description": "Personalização do comportamento do chatbot",
+        "acceptance_criteria": [
+          "Configuração de informações da clínica",
+          "Personalização de respostas",
+          "Configuração de horários e serviços",
+          "Teste de configurações"
+        ]
+      },
+      {
+        "name": "Dashboard Principal",
+        "description": "Visão geral do sistema e navegação",
+        "acceptance_criteria": [
+          "Módulos principais visíveis",
+          "Navegação intuitiva",
+          "Informações resumidas",
+          "Acesso rápido às funcionalidades"
+        ]
+      }
+    ],
+    "technical_requirements": [
+      "Interface responsiva para desktop e mobile",
+      "Integração com Supabase para banco de dados",
+      "API REST para comunicação frontend-backend",
+      "Integração com OpenAI para processamento de linguagem natural",
+      "Webhook do WhatsApp para recebimento de mensagens",
+      "Sistema de autenticação seguro",
+      "Controle de permissões baseado em roles"
+    ],
+    "non_functional_requirements": [
+      "Tempo de resposta < 2 segundos",
+      "Disponibilidade 99% do tempo",
+      "Suporte a 100 usuários simultâneos",
+      "Interface responsiva",
+      "Segurança de dados sensíveis",
+      "Logs de auditoria"
+    ],
+    "user_stories": [
+      "Como administrador, quero cadastrar clínicas para gerenciar o sistema",
+      "Como profissional, quero visualizar meus agendamentos para planejar o dia",
+      "Como paciente, quero agendar consultas via WhatsApp de forma simples",
+      "Como suporte, quero monitorar conversas para intervir quando necessário",
+      "Como usuário, quero navegar facilmente entre as funcionalidades"
+    ],
+    "success_metrics": [
+      "Redução de 50% no tempo de atendimento inicial",
+      "Aumento de 30% na satisfação do paciente",
+      "Redução de 40% na carga administrativa",
+      "Taxa de conversão de 80% nas conversas do WhatsApp"
+    ]
+  }
+}
