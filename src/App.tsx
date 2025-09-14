@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider } from '@/hooks/useAuth';
 import { ClinicProvider } from './contexts/ClinicContext';
 import Auth from './pages/Auth';
+import CustomAuth from './components/CustomAuth';
 import { Layout } from './components/Layout';
 import Index from './pages/Index';
 import Agenda from './pages/Agenda';
@@ -18,7 +19,8 @@ function App() {
       <ClinicProvider>
         <Router>
           <Routes>
-            <Route path="/auth" element={<Auth />} />
+            <Route path="/auth" element={<CustomAuth />} />
+            <Route path="/auth-supabase" element={<Auth />} />
             <Route path="/" element={
               <Layout>
                 <Index />
