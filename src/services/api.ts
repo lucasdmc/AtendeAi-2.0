@@ -147,12 +147,14 @@ class MicroserviceClient {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), this.timeout);
 
+      console.log(`🚀 API Request: ${url}`, config);
       const response = await fetch(url, {
         ...config,
         signal: controller.signal,
       });
 
       clearTimeout(timeoutId);
+      console.log(`📡 API Response: ${url}`, response.status, response.statusText);
       
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
@@ -160,6 +162,7 @@ class MicroserviceClient {
       }
 
       const data = await response.json();
+      console.log(`✅ API Data: ${url}`, data);
       return data;
     } catch (error) {
       if (error.name === 'AbortError') {

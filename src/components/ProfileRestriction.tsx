@@ -14,8 +14,19 @@ const ProfileRestriction: React.FC<ProfileRestrictionProps> = ({
 }) => {
   const { user } = useAuth();
 
-  // Always show content for now (mock behavior)
-  return <>{children}</>;
+  if (!user) {
+    return null;
+  }
+
+  if (allowedRoles.length === 0) {
+    return <>{children}</>;
+  }
+
+  const hasPermission = requireAll 
+    ? allowedRoles.every(role => user.role === role)
+    : allowedRoles.includes(user.role);
+
+  return hasPermission ? <>{children}</> : null;
 };
 
 export const AdminLifyOnly: React.FC<{ children: React.ReactNode }> = ({ children }) => {
