@@ -18,6 +18,7 @@ import { fileURLToPath } from 'url';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import { v4 as uuidv4 } from 'uuid';
+import { Pool } from 'pg';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -134,7 +135,7 @@ async function handleAuthRoutes(req, res, pathname) {
       const { email, password, clinicId } = body;
       
       // Login real com banco de dados
-      const { Pool } = require('pg');
+      // Pool já importado no topo
       const pool = new Pool({
         connectionString: config.database.url,
         ssl: { rejectUnauthorized: false }
@@ -280,7 +281,7 @@ async function handleClinicRoutes(req, res, pathname) {
   if (method === 'GET' && pathname === '/api/clinics') {
     // DADOS REAIS DO BANCO - SEM MOCKADOS
     try {
-      const { Pool } = require('pg');
+      // Pool já importado no topo
       const pool = new Pool({
         connectionString: config.database.url,
         ssl: { rejectUnauthorized: false }
@@ -309,7 +310,7 @@ async function handleClinicRoutes(req, res, pathname) {
     // Buscar clínica específica - DADOS REAIS DO BANCO
     try {
       const clinicId = pathname.split('/')[3];
-      const { Pool } = require('pg');
+      // Pool já importado no topo
       const pool = new Pool({
         connectionString: config.database.url,
         ssl: { rejectUnauthorized: false }
@@ -530,7 +531,7 @@ async function handleUserRoutes(req, res, pathname) {
   if (method === 'GET' && pathname === '/api/users') {
     // Listar usuários - DADOS REAIS DO BANCO
     try {
-      const { Pool } = require('pg');
+      // Pool já importado no topo
       const pool = new Pool({
         connectionString: config.database.url,
         ssl: { rejectUnauthorized: false }
@@ -573,7 +574,7 @@ async function handleUserRoutes(req, res, pathname) {
     // Buscar usuário específico - DADOS REAIS DO BANCO
     try {
       const userId = pathname.split('/')[3];
-      const { Pool } = require('pg');
+      // Pool já importado no topo
       const pool = new Pool({
         connectionString: config.database.url,
         ssl: { rejectUnauthorized: false }
@@ -629,7 +630,7 @@ async function handleUserRoutes(req, res, pathname) {
       const body = await getRequestBody(req);
       const { email, password, first_name, last_name, clinic_id, role } = body;
       
-      const { Pool } = require('pg');
+      // Pool já importado no topo
       const pool = new Pool({
         connectionString: config.database.url,
         ssl: { rejectUnauthorized: false }
