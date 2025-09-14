@@ -8,7 +8,7 @@
     "build": "vite build",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
-    "start": "node webhook-production.js"
+    "start": "node production-server.js"
   },
   "dependencies": {
     "@radix-ui/react-accordion": "^1.2.1",
