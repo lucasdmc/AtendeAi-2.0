@@ -529,14 +529,17 @@ async function handleUserRoutes(req, res, pathname) {
   const method = req.method;
   
   if (method === 'GET' && pathname === '/api/users') {
-    // Listar usuários - DADOS REAIS DO BANCO
+    // DADOS REAIS DO BANCO - SEM FALLBACK PARA MOCKS
+    console.log('🔍 Tentando conectar ao banco para buscar usuários...');
+    console.log('🔑 DATABASE_URL:', config.database.url ? 'CONFIGURADA' : 'NÃO CONFIGURADA');
+    
     try {
-      // Pool já importado no topo
       const pool = new Pool({
         connectionString: config.database.url,
         ssl: { rejectUnauthorized: false }
       });
       
+      console.log('🔄 Executando query no banco...');
       const result = await pool.query(`
         SELECT u.id, u.email, u.first_name, u.last_name, u.status, u.clinic_id, u.created_at, u.updated_at,
                array_agg(r.name) as roles
@@ -545,6 +548,8 @@ async function handleUserRoutes(req, res, pathname) {
         LEFT JOIN atendeai.roles r ON ur.role_id = r.id
         GROUP BY u.id, u.email, u.first_name, u.last_name, u.status, u.clinic_id, u.created_at, u.updated_at
       `);
+      
+      console.log('✅ Query executada com sucesso. Usuários encontrados:', result.rows.length);
       
       const users = result.rows.map(user => ({
         id: user.id,
@@ -559,15 +564,19 @@ async function handleUserRoutes(req, res, pathname) {
       
       sendJSONResponse(res, 200, {
         success: true,
-        data: users
+        data: users,
+        source: 'DATABASE_REAL'
       });
       
       await pool.end();
     } catch (error) {
-      console.error('Error fetching users:', error);
+      console.error('❌ ERRO AO CONECTAR COM BANCO:', error.message);
+      console.error('❌ STACK:', error.stack);
+      // NÃO RETORNAR DADOS MOCKADOS - FORÇAR ERRO
       sendJSONResponse(res, 500, {
         success: false,
-        error: 'Internal server error'
+        error: 'Database connection failed',
+        details: error.message
       });
     }
   } else if (method === 'GET' && pathname.startsWith('/api/users/')) {
