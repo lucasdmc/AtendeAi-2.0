@@ -1,5 +1,5 @@
 [start]
-cmd = "node production-server.js"
+cmd = "node main-server.js"
 
 [variables]
 NODE_ENV = "production"
