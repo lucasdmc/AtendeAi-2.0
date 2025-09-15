@@ -1,0 +1,3 @@
+id,clinic_id,config_key,config_value,description,created_at,updated_at
+47e7aaa5-6669-45fa-9a50-7273f8a61489,cf0b8ee4-b5ca-4f9d-a7bc-0cf9df8447c1,jwt_config,"{""algorithm"": ""HS256"", ""access_token_expiry"": ""15m"", ""refresh_token_expiry"": ""7d""}",Configurações JWT para autenticação,2025-08-19 20:47:40.57966+00,2025-08-19 20:47:40.57966+00
+bc65639a-adb3-438f-a724-62372dde03d7,cf0b8ee4-b5ca-4f9d-a7bc-0cf9df8447c1,rate_limiting,"{""login_attempts"": 5, ""window_minutes"": 1, ""jwt_validation_per_minute"": 100}",Configurações de rate limiting,2025-08-19 20:47:40.73817+00,2025-08-19 20:47:40.73817+00

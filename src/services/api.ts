@@ -23,7 +23,7 @@ const apiConfig = {
 
 // Zod schemas for validation
 export const ClinicSchema = z.object({
-  id: z.string().uuid(),
+  id: z.string().min(1, 'ID é obrigatório'), // Removido .uuid() para aceitar IDs simples
   name: z.string().min(1, 'Nome é obrigatório'),
   whatsapp_number: z.string().min(1, 'Número do WhatsApp é obrigatório'),
   meta_webhook_url: z.string().url().optional(),
@@ -36,32 +36,32 @@ export const ClinicSchema = z.object({
 });
 
 export const UserSchema = z.object({
-  id: z.string().uuid(),
+  id: z.string().min(1, 'ID é obrigatório'), // Removido .uuid() para aceitar IDs simples
   name: z.string().min(1, 'Nome é obrigatório'),
   login: z.string().email('Email inválido'),
   role: z.enum(['admin_lify', 'suporte_lify', 'atendente', 'gestor', 'administrador']),
-  clinic_id: z.string().uuid(),
+  clinic_id: z.string().min(1, 'Clinic ID é obrigatório'), // Removido .uuid() para aceitar IDs simples
   status: z.enum(['active', 'inactive']).default('active'),
   created_at: z.string().datetime(),
   updated_at: z.string().datetime(),
 });
 
 export const ConversationSchema = z.object({
-  id: z.string().uuid(),
-  clinic_id: z.string().uuid(),
+  id: z.string().min(1, 'ID é obrigatório'), // Removido .uuid() para aceitar IDs simples
+  clinic_id: z.string().min(1, 'Clinic ID é obrigatório'), // Removido .uuid() para aceitar IDs simples
   customer_phone: z.string().min(1, 'Telefone é obrigatório'),
   conversation_type: z.enum(['chatbot', 'human', 'mixed']),
   status: z.enum(['active', 'paused', 'closed']),
   bot_active: z.boolean().default(true),
-  assigned_user_id: z.string().uuid().optional(),
+  assigned_user_id: z.string().min(1, 'User ID é obrigatório').optional(), // Removido .uuid() para aceitar IDs simples
   tags: z.array(z.any()).default([]),
   created_at: z.string().datetime(),
   updated_at: z.string().datetime(),
 });
 
 export const MessageSchema = z.object({
-  id: z.string().uuid(),
-  conversation_id: z.string().uuid(),
+  id: z.string().min(1, 'ID é obrigatório'), // Removido .uuid() para aceitar IDs simples
+  conversation_id: z.string().min(1, 'Conversation ID é obrigatório'), // Removido .uuid() para aceitar IDs simples
   sender_type: z.enum(['customer', 'bot', 'human']),
   content: z.string().min(1, 'Conteúdo é obrigatório'),
   message_type: z.enum(['text', 'image', 'audio', 'video', 'document']),
@@ -70,8 +70,8 @@ export const MessageSchema = z.object({
 });
 
 export const AppointmentSchema = z.object({
-  id: z.string().uuid(),
-  clinic_id: z.string().uuid(),
+  id: z.string().min(1, 'ID é obrigatório'), // Removido .uuid() para aceitar IDs simples
+  clinic_id: z.string().min(1, 'Clinic ID é obrigatório'), // Removido .uuid() para aceitar IDs simples
   customer_info: z.any(),
   google_event_id: z.string().optional(),
   google_calendar_id: z.string().optional(),

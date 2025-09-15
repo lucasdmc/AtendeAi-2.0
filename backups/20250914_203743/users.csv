@@ -1,0 +1,5 @@
+id,clinic_id,email,password_hash,first_name,last_name,status,last_login_at,created_at,updated_at,role
+df8ee308-e0f7-4407-b067-4c196b557eb8,cf0b8ee4-b5ca-4f9d-a7bc-0cf9df8447c1,admin@lify.com,$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj8J/8KqKqKq,Admin,Lify,active,,2025-08-20 01:55:36.57137+00,2025-08-20 01:55:36.57137+00,admin_lify
+edbe9476-1f1d-4100-a788-ef6ceaff549f,cf0b8ee4-b5ca-4f9d-a7bc-0cf9df8447c1,admin@clinica.com,$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj8J/8KqKqKq,Admin,Clínica,active,,2025-08-20 01:55:36.57137+00,2025-08-20 01:55:36.57137+00,admin_clinic
+c9649dcd-b180-4589-a36f-79f0c102df79,cf0b8ee4-b5ca-4f9d-a7bc-0cf9df8447c1,atendente@clinica.com,$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj8J/8KqKqKq,Atendente,Teste,active,,2025-08-20 01:55:36.57137+00,2025-08-20 01:55:36.57137+00,attendant
+75b43b69-7c38-4f5a-af1f-8a47ed0c7e64,cf0b8ee4-b5ca-4f9d-a7bc-0cf9df8447c1,lucas@lify.com,$2b$12$Y/j8UcmPbXlFvKLysdqHoOjP2GjCzrEvS86kc8J1OsUCjzcZ1LIxO,Lucas,Cantoni,active,,2025-09-14 22:49:12.904869+00,2025-09-14 23:09:39.322345+00,admin_lify

@@ -1,0 +1,8 @@
+id,name,description,created_at
+87e96f2f-acfd-4a1e-ae36-8cbd35212ed7,admin_lify,Admin Lify - Acesso completo a todas as clínicas e funcionalidades,2025-08-19 20:47:39.790695+00
+9203f9f6-4bd1-45ee-aacd-1941fddb19fe,admin_clinic,Administrador de Clínica - Acesso limitado à clínica específica,2025-08-19 20:47:39.790695+00
+044a251c-e44a-46c9-b371-870b1bcb8a66,attendant,Atendente - Acesso limitado às funcionalidades operacionais,2025-08-19 20:47:39.790695+00
+4a541b66-7118-4df6-9cce-3c31970d25cb,suporte_lify,Suporte técnico Lify,2025-09-14 22:09:29.721884+00
+74e13633-0dc6-4b10-b54e-11530dd37099,atendente,Atendente da clínica,2025-09-14 22:09:29.721884+00
+ab92693e-f89c-49a3-aaa7-2fb37dd47236,gestor,Gestor da clínica,2025-09-14 22:09:29.721884+00
+422047d4-9e46-4324-9f00-31387d7201d9,administrador,Administrador da clínica,2025-09-14 22:09:29.721884+00

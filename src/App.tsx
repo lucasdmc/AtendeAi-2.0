@@ -19,8 +19,8 @@ function App() {
       <ClinicProvider>
         <Router>
           <Routes>
-            <Route path="/auth" element={<CustomAuth />} />
-            <Route path="/auth-supabase" element={<Auth />} />
+            <Route path="/auth" element={<Auth />} />
+            <Route path="/auth-custom" element={<CustomAuth />} />
             <Route path="/" element={
               <Layout>
                 <Index />

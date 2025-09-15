@@ -1,0 +1,3 @@
+id,name,cnpj,status,created_at,updated_at,whatsapp_webhook_url,whatsapp_id_number,whatsapp_verify_token,google_client_id,google_client_secret,google_refresh_token,google_access_token,google_token_expires_at
+cf0b8ee4-b5ca-4f9d-a7bc-0cf9df8447c1,Clínica Teste AtendeAI,00.000.000/0001-00,active,2025-08-19 20:47:39.616675+00,2025-08-19 20:47:39.616675+00,,,,,,,,
+b62b9564-492a-4bac-a1e4-0a21b14ad6c8,Teste Context Manager,11.111.111/0001-11,active,2025-09-10 00:05:24.189915+00,2025-09-10 00:05:24.189915+00,,,,,,,,

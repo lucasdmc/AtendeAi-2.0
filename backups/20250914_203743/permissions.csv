@@ -1,0 +1,8 @@
+id,name,resource,action,created_at
+8832a583-6a72-457c-add3-a882da20389f,users.read,users,read,2025-08-19 20:47:39.949159+00
+514f03cb-802a-4f53-9843-6d772429abda,users.write,users,write,2025-08-19 20:47:39.949159+00
+218c3747-25df-4d13-91a6-1ca908f0dcaf,users.delete,users,delete,2025-08-19 20:47:39.949159+00
+77e5673d-e48d-4671-ad96-b890ea0d733b,clinics.read,clinics,read,2025-08-19 20:47:39.949159+00
+094f3118-4013-4af4-92f8-b0b893fbb4ea,clinics.write,clinics,write,2025-08-19 20:47:39.949159+00
+26c093c2-75bb-4ea3-9e4a-c12493c924b9,system.read,system,read,2025-08-19 20:47:39.949159+00
+6dbfaa43-e464-4762-a697-b2351427e13d,system.write,system,write,2025-08-19 20:47:39.949159+00
