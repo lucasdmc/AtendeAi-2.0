@@ -1,2 +1,2 @@
-release: npm run build
+release: ./build.sh
 web: node webhook-production.js
