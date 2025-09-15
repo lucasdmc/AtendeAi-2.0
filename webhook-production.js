@@ -330,7 +330,7 @@ async function handleClinicRoutes(req, res, pathname) {
       });
       
       const result = await pool.query(`
-        SELECT id, name, whatsapp_id_number as whatsapp_number, status, created_at, updated_at
+        SELECT id, name, whatsapp_id_number as whatsapp_number, cnpj, status, created_at, updated_at
         FROM atendeai.clinics
         WHERE status = 'active'
       `);
@@ -353,12 +353,12 @@ async function handleClinicRoutes(req, res, pathname) {
     console.log(`🔍 DEBUG: POST /api/clinics endpoint reached`);
     try {
       const body = await getRequestBody(req);
-      const { name, whatsapp_number, status = 'active', context_json = {} } = body;
+      const { name, whatsapp_number, cnpj, status = 'active' } = body;
       
-      if (!name || !whatsapp_number) {
+      if (!name) {
         sendJSONResponse(res, 400, {
           success: false,
-          error: 'Name and WhatsApp number are required'
+          error: 'Name is required'
         });
         return;
       }
@@ -368,11 +368,27 @@ async function handleClinicRoutes(req, res, pathname) {
         ssl: { rejectUnauthorized: false }
       });
       
+      // Verificar se CNPJ já existe (se fornecido)
+      if (cnpj) {
+        const existingClinic = await pool.query(`
+          SELECT id FROM atendeai.clinics WHERE cnpj = $1
+        `, [cnpj]);
+        
+        if (existingClinic.rows.length > 0) {
+          sendJSONResponse(res, 400, {
+            success: false,
+            error: 'CNPJ already exists'
+          });
+          await pool.end();
+          return;
+        }
+      }
+      
       const result = await pool.query(`
-        INSERT INTO atendeai.clinics (name, whatsapp_id_number, status, created_at, updated_at)
-        VALUES ($1, $2, $3, NOW(), NOW())
-        RETURNING id, name, whatsapp_id_number, status, created_at, updated_at
-      `, [name, whatsapp_number, status]);
+        INSERT INTO atendeai.clinics (name, whatsapp_id_number, cnpj, status, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, NOW(), NOW())
+        RETURNING id, name, whatsapp_id_number as whatsapp_number, cnpj, status, created_at, updated_at
+      `, [name, whatsapp_number, cnpj, status]);
       
       sendJSONResponse(res, 201, {
         success: true,
@@ -385,7 +401,8 @@ async function handleClinicRoutes(req, res, pathname) {
       console.error('Error creating clinic:', error);
       sendJSONResponse(res, 500, {
         success: false,
-        error: 'Internal server error'
+        error: 'Internal server error',
+        details: error.message
       });
     }
   } else if (method === 'GET' && pathname.startsWith('/api/clinics/')) {
@@ -399,7 +416,7 @@ async function handleClinicRoutes(req, res, pathname) {
       });
       
       const result = await pool.query(`
-        SELECT id, name, whatsapp_id_number as whatsapp_number, status, created_at, updated_at
+        SELECT id, name, whatsapp_id_number as whatsapp_number, cnpj, status, created_at, updated_at
         FROM atendeai.clinics
         WHERE id = $1
       `, [clinicId]);
@@ -721,11 +738,48 @@ async function handleUserRoutes(req, res, pathname) {
       const body = await getRequestBody(req);
       const { email, password, first_name, last_name, clinic_id, role } = body;
       
+      // Validações básicas
+      if (!email || !password || !first_name || !last_name || !clinic_id) {
+        sendJSONResponse(res, 400, {
+          success: false,
+          error: 'Email, password, first_name, last_name and clinic_id are required'
+        });
+        return;
+      }
+      
       // Pool já importado no topo
       const pool = new Pool({
         connectionString: config.database.url,
         ssl: { rejectUnauthorized: false }
       });
+      
+      // Verificar se email já existe
+      const existingUser = await pool.query(`
+        SELECT id FROM atendeai.users WHERE email = $1
+      `, [email]);
+      
+      if (existingUser.rows.length > 0) {
+        sendJSONResponse(res, 400, {
+          success: false,
+          error: 'Email already exists'
+        });
+        await pool.end();
+        return;
+      }
+      
+      // Verificar se clínica existe
+      const clinicExists = await pool.query(`
+        SELECT id FROM atendeai.clinics WHERE id = $1
+      `, [clinic_id]);
+      
+      if (clinicExists.rows.length === 0) {
+        sendJSONResponse(res, 400, {
+          success: false,
+          error: 'Clinic not found'
+        });
+        await pool.end();
+        return;
+      }
       
       // Hash da senha
       const passwordHash = await bcrypt.hash(password, 12);
@@ -762,6 +816,7 @@ async function handleUserRoutes(req, res, pathname) {
       
       sendJSONResponse(res, 201, {
         success: true,
+        message: 'User created successfully',
         data: userData
       });
       
@@ -770,7 +825,8 @@ async function handleUserRoutes(req, res, pathname) {
       console.error('Error creating user:', error);
       sendJSONResponse(res, 500, {
         success: false,
-        error: 'Internal server error'
+        error: 'Internal server error',
+        details: error.message
       });
     }
   } else if (method === 'GET' && pathname === '/api/users/health') {
