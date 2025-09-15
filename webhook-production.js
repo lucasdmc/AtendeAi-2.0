@@ -329,7 +329,7 @@ async function handleClinicRoutes(req, res, pathname) {
       });
       
       const result = await pool.query(`
-        SELECT id, name, whatsapp_number, status, created_at, updated_at, context_json
+        SELECT id, name, whatsapp_id_number as whatsapp_number, status, created_at, updated_at
         FROM atendeai.clinics
         WHERE status = 'active'
       `);
@@ -367,10 +367,10 @@ async function handleClinicRoutes(req, res, pathname) {
       });
       
       const result = await pool.query(`
-        INSERT INTO atendeai.clinics (name, whatsapp_number, status, context_json, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, NOW(), NOW())
-        RETURNING id, name, whatsapp_number, status, created_at, updated_at, context_json
-      `, [name, whatsapp_number, status, JSON.stringify(context_json)]);
+        INSERT INTO atendeai.clinics (name, whatsapp_id_number, status, created_at, updated_at)
+        VALUES ($1, $2, $3, NOW(), NOW())
+        RETURNING id, name, whatsapp_id_number, status, created_at, updated_at
+      `, [name, whatsapp_number, status]);
       
       sendJSONResponse(res, 201, {
         success: true,
@@ -397,7 +397,7 @@ async function handleClinicRoutes(req, res, pathname) {
       });
       
       const result = await pool.query(`
-        SELECT id, name, whatsapp_number, status, created_at, updated_at, context_json
+        SELECT id, name, whatsapp_id_number as whatsapp_number, status, created_at, updated_at
         FROM atendeai.clinics
         WHERE id = $1
       `, [clinicId]);
