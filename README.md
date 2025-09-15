@@ -1,8 +1,18 @@
-# Welcome to your Lovable project
+# 🚀 ATENDEAI 2.0 - SISTEMA COMPLETO
+
+## ⚠️ **REGRA FUNDAMENTAL - NUNCA ESQUECER:**
+- **BACKEND = RAILWAY** (https://atendeai-20-production.up.railway.app)
+- **FRONTEND = LOVABLE** (https://lovable.dev/projects/a892a2db-7df8-4dfb-8cf3-866bdc9576cc)
+
+## 📋 **DOCUMENTAÇÃO CRÍTICA:**
+- [DEPLOYMENT_RULES.md](./DEPLOYMENT_RULES.md) - Regras de deployment
+- [GIT_RULES.md](./GIT_RULES.md) - Regras de comandos Git
+- [docs/](./docs/) - Documentação completa do sistema
 
 ## Project info
 
-**URL**: https://lovable.dev/projects/a892a2db-7df8-4dfb-8cf3-866bdc9576cc
+**Frontend URL**: https://lovable.dev/projects/a892a2db-7df8-4dfb-8cf3-866bdc9576cc
+**Backend URL**: https://atendeai-20-production.up.railway.app
 
 ## How can I edit this code?
 
