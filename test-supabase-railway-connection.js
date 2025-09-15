@@ -7,8 +7,8 @@
  * configurações para identificar o problema de DNS ENETUNREACH
  */
 
-const { Client } = require('pg');
-const dns = require('dns').promises;
+import { Client } from 'pg';
+import { promises as dns } from 'dns';
 
 // Configurações de teste
 const configs = {

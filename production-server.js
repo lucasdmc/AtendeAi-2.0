@@ -660,7 +660,7 @@ async function handleUserRoutes(req, res, pathname) {
       // Associar role
       if (role) {
         await pool.query(`
-          INSERT INTO atendeai.user_roles (user_id, role_id, clinic_id)
+          INSERT INTO atendeai.user_roles (user_id, role_id)
           SELECT $1, r.id, $2
           FROM atendeai.roles r
           WHERE r.name = $3
