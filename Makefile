@@ -48,16 +48,42 @@ validate: lint test contract
 deploy:
 	@echo "Deploy não configurado ainda"
 
+# Geração de PDFs
+pdf:
+	@echo "Gerando PDFs da documentação..."
+	@./scripts/generate-pdf-simple.sh
+
+pdf-combined:
+	@echo "Gerando PDF combinado..."
+	@./scripts/generate-pdf-combined.sh
+
+pdf-all: pdf pdf-combined
+	@echo "Todos os PDFs gerados com sucesso!"
+
+open-pdfs:
+	@echo "Abrindo PDFs da documentação..."
+	@./scripts/open-pdfs.sh
+
+# Limpeza de PDFs
+clean-pdfs:
+	@echo "Limpando PDFs gerados..."
+	@rm -rf docs/pdf/*.pdf
+	@rm -rf docs/pdf/*.html
+
 # Help
 help:
 	@echo "Comandos disponíveis:"
-	@echo "  install   - Instala dependências"
-	@echo "  test      - Executa testes"
-	@echo "  lint      - Executa linters"
-	@echo "  contract  - Valida contrato OpenAPI"
-	@echo "  build     - Faz build do projeto"
-	@echo "  clean     - Limpa arquivos temporários"
-	@echo "  setup     - Setup completo"
-	@echo "  validate  - Validação completa"
-	@echo "  deploy    - Deploy (placeholder)"
-	@echo "  help      - Mostra esta ajuda"
+	@echo "  install      - Instala dependências"
+	@echo "  test         - Executa testes"
+	@echo "  lint         - Executa linters"
+	@echo "  contract     - Valida contrato OpenAPI"
+	@echo "  build        - Faz build do projeto"
+	@echo "  clean        - Limpa arquivos temporários"
+	@echo "  setup        - Setup completo"
+	@echo "  validate     - Validação completa"
+	@echo "  deploy       - Deploy (placeholder)"
+	@echo "  pdf          - Gera PDFs individuais"
+	@echo "  pdf-combined - Gera PDF combinado"
+	@echo "  pdf-all      - Gera todos os PDFs"
+	@echo "  open-pdfs    - Abre PDFs da documentação"
+	@echo "  clean-pdfs   - Limpa PDFs gerados"

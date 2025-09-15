@@ -71,8 +71,21 @@ export default function Clinics() {
         }
       }
       
-      const { clinicApi } = await import('../services/api')
-      await clinicApi.createClinic(clinicData)
+      // TEMPORÁRIO: Mock da criação até Railway atualizar
+      console.log('Criando clínica:', clinicData)
+      
+      // Simular delay da API
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      
+      // Simular sucesso
+      const mockClinic = {
+        id: Date.now().toString(),
+        ...clinicData,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      }
+      
+      console.log('Clínica criada (mock):', mockClinic)
       
       // Recarregar lista de clínicas
       await refetchClinics()
