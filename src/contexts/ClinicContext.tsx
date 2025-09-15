@@ -55,12 +55,29 @@ export const ClinicProvider = ({ children }: ClinicProviderProps) => {
   const [isLoading, setIsLoading] = useState(false);
 
   // Determine if user can select clinic (admin_lify can see all clinics)
-  const canSelectClinic = user?.role === 'admin_lify' || user?.role === 'suporte_lify';
+  const canSelectClinic = user?.user_metadata?.role === 'admin_lify' || user?.user_metadata?.role === 'suporte_lify';
+  
+  // Debug logs
+  console.log('🔍 ClinicContext Debug:', {
+    user: user,
+    userRole: user?.user_metadata?.role,
+    canSelectClinic: canSelectClinic,
+    isAdminLify: isAdminLify()
+  });
   
   // Available clinics based on user role
   const availableClinics = canSelectClinic 
     ? clinics.filter(clinic => clinic.status === 'active')
     : clinics.filter(clinic => clinic.id === user?.clinic_id && clinic.status === 'active');
+
+  // Debug available clinics
+  console.log('🔍 Available Clinics Debug:', {
+    canSelectClinic,
+    totalClinics: clinics.length,
+    availableClinics: availableClinics.length,
+    userClinicId: user?.clinic_id,
+    availableClinicsList: availableClinics.map(c => ({ id: c.id, name: c.name, status: c.status }))
+  });
 
   // Carregar clínicas da API real do microserviço
   useEffect(() => {
@@ -70,6 +87,11 @@ export const ClinicProvider = ({ children }: ClinicProviderProps) => {
         console.log('🔄 Carregando clínicas...');
         const data = await clinicApi.getClinics();
         console.log('✅ Clínicas carregadas:', data);
+        console.log('📊 Dados das clínicas:', {
+          total: data?.length || 0,
+          active: data?.filter(c => c.status === 'active').length || 0,
+          clinics: data?.map(c => ({ id: c.id, name: c.name, status: c.status })) || []
+        });
         setClinics(data);
         
         // Selecionar clínica baseada no role do usuário

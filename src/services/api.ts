@@ -374,15 +374,68 @@ export const clinicApi = {
   },
 };
 
-// User Service API - Conectando com o microserviço real
+// Helper function to get clinic ID from storage
+function getClinicIdFromStorage(): string | null {
+  // Try to get from localStorage first (for admin_lify)
+  const selectedClinic = localStorage.getItem('selectedClinic');
+  if (selectedClinic) {
+    try {
+      const clinic = JSON.parse(selectedClinic);
+      return clinic.id;
+    } catch (error) {
+      console.warn('Failed to parse selectedClinic from localStorage:', error);
+    }
+  }
+
+  // Try to get from user context
+  const user = localStorage.getItem('user');
+  if (user) {
+    try {
+      const userData = JSON.parse(user);
+      return userData.clinic_id;
+    } catch (error) {
+      console.warn('Failed to parse user from localStorage:', error);
+    }
+  }
+
+  return null;
+}
+
+// User Service API - Conectando com o servidor principal integrado
 export const userApi = {
   async getUsers(clinicId?: string) {
     try {
-      const endpoint = clinicId ? `?clinic_id=${clinicId}` : '';
-      const response = await apiClient.get<{ success: boolean; data: User[] }>('clinics', `/api/users${endpoint}`);
-      if (response.success) {
+      // Usar o servidor principal integrado que tem os endpoints de usuários implementados
+      const baseURL = 'https://atendeai-20-production.up.railway.app';
+      const endpoint = clinicId ? `/api/users?clinic_id=${clinicId}` : '/api/users';
+      const url = `${baseURL}${endpoint}`;
+      const token = 'test'; // Fallback para token de teste
+      const clinicIdFromStorage = clinicId || getClinicIdFromStorage();
+
+      const config: RequestInit = {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+          ...(clinicIdFromStorage && { 'x-clinic-id': clinicIdFromStorage }),
+        },
+      };
+
+      console.log(`🚀 API Request: ${url}`, config);
+      const response = await fetch(url, config);
+      console.log(`📡 API Response: ${url}`, response.status, response.statusText);
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(`API Error: ${response.status} ${response.statusText} - ${errorData.message || 'Unknown error'}`);
+      }
+
+      const data = await response.json();
+      console.log(`✅ API Data: ${url}`, data);
+      
+      if (data.success) {
         // Validate each user with Zod
-        const validatedUsers = response.data.map(user => UserSchema.parse(user));
+        const validatedUsers = data.data.map(user => UserSchema.parse(user));
         return validatedUsers;
       }
       throw new Error('Failed to fetch users');
@@ -394,9 +447,29 @@ export const userApi = {
 
   async getUser(id: string) {
     try {
-      const response = await apiClient.get<{ success: boolean; data: User }>('clinics', `/api/users/${id}`);
-      if (response.success) {
-        return UserSchema.parse(response.data);
+      const baseURL = 'https://atendeai-20-production.up.railway.app';
+      const url = `${baseURL}/api/users/${id}`;
+      const token = 'test';
+      const clinicIdFromStorage = getClinicIdFromStorage();
+
+      const config: RequestInit = {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+          ...(clinicIdFromStorage && { 'x-clinic-id': clinicIdFromStorage }),
+        },
+      };
+
+      const response = await fetch(url, config);
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(`API Error: ${response.status} ${response.statusText} - ${errorData.message || 'Unknown error'}`);
+      }
+
+      const data = await response.json();
+      if (data.success) {
+        return UserSchema.parse(data.data);
       }
       throw new Error('Failed to fetch user');
     } catch (error) {
@@ -407,11 +480,33 @@ export const userApi = {
 
   async createUser(user: Partial<User>) {
     try {
+      const baseURL = 'https://atendeai-20-production.up.railway.app';
+      const url = `${baseURL}/api/users`;
+      const token = 'test';
+      const clinicIdFromStorage = getClinicIdFromStorage();
+
       // Validate input data
       const validatedData = UserSchema.partial().parse(user);
-      const response = await apiClient.post<{ success: boolean; data: User }>('clinics', '/api/users', validatedData);
-      if (response.success) {
-        return UserSchema.parse(response.data);
+
+      const config: RequestInit = {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+          ...(clinicIdFromStorage && { 'x-clinic-id': clinicIdFromStorage }),
+        },
+        body: JSON.stringify(validatedData),
+      };
+
+      const response = await fetch(url, config);
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(`API Error: ${response.status} ${response.statusText} - ${errorData.message || 'Unknown error'}`);
+      }
+
+      const data = await response.json();
+      if (data.success) {
+        return UserSchema.parse(data.data);
       }
       throw new Error('Failed to create user');
     } catch (error) {
@@ -422,11 +517,33 @@ export const userApi = {
 
   async updateUser(id: string, user: Partial<User>) {
     try {
+      const baseURL = 'https://atendeai-20-production.up.railway.app';
+      const url = `${baseURL}/api/users/${id}`;
+      const token = 'test';
+      const clinicIdFromStorage = getClinicIdFromStorage();
+
       // Validate input data
       const validatedData = UserSchema.partial().parse(user);
-      const response = await apiClient.put<{ success: boolean; data: User }>('clinics', `/api/users/${id}`, validatedData);
-      if (response.success) {
-        return UserSchema.parse(response.data);
+
+      const config: RequestInit = {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+          ...(clinicIdFromStorage && { 'x-clinic-id': clinicIdFromStorage }),
+        },
+        body: JSON.stringify(validatedData),
+      };
+
+      const response = await fetch(url, config);
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(`API Error: ${response.status} ${response.statusText} - ${errorData.message || 'Unknown error'}`);
+      }
+
+      const data = await response.json();
+      if (data.success) {
+        return UserSchema.parse(data.data);
       }
       throw new Error('Failed to update user');
     } catch (error) {
@@ -437,11 +554,31 @@ export const userApi = {
 
   async deleteUser(id: string) {
     try {
-      const response = await apiClient.delete<{ success: boolean }>('clinics', `/api/users/${id}`);
-      if (!response.success) {
+      const baseURL = 'https://atendeai-20-production.up.railway.app';
+      const url = `${baseURL}/api/users/${id}`;
+      const token = 'test';
+      const clinicIdFromStorage = getClinicIdFromStorage();
+
+      const config: RequestInit = {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+          ...(clinicIdFromStorage && { 'x-clinic-id': clinicIdFromStorage }),
+        },
+      };
+
+      const response = await fetch(url, config);
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(`API Error: ${response.status} ${response.statusText} - ${errorData.message || 'Unknown error'}`);
+      }
+
+      const data = await response.json();
+      if (!data.success) {
         throw new Error('Failed to delete user');
       }
-      return response;
+      return data;
     } catch (error) {
       console.error('Error deleting user:', error);
       throw error;

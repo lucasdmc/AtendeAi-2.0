@@ -71,21 +71,29 @@ export default function Clinics() {
         }
       }
       
-      // TEMPORÁRIO: Mock da criação até Railway atualizar
       console.log('Criando clínica:', clinicData)
       
-      // Simular delay da API
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      // Chamada real para API de criação
+      const response = await fetch('https://atendeai-20-production.up.railway.app/api/clinics', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer test',
+        },
+        body: JSON.stringify({
+          name: clinicData.name,
+          whatsapp_id_number: clinicData.whatsapp_number,
+          status: clinicData.status
+        })
+      })
       
-      // Simular sucesso
-      const mockClinic = {
-        id: Date.now().toString(),
-        ...clinicData,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(`Erro ${response.status}: ${errorData.message || 'Falha ao criar clínica'}`)
       }
       
-      console.log('Clínica criada (mock):', mockClinic)
+      const result = await response.json()
+      console.log('Clínica criada com sucesso:', result)
       
       // Recarregar lista de clínicas
       await refetchClinics()
@@ -110,6 +118,55 @@ export default function Clinics() {
     setIsEditDialogOpen(true)
   }
 
+  const handleUpdate = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    if (!editingClinic) return
+    
+    try {
+      const formData = new FormData(e.currentTarget)
+      const updateData = {
+        name: formData.get('edit-name') as string,
+        whatsapp_id_number: formData.get('edit-whatsapp') as string,
+        meta_webhook_url: formData.get('edit-webhook') as string,
+        status: formData.get('edit-status') as string || 'active'
+      }
+      
+      console.log('Atualizando clínica:', editingClinic.id, updateData)
+      
+      // Chamada real para API de atualização
+      const response = await fetch(`https://atendeai-20-production.up.railway.app/api/clinics/${editingClinic.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer test',
+        },
+        body: JSON.stringify(updateData)
+      })
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(`Erro ${response.status}: ${errorData.message || 'Falha ao atualizar clínica'}`)
+      }
+      
+      const result = await response.json()
+      console.log('Clínica atualizada com sucesso:', result)
+      
+      // Recarregar lista de clínicas
+      await refetchClinics()
+      
+      // Fechar modal
+      setIsEditDialogOpen(false)
+      setEditingClinic(null)
+      
+      // Mostrar notificação de sucesso
+      alert('Clínica atualizada com sucesso!')
+      
+    } catch (error) {
+      console.error('Erro ao atualizar clínica:', error)
+      alert(`Erro ao atualizar clínica: ${error.message}`)
+    }
+  }
+
   const handleJsonConfig = (clinic: Clinic) => {
     setSelectedClinicForJson(clinic)
     setJsonConfig("")
@@ -119,11 +176,24 @@ export default function Clinics() {
   const handleDelete = async (clinic: Clinic) => {
     if (window.confirm(`Tem certeza que deseja deletar a clínica "${clinic.name}"? Esta ação não pode ser desfeita.`)) {
       try {
-        // TODO: Implementar chamada real para API quando estiver disponível
         console.log('Deletando clínica:', clinic.id)
         
-        // Simular delay da API
-        await new Promise(resolve => setTimeout(resolve, 1000))
+        // Chamada real para API de deleção
+        const response = await fetch(`https://atendeai-20-production.up.railway.app/api/clinics/${clinic.id}`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer test',
+          },
+        })
+        
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}))
+          throw new Error(`Erro ${response.status}: ${errorData.message || 'Falha ao deletar clínica'}`)
+        }
+        
+        const result = await response.json()
+        console.log('Clínica deletada com sucesso:', result)
         
         // Recarregar lista de clínicas
         await refetchClinics()
@@ -133,7 +203,7 @@ export default function Clinics() {
         
       } catch (error) {
         console.error('Erro ao deletar clínica:', error)
-        alert('Erro ao deletar clínica. Tente novamente.')
+        alert(`Erro ao deletar clínica: ${error.message}`)
       }
     }
   }
@@ -416,16 +486,16 @@ export default function Clinics() {
             </DialogDescription>
           </DialogHeader>
           {editingClinic && (
-            <form className="space-y-4">
+            <form onSubmit={handleUpdate} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="edit-name">Nome da Clínica</Label>
-                <Input id="edit-name" defaultValue={editingClinic.name} />
+                <Input id="edit-name" name="edit-name" defaultValue={editingClinic.name} required />
               </div>
               
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="edit-whatsapp">WhatsApp</Label>
-                  <Input id="edit-whatsapp" defaultValue={editingClinic.whatsapp_number} />
+                  <Input id="edit-whatsapp" name="edit-whatsapp" defaultValue={editingClinic.whatsapp_number} required />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="edit-verify-token">WhatsApp Verify Token</Label>
@@ -435,12 +505,12 @@ export default function Clinics() {
               
               <div className="space-y-2">
                 <Label htmlFor="edit-webhook">Meta Webhook (Opcional)</Label>
-                <Input id="edit-webhook" defaultValue={editingClinic.meta_webhook_url || ""} />
+                <Input id="edit-webhook" name="edit-webhook" defaultValue={editingClinic.meta_webhook_url || ""} />
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="edit-status">Status</Label>
-                <Select defaultValue={editingClinic.status}>
+                <Select name="edit-status" defaultValue={editingClinic.status}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>

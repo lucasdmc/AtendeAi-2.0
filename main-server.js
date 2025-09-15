@@ -405,6 +405,105 @@ async function handleClinicRoutes(req, res, pathname) {
         error: 'Internal server error'
       });
     }
+  } else if (method === 'PUT' && pathname.startsWith('/api/clinics/')) {
+    // Atualizar clínica - DADOS REAIS DO BANCO
+    try {
+      const clinicId = pathname.split('/')[3];
+      const body = await getRequestBody(req);
+      const { name, whatsapp_id_number, status } = body;
+      
+      if (!name) {
+        sendJSONResponse(res, 400, {
+          success: false,
+          error: 'Nome da clínica é obrigatório'
+        });
+        return;
+      }
+      
+      // Pool já importado no topo
+      const pool = new Pool({
+        connectionString: config.database.connectionString,
+        ssl: { rejectUnauthorized: false },
+        connectionTimeoutMillis: config.database.connectionTimeout,
+        idleTimeoutMillis: config.database.idleTimeout,
+        max: config.database.poolSize
+      });
+      
+      const result = await pool.query(`
+        UPDATE atendeai.clinics 
+        SET name = $1, whatsapp_id_number = $2, status = $3, updated_at = NOW()
+        WHERE id = $4 AND status != 'deleted'
+        RETURNING id, name, whatsapp_id_number, status, created_at, updated_at
+      `, [name, whatsapp_id_number, status || 'active', clinicId]);
+      
+      if (result.rows.length === 0) {
+        sendJSONResponse(res, 404, {
+          success: false,
+          error: 'Clinic not found'
+        });
+        await pool.end();
+        return;
+      }
+      
+      sendJSONResponse(res, 200, {
+        success: true,
+        data: result.rows[0],
+        message: 'Clínica atualizada com sucesso'
+      });
+      
+      await pool.end();
+    } catch (error) {
+      console.error('Error updating clinic:', error);
+      sendJSONResponse(res, 500, {
+        success: false,
+        error: 'Internal server error'
+      });
+    }
+  } else if (method === 'DELETE' && pathname.startsWith('/api/clinics/')) {
+    // Deletar clínica - DADOS REAIS DO BANCO
+    try {
+      const clinicId = pathname.split('/')[3];
+      
+      // Pool já importado no topo
+      const pool = new Pool({
+        connectionString: config.database.connectionString,
+        ssl: { rejectUnauthorized: false },
+        connectionTimeoutMillis: config.database.connectionTimeout,
+        idleTimeoutMillis: config.database.idleTimeout,
+        max: config.database.poolSize
+      });
+      
+      // Soft delete - marcar como deleted
+      const result = await pool.query(`
+        UPDATE atendeai.clinics 
+        SET status = 'deleted', updated_at = NOW()
+        WHERE id = $1 AND status != 'deleted'
+        RETURNING id, name, whatsapp_id_number, status, created_at, updated_at
+      `, [clinicId]);
+      
+      if (result.rows.length === 0) {
+        sendJSONResponse(res, 404, {
+          success: false,
+          error: 'Clinic not found or already deleted'
+        });
+        await pool.end();
+        return;
+      }
+      
+      sendJSONResponse(res, 200, {
+        success: true,
+        data: result.rows[0],
+        message: 'Clínica deletada com sucesso'
+      });
+      
+      await pool.end();
+    } catch (error) {
+      console.error('Error deleting clinic:', error);
+      sendJSONResponse(res, 500, {
+        success: false,
+        error: 'Internal server error'
+      });
+    }
   } else if (method === 'GET' && pathname === '/api/clinics/health') {
     sendJSONResponse(res, 200, {
       status: 'healthy',

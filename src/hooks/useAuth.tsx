@@ -48,7 +48,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           return;
         }
         setSession(session);
-        setUser(session?.user as CustomUser || null);
+        const userData = session?.user as CustomUser || null;
+        console.log('🔍 Setting User (Initial):', { userData, userMetadata: userData?.user_metadata });
+        setUser(userData);
       } catch (error) {
         console.error('Error getting initial session:', error);
       } finally {
@@ -61,8 +63,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        console.log('🔍 Auth State Change:', { event, session, user: session?.user });
         setSession(session);
-        setUser(session?.user as CustomUser || null);
+        const userData = session?.user as CustomUser || null;
+        console.log('🔍 Setting User:', { userData, userMetadata: userData?.user_metadata });
+        setUser(userData);
         setIsLoading(false);
       }
     );
@@ -73,7 +78,14 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const isAuthenticated = !!user;
 
   const isAdminLify = () => {
-    return user?.user_metadata?.role === 'admin_lify';
+    const isAdmin = user?.user_metadata?.role === 'admin_lify';
+    console.log('🔍 isAdminLify Debug:', {
+      user: user,
+      userMetadata: user?.user_metadata,
+      role: user?.user_metadata?.role,
+      isAdmin: isAdmin
+    });
+    return isAdmin;
   };
 
   // Permission checks based on user role
