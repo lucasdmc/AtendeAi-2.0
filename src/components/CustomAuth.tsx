@@ -6,7 +6,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, LogIn } from "lucide-react";
-import { authApi } from "@/services/api";
 
 const CustomAuth = () => {
   const navigate = useNavigate();

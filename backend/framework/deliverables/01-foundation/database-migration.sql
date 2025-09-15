@@ -16,7 +16,6 @@ CREATE TABLE IF NOT EXISTS atendeai.clinics (
     meta_webhook_url VARCHAR(500),
     whatsapp_id VARCHAR(255),
     context_json JSONB DEFAULT '{}',
-    simulation_mode BOOLEAN DEFAULT false,
     status VARCHAR(20) DEFAULT 'active' CHECK (status IN ('active', 'inactive')),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()

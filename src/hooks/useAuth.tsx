@@ -1,11 +1,15 @@
 import { useState, useEffect, createContext, useContext, ReactNode, useMemo } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase';
 import type { User, Session } from '@supabase/supabase-js';
-import { authApi } from '@/services/api';
 
 interface CustomUser extends User {
   clinic_id?: string;
   role?: string;
+  user_metadata?: {
+    first_name?: string;
+    last_name?: string;
+    role?: string;
+  };
 }
 
 interface AuthContextType {
@@ -69,16 +73,16 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const isAuthenticated = !!user;
 
   const isAdminLify = () => {
-    return user?.role === 'admin_lify';
+    return user?.user_metadata?.role === 'admin_lify';
   };
 
   // Permission checks based on user role
   const canManageUsers = useMemo(() => {
-    return user?.role === 'admin_lify' || user?.role === 'suporte_lify';
+    return user?.user_metadata?.role === 'admin_lify' || user?.user_metadata?.role === 'suporte_lify';
   }, [user]);
 
   const canManageClinics = useMemo(() => {
-    return user?.role === 'admin_lify' || user?.role === 'suporte_lify';
+    return user?.user_metadata?.role === 'admin_lify' || user?.user_metadata?.role === 'suporte_lify';
   }, [user]);
 
   const canViewDashboard = useMemo(() => {

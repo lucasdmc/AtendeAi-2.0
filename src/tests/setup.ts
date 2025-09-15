@@ -90,9 +90,6 @@ global.console = {
 };
 
 // Configurar variáveis de ambiente para testes
-process.env.JWT_SECRET = 'test-jwt-secret-key-for-testing-only-32-chars';
-process.env.JWT_ACCESS_TOKEN_EXPIRY = '15m';
-process.env.JWT_REFRESH_TOKEN_EXPIRY = '7d';
 process.env.BCRYPT_ROUNDS = '12';
 
 // Mock do fetch global

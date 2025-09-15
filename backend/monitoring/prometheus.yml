@@ -22,9 +22,6 @@ scrape_configs:
   # =====================================================
   # AUTH SERVICE
   # =====================================================
-  - job_name: 'auth-service'
-    static_configs:
-      - targets: ['auth-service:3001']
     metrics_path: '/metrics'
     scrape_interval: 10s
     scrape_timeout: 5s

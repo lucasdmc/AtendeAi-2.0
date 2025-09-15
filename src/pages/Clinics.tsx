@@ -18,7 +18,6 @@ interface Clinic {
   meta_webhook_url?: string
   whatsapp_id?: string
   context_json: any
-  simulation_mode: boolean
   status: 'active' | 'inactive'
   created_at: string
   updated_at: string
@@ -34,14 +33,64 @@ export default function Clinics() {
   const [editingClinic, setEditingClinic] = useState<Clinic | null>(null)
   const [selectedClinicForJson, setSelectedClinicForJson] = useState<Clinic | null>(null)
   const [jsonConfig, setJsonConfig] = useState("")
+  const [isCreating, setIsCreating] = useState(false)
 
   // API hooks
   const { data: clinics = [], loading: clinicsLoading, error: clinicsError, refetch: refetchClinics } = useClinics()
 
-  const filteredClinics = clinics.filter(clinic =>
+  const filteredClinics = (clinics || []).filter(clinic =>
     clinic.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     clinic.whatsapp_number.toLowerCase().includes(searchTerm.toLowerCase())
   )
+
+  const handleCreate = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    setIsCreating(true)
+    
+    try {
+      const formData = new FormData(e.currentTarget)
+      const clinicData = {
+        name: formData.get('name') as string,
+        whatsapp_number: formData.get('whatsapp') as string,
+        meta_webhook_url: formData.get('webhook') as string,
+        status: formData.get('status') as string || 'active',
+        context_json: {
+          clinica: {
+            informacoes_basicas: {
+              nome: formData.get('name') as string,
+              descricao: formData.get('description') as string || ''
+            },
+            localizacao: {
+              endereco_principal: formData.get('address') as string || ''
+            },
+            contatos: {
+              telefone_principal: formData.get('whatsapp') as string,
+              email_principal: formData.get('email') as string || ''
+            }
+          }
+        }
+      }
+      
+      const { clinicApi } = await import('../services/api')
+      await clinicApi.createClinic(clinicData)
+      
+      // Recarregar lista de clínicas
+      await refetchClinics()
+      
+      // Fechar modal e limpar formulário
+      setIsCreateDialogOpen(false)
+      e.currentTarget.reset()
+      
+      // Mostrar notificação de sucesso
+      alert('Clínica criada com sucesso!')
+      
+    } catch (error) {
+      console.error('Erro ao criar clínica:', error)
+      alert('Erro ao criar clínica. Verifique os dados e tente novamente.')
+    } finally {
+      setIsCreating(false)
+    }
+  }
 
   const handleEdit = (clinic: Clinic) => {
     setEditingClinic(clinic)
@@ -130,31 +179,41 @@ export default function Clinics() {
                 Preencha as informações da nova clínica
               </DialogDescription>
             </DialogHeader>
-            <form className="space-y-4">
+            <form onSubmit={handleCreate} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="name">Nome da Clínica</Label>
-                <Input id="name" placeholder="Digite o nome da clínica" />
+                <Label htmlFor="name">Nome da Clínica *</Label>
+                <Input id="name" name="name" placeholder="Digite o nome da clínica" required />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="description">Descrição</Label>
+                <Input id="description" name="description" placeholder="Descrição da clínica" />
               </div>
               
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="whatsapp">WhatsApp</Label>
-                  <Input id="whatsapp" placeholder="(11) 99999-9999" />
+                  <Label htmlFor="whatsapp">WhatsApp *</Label>
+                  <Input id="whatsapp" name="whatsapp" placeholder="(11) 99999-9999" required />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="verify-token">WhatsApp Verify Token</Label>
-                  <Input id="verify-token" placeholder="verify_token_123" />
+                  <Label htmlFor="email">Email</Label>
+                  <Input id="email" name="email" type="email" placeholder="contato@clinica.com" />
                 </div>
               </div>
               
               <div className="space-y-2">
+                <Label htmlFor="address">Endereço</Label>
+                <Input id="address" name="address" placeholder="Rua, número - Bairro" />
+              </div>
+              
+              <div className="space-y-2">
                 <Label htmlFor="webhook">Meta Webhook (Opcional)</Label>
-                <Input id="webhook" placeholder="https://api.clinica.com/webhook" />
+                <Input id="webhook" name="webhook" placeholder="https://api.clinica.com/webhook" />
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="status">Status</Label>
-                <Select defaultValue="active">
+                <Select name="status" defaultValue="active">
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione o status" />
                   </SelectTrigger>
@@ -166,11 +225,11 @@ export default function Clinics() {
               </div>
               
               <div className="flex justify-end space-x-2">
-                <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
+                <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)} disabled={isCreating}>
                   Cancelar
                 </Button>
-                <Button type="submit">
-                  Criar Clínica
+                <Button type="submit" disabled={isCreating}>
+                  {isCreating ? 'Criando...' : 'Criar Clínica'}
                 </Button>
               </div>
             </form>

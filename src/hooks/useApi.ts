@@ -5,7 +5,6 @@ import {
   userApi,
   conversationApi, 
   appointmentApi, 
-  authApi, 
   whatsappApi,
   handleApiError,
   type Clinic,
@@ -105,79 +104,6 @@ export function useAppointment(id: string) {
   return useApiCall(() => appointmentApi.getAppointment(id), [id]);
 }
 
-// Auth hooks
-export function useAuth() {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const login = useCallback(async (email: string, password: string, clinicId: string) => {
-    setLoading(true);
-    setError(null);
-    
-    try {
-      const result = await authApi.login(email, password, clinicId);
-      if (result.success) {
-        localStorage.setItem('auth_token', result.data.accessToken);
-        localStorage.setItem('refresh_token', result.data.refreshToken);
-        setUser(result.data.user);
-        return result;
-      }
-    } catch (err) {
-      const errorMessage = handleApiError(err);
-      setError(errorMessage);
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  const logout = useCallback(async () => {
-    try {
-      const refreshToken = localStorage.getItem('refresh_token');
-      const clinicId = user?.clinic_id;
-      if (refreshToken && clinicId) {
-        await authApi.logout(refreshToken, clinicId);
-      }
-    } finally {
-      localStorage.removeItem('auth_token');
-      localStorage.removeItem('refresh_token');
-      setUser(null);
-    }
-  }, [user]);
-
-  const checkAuth = useCallback(async () => {
-    const token = localStorage.getItem('auth_token');
-    if (!token) {
-      setLoading(false);
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const result = await authApi.validateToken();
-      if (result.success && result.data.valid) {
-        setUser(result.data.user);
-      } else {
-        localStorage.removeItem('auth_token');
-        localStorage.removeItem('refresh_token');
-        setUser(null);
-      }
-    } catch (err) {
-      localStorage.removeItem('auth_token');
-      localStorage.removeItem('refresh_token');
-      setUser(null);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    checkAuth();
-  }, [checkAuth]);
-
-  return { user, loading, error, login, logout, checkAuth };
-}
 
 // WhatsApp hooks
 export function useWhatsApp() {

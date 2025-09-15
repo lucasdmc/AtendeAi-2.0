@@ -6,7 +6,6 @@ import { z } from 'zod';
 // Microservices URLs - Servidor Integrado (Produção)
 const MICROSERVICES_URLS = {
   // URLs para servidor integrado - produção no Railway
-  auth: import.meta.env.VITE_AUTH_SERVICE_URL || 'https://atendeai-20-production.up.railway.app/api/auth',
   clinics: import.meta.env.VITE_CLINIC_SERVICE_URL || 'https://atendeai-20-production.up.railway.app/api/clinics',
   conversations: import.meta.env.VITE_CONVERSATION_SERVICE_URL || 'https://atendeai-20-production.up.railway.app/api/conversations',
   appointments: import.meta.env.VITE_APPOINTMENT_SERVICE_URL || 'https://atendeai-20-production.up.railway.app/api/appointments',
@@ -29,7 +28,6 @@ export const ClinicSchema = z.object({
   meta_webhook_url: z.string().url().optional(),
   whatsapp_id: z.string().optional(),
   context_json: z.any().default({}),
-  simulation_mode: z.boolean().default(false),
   status: z.enum(['active', 'inactive']).default('active'),
   created_at: z.string().datetime(),
   updated_at: z.string().datetime(),
@@ -130,7 +128,7 @@ class MicroserviceClient {
   ): Promise<T> {
     const baseURL = MICROSERVICES_URLS[service];
     const url = `${baseURL}${endpoint}`;
-    const token = localStorage.getItem('auth_token') || 'test'; // Fallback para token de teste
+    const token = 'test'; // Fallback para token de teste
     const clinicId = this.getClinicId();
 
     const config: RequestInit = {
@@ -223,7 +221,6 @@ export interface Clinic {
     profissionais?: any[];
     politicas?: any;
   };
-  simulation_mode: boolean;
   status: 'active' | 'inactive';
   created_at: string;
   updated_at: string;
@@ -281,43 +278,6 @@ export interface Appointment {
   updated_at: string;
 }
 
-// Auth Service API - Conectando com o servidor integrado
-export const authApi = {
-  async login(email: string, password: string, clinicId: string) {
-    return apiClient.post<{
-      success: boolean;
-      data: {
-        accessToken: string;
-        refreshToken: string;
-        user: User;
-      };
-    }>('auth', '/login', { email, password, clinicId });
-  },
-
-  async refreshToken(refreshToken: string, clinicId: string) {
-    return apiClient.post<{
-      success: boolean;
-      data: {
-        accessToken: string;
-        refreshToken: string;
-      };
-    }>('auth', '/refresh', { refreshToken, clinicId });
-  },
-
-  async validateToken() {
-    return apiClient.get<{
-      success: boolean;
-      data: {
-        valid: boolean;
-        user: User;
-      };
-    }>('auth', '/validate');
-  },
-
-  async logout(refreshToken: string, clinicId: string) {
-    return apiClient.post('auth', '/logout', { refreshToken, clinicId });
-  },
-};
 
 // Clinic Service API - Conectando com o microserviço real
 export const clinicApi = {
@@ -797,7 +757,6 @@ export const handleApiError = (error: any) => {
   
   if (error.message?.includes('401')) {
     // Unauthorized - redirect to login
-    localStorage.removeItem('auth_token');
     window.location.href = '/login';
     return;
   }

@@ -35,7 +35,6 @@ const clinicSchema = Joi.object({
       'array.max': 'Diferenciais devem ter no máximo 20 itens',
       'string.max': 'Cada diferencial deve ter no máximo 200 caracteres'
     }),
-  simulation_mode: Joi.boolean().optional(),
   whatsapp_phone: Joi.string().pattern(/^\+?[1-9]\d{1,14}$/).required()
     .messages({
       'string.pattern.base': 'Telefone WhatsApp deve estar em formato válido',

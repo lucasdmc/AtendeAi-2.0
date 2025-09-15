@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { clinicApi } from '@/services/api';
 
 interface Clinic {
   id: string;
@@ -25,7 +26,6 @@ interface Clinic {
     profissionais?: any[];
     politicas?: any;
   };
-  simulation_mode: boolean;
   status: 'active' | 'inactive';
   created_at: string;
   updated_at: string;
@@ -67,7 +67,6 @@ export const ClinicProvider = ({ children }: ClinicProviderProps) => {
     const fetchClinics = async () => {
       setIsLoading(true);
       try {
-        const { clinicApi } = await import('../services/api');
         const data = await clinicApi.getClinics();
         setClinics(data);
         

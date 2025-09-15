@@ -9,20 +9,11 @@ class ClinicController {
     try {
       const clinicData = req.body;
       
-      // Verificar se o usuário tem permissão para criar clínicas
-      if (!req.user.roles.includes('admin_lify')) {
-        return res.status(403).json({
-          success: false,
-          message: 'Insufficient permissions to create clinics'
-        });
-      }
-      
       const clinic = await Clinic.create(clinicData);
       
       logger.info('Clinic created successfully', { 
         clinicId: clinic.id,
-        clinicName: clinic.name,
-        createdBy: req.user.id
+        clinicName: clinic.name
       });
       
       res.status(201).json({
@@ -80,40 +71,18 @@ class ClinicController {
     try {
       const { limit = 100, offset = 0 } = req.query;
       
-      // Verificar isolamento multi-tenant
-      if (req.user.roles.includes('admin_lify')) {
-        // Admin Lify pode ver todas as clínicas
-        const clinics = await Clinic.findAll(parseInt(limit), parseInt(offset));
-        
-        res.status(200).json({
-          success: true,
-          data: clinics.map(clinic => clinic.toJSON()),
-          pagination: {
-            limit: parseInt(limit),
-            offset: parseInt(offset),
-            total: clinics.length
-          }
-        });
-      } else {
-        // Usuários normais só podem ver sua própria clínica
-        const clinic = await Clinic.findById(req.user.clinicId);
-        if (!clinic) {
-          return res.status(404).json({
-            success: false,
-            message: 'Clinic not found'
-          });
+      // Retornar todas as clínicas (sem autenticação por enquanto)
+      const clinics = await Clinic.findAll(parseInt(limit), parseInt(offset));
+      
+      res.status(200).json({
+        success: true,
+        data: clinics.map(clinic => clinic.toJSON()),
+        pagination: {
+          limit: parseInt(limit),
+          offset: parseInt(offset),
+          total: clinics.length
         }
-        
-        res.status(200).json({
-          success: true,
-          data: [clinic.toJSON()],
-          pagination: {
-            limit: 1,
-            offset: 0,
-            total: 1
-          }
-        });
-      }
+      });
     } catch (error) {
       logger.error('Error getting all clinics:', error);
       res.status(500).json({

@@ -21,39 +21,21 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
 // Usuários de teste para criar
 const testUsers = [
   {
+    email: 'lucas@lify.com',
+    password: 'lucas123',
+    user_metadata: {
+      first_name: 'Lucas',
+      last_name: 'Cantoni',
+      role: 'admin_lify'
+    }
+  },
+  {
     email: 'admin@lify.com',
     password: 'admin123',
     user_metadata: {
       first_name: 'Admin',
       last_name: 'Lify',
       role: 'admin_lify'
-    }
-  },
-  {
-    email: 'admin@clinica.com', 
-    password: 'admin123',
-    user_metadata: {
-      first_name: 'Admin',
-      last_name: 'Clínica',
-      role: 'admin_clinic'
-    }
-  },
-  {
-    email: 'atendente@clinica.com',
-    password: 'admin123', 
-    user_metadata: {
-      first_name: 'Atendente',
-      last_name: 'Teste',
-      role: 'attendant'
-    }
-  },
-  {
-    email: 'admin@exemplo.com',
-    password: 'admin123',
-    user_metadata: {
-      first_name: 'Administrador',
-      last_name: 'Sistema', 
-      role: 'admin'
     }
   }
 ];

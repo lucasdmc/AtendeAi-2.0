@@ -8,6 +8,7 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
+    cors: true,
   },
   plugins: [
     react(),
@@ -21,7 +22,6 @@ export default defineConfig(({ mode }) => ({
   },
   define: {
     global: 'globalThis',
-    'process.env': 'process.env',
   },
   build: {
     rollupOptions: {

@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const logger = require('../utils/logger');
+const database = require('../config/database');
 
 // GET /api/clinics/:clinicId/services
 const getServices = async (req, res) => {
@@ -9,31 +10,19 @@ const getServices = async (req, res) => {
     
     logger.info('Getting services for clinic', { clinicId });
     
-    // Mock data for now
-    const services = [
-      {
-        id: '1',
-        name: 'Consulta de Cardiologia',
-        description: 'Consulta médica especializada em cardiologia',
-        duration: 30,
-        price: 150.00,
-        clinic_id: clinicId,
-        status: 'active'
-      },
-      {
-        id: '2',
-        name: 'Consulta de Dermatologia', 
-        description: 'Consulta médica especializada em dermatologia',
-        duration: 45,
-        price: 120.00,
-        clinic_id: clinicId,
-        status: 'active'
-      }
-    ];
-
+    // Buscar serviços reais do banco de dados
+    const query = `
+      SELECT id, name, description, duration, price, clinic_id, status, created_at, updated_at
+      FROM atendeai.services 
+      WHERE clinic_id = $1 AND status = 'active'
+      ORDER BY name
+    `;
+    
+    const result = await database.query(query, [clinicId]);
+    
     res.json({
       success: true,
-      data: services
+      data: result.rows
     });
   } catch (error) {
     logger.error('Error getting services:', error);
@@ -51,20 +40,25 @@ const getService = async (req, res) => {
     
     logger.info('Getting service', { clinicId, id });
     
-    // Mock data for now
-    const service = {
-      id: id,
-      name: 'Consulta de Cardiologia',
-      description: 'Consulta médica especializada em cardiologia',
-      duration: 30,
-      price: 150.00,
-      clinic_id: clinicId,
-      status: 'active'
-    };
+    // Buscar serviço específico do banco de dados
+    const query = `
+      SELECT id, name, description, duration, price, clinic_id, status, created_at, updated_at
+      FROM atendeai.services 
+      WHERE id = $1 AND clinic_id = $2 AND status = 'active'
+    `;
+    
+    const result = await database.query(query, [id, clinicId]);
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Service not found'
+      });
+    }
 
     res.json({
       success: true,
-      data: service
+      data: result.rows[0]
     });
   } catch (error) {
     logger.error('Error getting service:', error);

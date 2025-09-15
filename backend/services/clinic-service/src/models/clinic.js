@@ -12,7 +12,6 @@ class Clinic {
     this.mission = data.mission;
     this.values = data.values;
     this.differentials = data.differentials;
-    this.simulation_mode = data.simulation_mode || false;
     this.whatsapp_phone = data.whatsapp_phone;
     this.email = data.email;
     this.website = data.website;
@@ -41,7 +40,7 @@ class Clinic {
       const query = `
         INSERT INTO clinics (
           id, name, type, specialty, description, mission, values, differentials,
-          simulation_mode, whatsapp_phone, email, website, address, city, state,
+          whatsapp_phone, email, website, address, city, state,
           zip_code, country, phone, working_hours, timezone, contextualization_json,
           ai_personality, ai_behavior, appointment_policies, calendar_mappings,
           status, created_at, updated_at
@@ -52,7 +51,7 @@ class Clinic {
       
       const values = [
         clinic.id, clinic.name, clinic.type, clinic.specialty, clinic.description,
-        clinic.mission, clinic.values, clinic.differentials, clinic.simulation_mode,
+        clinic.mission, clinic.values, clinic.differentials,
         clinic.whatsapp_phone, clinic.email, clinic.website, clinic.address,
         clinic.city, clinic.state, clinic.zip_code, clinic.country, clinic.phone,
         clinic.working_hours, clinic.timezone, clinic.contextualization_json,
@@ -271,7 +270,6 @@ class Clinic {
       mission: this.mission,
       values: this.values,
       differentials: this.differentials,
-      simulation_mode: this.simulation_mode,
       whatsapp_phone: this.whatsapp_phone,
       email: this.email,
       website: this.website,
