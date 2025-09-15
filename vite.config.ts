@@ -21,7 +21,6 @@ export default defineConfig(({ mode }) => ({
   },
   define: {
     global: 'globalThis',
-    'process.env': 'process.env',
   },
   build: {
     rollupOptions: {
