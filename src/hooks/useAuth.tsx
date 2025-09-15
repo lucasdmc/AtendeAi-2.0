@@ -48,9 +48,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           return;
         }
         setSession(session);
-        const userData = session?.user as CustomUser || null;
-        console.log('🔍 Setting User (Initial):', { userData, userMetadata: userData?.user_metadata });
-        setUser(userData);
+        setUser(session?.user as CustomUser || null);
       } catch (error) {
         console.error('Error getting initial session:', error);
       } finally {

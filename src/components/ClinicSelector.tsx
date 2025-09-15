@@ -7,16 +7,8 @@ import { Building2 } from 'lucide-react';
 export const ClinicSelector: React.FC = () => {
   const { selectedClinic, setSelectedClinic, canSelectClinic, availableClinics } = useClinic();
 
-  // Debug logs
-  console.log('🔍 ClinicSelector Debug:', {
-    canSelectClinic,
-    availableClinics: availableClinics?.length || 0,
-    selectedClinic: selectedClinic?.name || 'Nenhuma'
-  });
-
   // Só mostrar se o usuário pode selecionar clínica
   if (!canSelectClinic) {
-    console.log('❌ ClinicSelector: Usuário não pode selecionar clínica');
     return null;
   }
 

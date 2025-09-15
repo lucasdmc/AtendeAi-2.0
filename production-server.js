@@ -413,12 +413,14 @@ async function handleClinicRoutes(req, res, pathname) {
       });
       
       // Soft delete - marcar como deleted
+      console.log('Tentando deletar clínica:', clinicId);
       const result = await pool.query(`
         UPDATE atendeai.clinics 
         SET status = 'deleted'
-        WHERE id = $1 AND status != 'deleted'
-        RETURNING id, name, whatsapp_id_number, status, created_at
+        WHERE id = $1
+        RETURNING id, name, whatsapp_id_number, status
       `, [clinicId]);
+      console.log('Resultado da query:', result.rows);
       
       if (result.rows.length === 0) {
         sendJSONResponse(res, 404, {
