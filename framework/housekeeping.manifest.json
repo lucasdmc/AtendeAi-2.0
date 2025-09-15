@@ -1,12 +1,1 @@
-{
-  "version": "1.0",
-  "strategy": {
-    "dry_run": true,
-    "archive_dir": "archive/{cycle_id}",
-    "delete_patterns": ["**/.cache/**","**/dist/**","**/build/**","**/*.tmp","**/*.log","context/temp/**","tmp/**"],
-    "deduplicate_paths": ["docs/", "context/", "scripts/"],
-    "keep_paths": ["api/","db/","docs/","orchestrator.runbook.yaml","tools/","agents/","templates/","scripts/"]
-  },
-  "report_path": "reports/{cycle_id}/housekeeping_report.json",
-  "undo_script_path": "scripts/undo_housekeeping.sh"
-}
+{"version":"1.1","strategy":{"dry_run":true,"archive_dir":"archive/{cycle_id}","delete_patterns":["**/.cache/**","**/dist/**","**/build/**","**/*.tmp","**/*.log","context/temp/**","tmp/**"],"deduplicate_paths":["docs/","context/","scripts/"],"keep_paths":["api/","db/","docs/","orchestrator.runbook.yaml","tools/","agents/","templates/","scripts/"]},"report_path":"reports/{cycle_id}/housekeeping_report.json","undo_script_path":"scripts/undo_housekeeping.sh"}

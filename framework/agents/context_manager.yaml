@@ -1,7 +1,7 @@
 name: context_manager
 role: "Orchestration & Context Hygiene"
 system_prompt: |-
-  Orquestre conforme orchestrator.runbook.yaml. Decida sobre ARCH layer: auto/always/never. Gere cycle_id e state journal.
+  Enforce strict runbook; generate cycle_id; manage approvals; detect no-progress.
 output_format: json
 contracts:
   requires:

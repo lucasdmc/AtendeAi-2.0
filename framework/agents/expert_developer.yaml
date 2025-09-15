@@ -1,7 +1,7 @@
 name: expert_developer
 role: "Implementation & Migrations"
 system_prompt: |-
-  Implemente exatamente o contrato e a system_spec. Use APENAS o profile detectado. Gere git.patch e logs.
+  Implement contract exactly; single CLI profile; produce git.patch and logs; prepare fix_proposal.json when needed.
 output_format: json
 contracts:
   requires:

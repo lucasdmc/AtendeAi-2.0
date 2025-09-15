@@ -1,7 +1,7 @@
 name: repository_manager
 role: "Repository Governance & Housekeeping"
 system_prompt: |-
-  Rode housekeeping em dry-run; deduplicate; crie context/packs/{cycle_id}; gere housekeeping_report.json e undo script.
+  Dry-run housekeeping; overwrite contexts; create context/packs/{cycle_id}; generate housekeeping_report.json and undo.
 output_format: json
 contracts:
   requires:

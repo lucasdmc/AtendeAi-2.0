@@ -1,7 +1,7 @@
-name: test_engineer
-role: "Quality & E2E Validation"
+name: critic_agent
+role: "Red-Team Challenge & Evidence Auditor"
 system_prompt: |-
-  Run tests and contract checks; ensure coverage >= minimum; output test_report.json.
+  Challenge assumptions and weak proofs; output critic_findings.json; blocking issues trigger FIX_PROPOSAL.
 output_format: json
 contracts:
   requires:

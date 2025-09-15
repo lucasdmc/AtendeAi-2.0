@@ -35,7 +35,16 @@ const config = {
     refreshTokenExpiry: '7d'
   },
   database: {
-    url: process.env.DATABASE_URL || 'postgresql://postgres:Supa201294base@db.kytphnasmdvebmdvvwtx.supabase.co:5432/postgres'
+    // Usar apenas Supabase via API, não conexão direta PostgreSQL
+    supabaseUrl: process.env.SUPABASE_URL || 'https://kytphnasmdvebmdvvwtx.supabase.co',
+    supabaseKey: process.env.SUPABASE_SERVICE_ROLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt5dHBobmFzbWR2ZWJtZHZ2d3R4Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NTYyMjgxMCwiZXhwIjoyMDcxMTk4ODEwfQ.36Ip9NWvqh6aeFQeowV79r54C2YQPc5N-Mn_dn2qD70',
+    // URL de conexão com fallback para pooler (recomendado para Railway)
+    connectionString: process.env.DATABASE_URL_POOLER || process.env.DATABASE_URL || 'postgresql://postgres.kytphnasmdvebmdvvwtx:lify2025supa@aws-1-us-east-2.pooler.supabase.com:5432/postgres',
+    // Configurações de conectividade otimizadas para Railway
+    connectionTimeout: parseInt(process.env.DATABASE_CONNECTION_TIMEOUT) || 60000,
+    poolSize: parseInt(process.env.DATABASE_POOL_SIZE) || 5,
+    idleTimeout: parseInt(process.env.DATABASE_IDLE_TIMEOUT) || 60000,
+    retryAttempts: parseInt(process.env.DATABASE_RETRY_ATTEMPTS) || 3
   },
   supabase: {
     url: process.env.SUPABASE_URL || 'https://kytphnasmdvebmdvvwtx.supabase.co',
@@ -137,8 +146,11 @@ async function handleAuthRoutes(req, res, pathname) {
       // Login real com banco de dados
       // Pool já importado no topo
       const pool = new Pool({
-        connectionString: config.database.url,
-        ssl: { rejectUnauthorized: false }
+        connectionString: config.database.connectionString,
+        ssl: { rejectUnauthorized: false },
+        connectionTimeoutMillis: config.database.connectionTimeout,
+        idleTimeoutMillis: config.database.idleTimeout,
+        max: config.database.poolSize
       });
       
       // Buscar usuário
@@ -283,8 +295,11 @@ async function handleClinicRoutes(req, res, pathname) {
     try {
       // Pool já importado no topo
       const pool = new Pool({
-        connectionString: config.database.url,
-        ssl: { rejectUnauthorized: false }
+        connectionString: config.database.connectionString,
+        ssl: { rejectUnauthorized: false },
+        connectionTimeoutMillis: config.database.connectionTimeout,
+        idleTimeoutMillis: config.database.idleTimeout,
+        max: config.database.poolSize
       });
       
       const result = await pool.query(`
@@ -312,8 +327,11 @@ async function handleClinicRoutes(req, res, pathname) {
       const clinicId = pathname.split('/')[3];
       // Pool já importado no topo
       const pool = new Pool({
-        connectionString: config.database.url,
-        ssl: { rejectUnauthorized: false }
+        connectionString: config.database.connectionString,
+        ssl: { rejectUnauthorized: false },
+        connectionTimeoutMillis: config.database.connectionTimeout,
+        idleTimeoutMillis: config.database.idleTimeout,
+        max: config.database.poolSize
       });
       
       const result = await pool.query(`
@@ -531,12 +549,15 @@ async function handleUserRoutes(req, res, pathname) {
   if (method === 'GET' && pathname === '/api/users') {
     // DADOS REAIS DO BANCO - SEM FALLBACK PARA MOCKS
     console.log('🔍 Tentando conectar ao banco para buscar usuários...');
-    console.log('🔑 DATABASE_URL:', config.database.url ? 'CONFIGURADA' : 'NÃO CONFIGURADA');
+    console.log('🔑 DATABASE_URL:', config.database.connectionString ? 'CONFIGURADA' : 'NÃO CONFIGURADA');
     
     try {
       const pool = new Pool({
-        connectionString: config.database.url,
-        ssl: { rejectUnauthorized: false }
+        connectionString: config.database.connectionString,
+        ssl: { rejectUnauthorized: false },
+        connectionTimeoutMillis: config.database.connectionTimeout,
+        idleTimeoutMillis: config.database.idleTimeout,
+        max: config.database.poolSize
       });
       
       console.log('🔄 Executando query no banco...');
@@ -585,8 +606,11 @@ async function handleUserRoutes(req, res, pathname) {
       const userId = pathname.split('/')[3];
       // Pool já importado no topo
       const pool = new Pool({
-        connectionString: config.database.url,
-        ssl: { rejectUnauthorized: false }
+        connectionString: config.database.connectionString,
+        ssl: { rejectUnauthorized: false },
+        connectionTimeoutMillis: config.database.connectionTimeout,
+        idleTimeoutMillis: config.database.idleTimeout,
+        max: config.database.poolSize
       });
       
       const result = await pool.query(`
@@ -641,8 +665,11 @@ async function handleUserRoutes(req, res, pathname) {
       
       // Pool já importado no topo
       const pool = new Pool({
-        connectionString: config.database.url,
-        ssl: { rejectUnauthorized: false }
+        connectionString: config.database.connectionString,
+        ssl: { rejectUnauthorized: false },
+        connectionTimeoutMillis: config.database.connectionTimeout,
+        idleTimeoutMillis: config.database.idleTimeout,
+        max: config.database.poolSize
       });
       
       // Hash da senha

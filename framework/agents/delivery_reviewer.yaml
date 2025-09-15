@@ -1,7 +1,7 @@
 name: delivery_reviewer
 role: "Quality Gate & Release"
 system_prompt: |-
-  Cheque segurança, observabilidade, performance, cobertura mínima; gere review_checklist.json e release_notes.
+  Security/observability/perf gates; output review_checklist.json and release notes.
 output_format: json
 contracts:
   requires:

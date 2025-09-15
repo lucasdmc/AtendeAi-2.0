@@ -1,106 +1,81 @@
-# orchestrator.runbook.yaml
-version: "1.1"
-description: State machine with optional ARCH layer (API_ARCH, DB_ARCH) between SPEC and DEV.
+# orchestrator.runbook.yaml — v1.2 (Strict)
+version: "1.2"
 defaults:
-  max_attempts: 3
-  backoff_seconds: 30
-  time_budget_minutes: 60
+  max_attempts: 2
+  backoff_seconds: 20
+  time_budget_minutes: 90
   artifacts_required: true
+  strict_mode: true
 flags:
-  include_arch_layer: auto   # values: auto|always|never
+  include_arch_layer: auto
+  require_user_approval_for_fixes: true
+loop_policies:
+  abort_if_no_progress: true
+  no_progress_window_states: ["DEV","TEST"]
+  coverage_minimum: 0.75
 states:
+  RESET_CONTEXT:
+    on_enter: [{action: context_manager.reset_context}]
+    on_success: PROBLEM_HUNT
+  PROBLEM_HUNT:
+    on_enter: [{action: problem_hunter.scan}]
+    guards: [{condition: file_exists("reports/{cycle_id}/problems.json")}]
+    on_success: SPEC
+    on_failure: PROBLEM_HUNT
   SPEC:
-    on_enter:
-      - action: specification_agent.specify
-    guards:
-      - condition: files_exist(["docs/system_spec.md"])
-      - condition: schema_optional() OR schema_valid("api/openapi.yaml")
+    on_enter: [{action: specification_agent.specify}]
+    guards: [{condition: files_exist(["docs/system_spec.md"])}, {condition: schema_optional() OR schema_valid("api/openapi.yaml")}]
     on_success: ARCH_DECISION
     on_failure: SPEC
-
   ARCH_DECISION:
-    on_enter:
-      - action: context_manager.decide_arch_layer   # decides whether to include ARCH based on repo needs
+    on_enter: [{action: context_manager.decide_arch_layer}]
     on_success: API_ARCH
     on_skip: DB_ARCH
     on_bypass: DEV
-
   API_ARCH:
-    on_enter:
-      - action: api_architect.design_api
-    guards:
-      - condition: schema_valid("api/openapi.yaml")
-      - condition: contracts_versioned("api/openapi.yaml")
+    on_enter: [{action: api_architect.design_api}]
+    guards: [{condition: schema_valid("api/openapi.yaml")}, {condition: contracts_versioned("api/openapi.yaml")}]
     on_success: DB_ARCH
     on_failure: API_ARCH
-
   DB_ARCH:
-    on_enter:
-      - action: database_architect.design_db
-    guards:
-      - condition: db_migrations_valid("db/migrations")
-      - condition: rollback_plan_present("db/migrations")
+    on_enter: [{action: database_architect.design_db}]
+    guards: [{condition: db_migrations_valid("db/migrations")}, {condition: rollback_plan_present("db/migrations")}]
     on_success: DEV
     on_failure: DB_ARCH
-
   DEV:
-    on_enter:
-      - action: expert_developer.implement
-    guards:
-      - condition: git_diff_non_empty()
+    on_enter: [{action: expert_developer.implement}]
+    guards: [{condition: git_diff_non_empty()}, {condition: lint_build_pass()}]
     on_success: TEST
     on_failure: DEV
-
   TEST:
-    on_enter:
-      - action: test_engineer.test
-    guards:
-      - condition: reports_pass("reports/{cycle_id}/test_report.json")
-    on_success: REVIEW
+    on_enter: [{action: test_engineer.test}]
+    guards: [{condition: reports_pass("reports/{cycle_id}/test_report.json")}, {condition: coverage_at_least(loop_policies.coverage_minimum)}]
+    on_success: CRITIC
     on_failure: DEV
-
+  CRITIC:
+    on_enter: [{action: critic_agent.challenge}]
+    guards: [{condition: file_exists("reports/{cycle_id}/critic_findings.json")}, {condition: critic_all_clear("reports/{cycle_id}/critic_findings.json")}]
+    on_success: REVIEW
+    on_failure: FIX_PROPOSAL
+  FIX_PROPOSAL:
+    on_enter: [{action: expert_developer.prepare_fix}]
+    guards: [{condition: file_exists("reports/{cycle_id}/fix_proposal.json")}]
+    on_success: USER_APPROVAL
+    on_failure: DEV
+  USER_APPROVAL:
+    on_enter: [{action: context_manager.request_user_approval}]
+    policy: {require_user_approval: flags.require_user_approval_for_fixes}
+    on_approved: DEV
+    on_rejected: REVIEW
   REVIEW:
-    on_enter:
-      - action: delivery_reviewer.review
-    guards:
-      - condition: checklist_pass("reports/{cycle_id}/review_checklist.json")
+    on_enter: [{action: delivery_reviewer.review}]
+    guards: [{condition: checklist_pass("reports/{cycle_id}/review_checklist.json")}]
     on_success: HOUSEKEEPING
     on_failure: DEV
-
   HOUSEKEEPING:
-    on_enter:
-      - action: repository_manager.housekeeping
-    guards:
-      - condition: file_exists("reports/{cycle_id}/housekeeping_report.json")
+    on_enter: [{action: repository_manager.housekeeping}]
+    guards: [{condition: file_exists("reports/{cycle_id}/housekeeping_report.json")}]
     on_success: DONE
     on_failure: HOUSEKEEPING
-
   DONE:
-    on_enter:
-      - action: context_manager.snapshot_close
-
-transitions:
-  - from: SPEC
-    to: ARCH_DECISION
-  - from: ARCH_DECISION
-    to: API_ARCH
-  - from: ARCH_DECISION
-    to: DB_ARCH
-  - from: ARCH_DECISION
-    to: DEV
-  - from: API_ARCH
-    to: DB_ARCH
-  - from: DB_ARCH
-    to: DEV
-  - from: DEV
-    to: TEST
-  - from: TEST
-    to: REVIEW
-  - from: REVIEW
-    to: HOUSEKEEPING
-  - from: HOUSEKEEPING
-    to: DONE
-
-policies:
-  ask_user_when_blocked: true
-  require_evidence: true
+    on_enter: [{action: context_manager.snapshot_close}]

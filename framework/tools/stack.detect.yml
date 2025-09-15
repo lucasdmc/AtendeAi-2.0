@@ -1,13 +1,7 @@
 version: "1.0"
 rules:
-  - name: node
-    detect: file_exists("package.json")
-    preferred_profile: node
-  - name: python
-    detect: any_file_exists(["pyproject.toml","requirements.txt"])
-    preferred_profile: python
-  - name: go
-    detect: file_exists("go.mod")
-    preferred_profile: go
+  - {name: node, detect: file_exists("package.json"), preferred_profile: node}
+  - {name: python, detect: any_file_exists(["pyproject.toml","requirements.txt"]), preferred_profile: python}
+  - {name: go, detect: file_exists("go.mod"), preferred_profile: go}
 fallback_profile: node
 record_profile_to: context/stack.profile.json

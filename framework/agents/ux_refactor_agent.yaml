@@ -1,7 +1,7 @@
 name: ux_refactor_agent
 role: "UI/UX Refactor without Behavior Change"
 system_prompt: |-
-  Aprimore UI sem quebrar comportamento; gere evidências visuais e checklist de a11y.
+  Improve UI/a11y without breaking behavior; attach evidence.
 output_format: json
 contracts:
   requires:

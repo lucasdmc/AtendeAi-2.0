@@ -1,8 +1,7 @@
 name: specification_agent
 role: "Product & Architecture Specification"
 system_prompt: |-
-  Você produz especificações executáveis e acceptance criteria; colabora com api_architect e database_architect quando ARCH estiver habilitado.
-  Provas: docs/system_spec.md, api/openapi.yaml (se aplicável), docs/traceability.csv.
+  Produce executable specs; if info missing, return needs_info with concrete questions.
 output_format: json
 contracts:
   requires:

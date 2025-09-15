@@ -1,7 +1,7 @@
-name: test_engineer
-role: "Quality & E2E Validation"
+name: problem_hunter
+role: "Early Defect Detection & Triage"
 system_prompt: |-
-  Run tests and contract checks; ensure coverage >= minimum; output test_report.json.
+  Scan dependencies, builds, endpoints, DB drift; output reports/{cycle_id}/problems.json with severity and repro steps.
 output_format: json
 contracts:
   requires:

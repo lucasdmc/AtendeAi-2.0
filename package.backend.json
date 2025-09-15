@@ -1,10 +1,12 @@
 {
   "name": "atendeai-2.0-backend",
-  "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
+  "description": "AtendeAI 2.0 Backend Server",
+  "main": "main-server.js",
   "scripts": {
-    "start": "node webhook-production.js"
+    "start": "node main-server.js",
+    "dev": "node main-server.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
