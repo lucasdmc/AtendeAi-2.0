@@ -1290,8 +1290,24 @@ const server = createServer((req, res) => {
           res.end(content);
           return;
         } else {
-          res.writeHead(404, { 'Content-Type': 'text/plain' });
-          res.end('Frontend not built. Run: npm run build');
+          // Frontend está no Lovable, retornar informações da API
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({
+            service: 'AtendeAI 2.0 Backend API',
+            version: '1.0.0',
+            status: 'running',
+            frontend: 'https://lovable.dev (Lovable)',
+            endpoints: {
+              health: '/health',
+              clinics: '/api/clinics',
+              users: '/api/users',
+              auth: '/api/auth/*',
+              conversations: '/api/conversations/*',
+              appointments: '/api/appointments/*',
+              whatsapp: '/api/whatsapp/*'
+            },
+            documentation: 'https://atendeai-20-production.up.railway.app/api/docs'
+          }, null, 2));
           return;
         }
       }
