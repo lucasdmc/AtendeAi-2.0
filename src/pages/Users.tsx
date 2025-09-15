@@ -362,14 +362,14 @@ export default function Users() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="edit-email">E-mail</Label>
-                  <Input id="edit-email" type="email" defaultValue={editingUser.email} />
+                  <Input id="edit-email" type="email" defaultValue={editingUser.login} />
                 </div>
               </div>
               
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="edit-phone">Telefone</Label>
-                  <Input id="edit-phone" defaultValue={editingUser.phone || ""} />
+                  <Input id="edit-phone" defaultValue={""} />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="edit-role">Função</Label>
@@ -388,7 +388,7 @@ export default function Users() {
               
               <div className="space-y-2">
                 <Label htmlFor="edit-clinic">Clínica</Label>
-                <Select defaultValue={editingUser.clinicId}>
+                <Select defaultValue={editingUser.clinic_id}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>

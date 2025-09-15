@@ -33,7 +33,7 @@ const CustomAuth = () => {
         
         toast({
           title: "Login realizado com sucesso!",
-          description: `Bem-vindo, ${response.data.user.firstName} ${response.data.user.lastName}`,
+          description: `Bem-vindo, ${response.data.user.name || response.data.user.login}`,
         });
 
         console.log('✅ Login bem-sucedido:', response.data.user);

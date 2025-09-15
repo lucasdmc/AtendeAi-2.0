@@ -92,7 +92,7 @@ export default function Context() {
   }
 
   // No clinic data
-  if (!clinicData?.data) {
+  if (!clinicData) {
     return (
       <div className="flex items-center justify-center h-64">
         <Building2 className="h-8 w-8 text-muted-foreground" />
@@ -101,7 +101,7 @@ export default function Context() {
     )
   }
 
-  const clinic = clinicData.data
+  const clinic = clinicData
   const contextJson = clinic.context_json || {}
   const clinicInfo = contextJson.clinica || {}
   const services = contextJson.servicos || {}

@@ -226,8 +226,8 @@ export default function Clinics() {
                     <div className="flex items-start space-x-2 max-w-xs">
                       <MapPin className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
                       <span className="text-sm line-clamp-2">
-                        {clinic.context_json?.clinica?.localizacao?.endereco_principal ? 
-                          `${clinic.context_json.clinica.localizacao.endereco_principal.logradouro}, ${clinic.context_json.clinica.localizacao.endereco_principal.numero} - ${clinic.context_json.clinica.localizacao.endereco_principal.bairro}` :
+                        {typeof clinic.context_json?.clinica?.localizacao?.endereco_principal === 'string' ? 
+                          clinic.context_json.clinica.localizacao.endereco_principal :
                           'Endereço não informado'
                         }
                       </span>
@@ -326,7 +326,7 @@ export default function Clinics() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="edit-whatsapp">WhatsApp</Label>
-                  <Input id="edit-whatsapp" defaultValue={editingClinic.whatsappNumber} />
+                  <Input id="edit-whatsapp" defaultValue={editingClinic.whatsapp_number} />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="edit-verify-token">WhatsApp Verify Token</Label>
@@ -336,7 +336,7 @@ export default function Clinics() {
               
               <div className="space-y-2">
                 <Label htmlFor="edit-webhook">Meta Webhook (Opcional)</Label>
-                <Input id="edit-webhook" defaultValue={editingClinic.metaWebhook || ""} />
+                <Input id="edit-webhook" defaultValue={editingClinic.meta_webhook_url || ""} />
               </div>
 
               <div className="space-y-2">

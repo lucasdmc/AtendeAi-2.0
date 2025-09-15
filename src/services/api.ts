@@ -588,7 +588,7 @@ export const conversationApi = {
   },
 
   async clearUserMemory(clinicId: string, patientPhone: string) {
-    return apiClient.delete<{
+    return apiClient.post<{
       success: boolean;
     }>('conversations', '/api/conversation/memory/clear', { 
       clinic_id: clinicId, 

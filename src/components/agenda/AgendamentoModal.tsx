@@ -36,9 +36,7 @@ import { AgendaFlag, AgendamentoForm } from '@/types/agenda';
 
 const formSchema = z.object({
   paciente_nome: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres'),
-  data_consulta: z.date({
-    required_error: 'Data da consulta é obrigatória',
-  }),
+  data_consulta: z.date(),
   horario_inicio: z.string().min(1, 'Horário de início é obrigatório'),
   horario_fim: z.string().min(1, 'Horário de fim é obrigatório'),
   flag_id: z.string().min(1, 'Tipo de consulta é obrigatório'),

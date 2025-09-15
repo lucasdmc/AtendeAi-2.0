@@ -5,8 +5,8 @@ interface Clinic {
   id: string;
   name: string;
   whatsapp_number: string;
-  meta_webhook_url: string;
-  whatsapp_id: string;
+  meta_webhook_url?: string;
+  whatsapp_id?: string;
   context_json: {
     clinica: {
       informacoes_basicas: {
