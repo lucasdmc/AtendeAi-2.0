@@ -1,5 +1,10 @@
 import { createClient } from '@supabase/supabase-js';
 
+// Polyfill para global object - necessário para o Supabase funcionar
+if (typeof global === 'undefined') {
+  (window as any).global = globalThis;
+}
+
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "https://kytphnasmdvebmdvvwtx.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt5dHBobmFzbWR2ZWJtZHZ2d3R4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2MjI4MTAsImV4cCI6MjA3MTE5ODgxMH0.gfH3VNqxLZWAbjlrlk44VrBdyF1QKv7CyOSLmhFwbqA";
 
