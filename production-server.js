@@ -415,9 +415,9 @@ async function handleClinicRoutes(req, res, pathname) {
       // Soft delete - marcar como deleted
       const result = await pool.query(`
         UPDATE atendeai.clinics 
-        SET status = 'deleted', updated_at = NOW()
+        SET status = 'deleted'
         WHERE id = $1 AND status != 'deleted'
-        RETURNING id, name, whatsapp_id_number, status, created_at, updated_at
+        RETURNING id, name, whatsapp_id_number, status, created_at
       `, [clinicId]);
       
       if (result.rows.length === 0) {

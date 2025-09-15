@@ -57,46 +57,23 @@ export const ClinicProvider = ({ children }: ClinicProviderProps) => {
   // Determine if user can select clinic (admin_lify can see all clinics)
   const canSelectClinic = user?.user_metadata?.role === 'admin_lify' || user?.user_metadata?.role === 'suporte_lify';
   
-  // Debug logs
-  console.log('🔍 ClinicContext Debug:', {
-    user: user,
-    userRole: user?.user_metadata?.role,
-    canSelectClinic: canSelectClinic,
-    isAdminLify: isAdminLify()
-  });
   
   // Available clinics based on user role
   const availableClinics = canSelectClinic 
     ? clinics.filter(clinic => clinic.status === 'active')
     : clinics.filter(clinic => clinic.id === user?.clinic_id && clinic.status === 'active');
 
-  // Debug available clinics
-  console.log('🔍 Available Clinics Debug:', {
-    canSelectClinic,
-    totalClinics: clinics.length,
-    availableClinics: availableClinics.length,
-    userClinicId: user?.clinic_id,
-    availableClinicsList: availableClinics.map(c => ({ id: c.id, name: c.name, status: c.status }))
-  });
 
   // Carregar clínicas da API real do microserviço
   useEffect(() => {
     const fetchClinics = async () => {
       setIsLoading(true);
       try {
-        console.log('🔄 Carregando clínicas...');
         const data = await clinicApi.getClinics();
-        console.log('✅ Clínicas carregadas:', data);
-        console.log('📊 Dados das clínicas:', {
-          total: data?.length || 0,
-          active: data?.filter(c => c.status === 'active').length || 0,
-          clinics: data?.map(c => ({ id: c.id, name: c.name, status: c.status })) || []
-        });
         setClinics(data);
         
         // Selecionar clínica baseada no role do usuário
         if (canSelectClinic) {
-          console.log('👤 Usuário pode selecionar clínica');
           // Admin_lify: selecionar primeira clínica ativa se não houver seleção anterior
           const savedClinic = localStorage.getItem('selectedClinic');
           if (savedClinic) {
@@ -104,12 +81,10 @@ export const ClinicProvider = ({ children }: ClinicProviderProps) => {
               const parsedClinic = JSON.parse(savedClinic);
               const clinicExists = data.find((clinic: Clinic) => clinic.id === parsedClinic.id);
               if (clinicExists) {
-                console.log('🏥 Clínica salva encontrada:', clinicExists);
                 setSelectedClinic(clinicExists);
               } else {
                 const firstActiveClinic = data.find((clinic: Clinic) => clinic.status === 'active');
                 if (firstActiveClinic) {
-                  console.log('🏥 Primeira clínica ativa selecionada:', firstActiveClinic);
                   setSelectedClinic(firstActiveClinic);
                 }
               }
@@ -117,30 +92,24 @@ export const ClinicProvider = ({ children }: ClinicProviderProps) => {
               console.error('Erro ao carregar clínica salva:', error);
               const firstActiveClinic = data.find((clinic: Clinic) => clinic.status === 'active');
               if (firstActiveClinic) {
-                console.log('🏥 Primeira clínica ativa selecionada (fallback):', firstActiveClinic);
                 setSelectedClinic(firstActiveClinic);
               }
             }
           } else {
             const firstActiveClinic = data.find((clinic: Clinic) => clinic.status === 'active');
             if (firstActiveClinic) {
-              console.log('🏥 Primeira clínica ativa selecionada (sem salvamento):', firstActiveClinic);
               setSelectedClinic(firstActiveClinic);
             }
           }
         } else {
-          console.log('👤 Usuário não pode selecionar clínica, usando clínica do usuário');
           // Usuário normal: selecionar sua própria clínica
           const userClinic = data.find((clinic: Clinic) => clinic.id === user?.clinic_id);
           if (userClinic) {
-            console.log('🏥 Clínica do usuário selecionada:', userClinic);
             setSelectedClinic(userClinic);
-          } else {
-            console.log('❌ Clínica do usuário não encontrada');
           }
         }
       } catch (error) {
-        console.error('❌ Erro ao carregar clínicas:', error);
+        console.error('Erro ao carregar clínicas:', error);
       } finally {
         setIsLoading(false);
       }

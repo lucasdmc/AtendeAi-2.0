@@ -63,11 +63,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('🔍 Auth State Change:', { event, session, user: session?.user });
         setSession(session);
-        const userData = session?.user as CustomUser || null;
-        console.log('🔍 Setting User:', { userData, userMetadata: userData?.user_metadata });
-        setUser(userData);
+        setUser(session?.user as CustomUser || null);
         setIsLoading(false);
       }
     );
@@ -78,14 +75,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const isAuthenticated = !!user;
 
   const isAdminLify = () => {
-    const isAdmin = user?.user_metadata?.role === 'admin_lify';
-    console.log('🔍 isAdminLify Debug:', {
-      user: user,
-      userMetadata: user?.user_metadata,
-      role: user?.user_metadata?.role,
-      isAdmin: isAdmin
-    });
-    return isAdmin;
+    return user?.user_metadata?.role === 'admin_lify';
   };
 
   // Permission checks based on user role
