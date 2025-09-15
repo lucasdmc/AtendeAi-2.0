@@ -11,15 +11,22 @@ if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
   });
 }
 
-export const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
-  auth: {
-    storage: typeof window !== 'undefined' ? localStorage : undefined,
-    persistSession: true,
-    autoRefreshToken: true,
-  },
-  global: {
-    headers: {
-      'Content-Type': 'application/json',
+// Configuração mínima e robusta do Supabase
+let supabase;
+
+try {
+  supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+    auth: {
+      storage: typeof window !== 'undefined' ? localStorage : undefined,
+      persistSession: true,
+      autoRefreshToken: true,
     },
-  },
-});
+  });
+  console.log('✅ Cliente Supabase criado com sucesso');
+} catch (error) {
+  console.error('❌ Erro ao criar cliente Supabase:', error);
+  // Fallback com configuração mínima
+  supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+}
+
+export { supabase };
