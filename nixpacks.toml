@@ -1,5 +1,5 @@
 [start]
-cmd = "node main-server.js"
+cmd = "node webhook-production.js"
 
 [variables]
 NODE_ENV = "production"
