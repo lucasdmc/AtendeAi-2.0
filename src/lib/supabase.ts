@@ -9,6 +9,8 @@ if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
     SUPABASE_URL: !!SUPABASE_URL,
     SUPABASE_PUBLISHABLE_KEY: !!SUPABASE_PUBLISHABLE_KEY
   });
+} else {
+  console.log('✅ Variáveis do Supabase configuradas corretamente');
 }
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {

@@ -24,6 +24,12 @@ export default defineConfig(({ mode }) => ({
     global: 'globalThis',
     'process.env': {},
   },
+  optimizeDeps: {
+    include: ['@supabase/supabase-js'],
+  },
+  esbuild: {
+    target: 'es2020',
+  },
   build: {
     rollupOptions: {
       output: {

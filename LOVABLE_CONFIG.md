@@ -37,6 +37,26 @@ VITE_GOOGLE_CLIENT_ID=367439444210-phr1e6oiu8hnh5vm57lpoud5lhrdda2o.apps.googleu
 VITE_GOOGLE_REDIRECT_URI=https://atendeai-20-production.up.railway.app/auth/google/callback
 ```
 
+## 🚨 **CORREÇÃO DO ERRO DE HEADERS**
+
+Se você estiver vendo o erro `TypeError: undefined is not an object (evaluating 'b.global.headers')`, siga estes passos:
+
+### **1. Verificar Variáveis de Ambiente**
+Certifique-se de que as variáveis `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY` estão configuradas no Lovable.
+
+### **2. Limpar Cache do Navegador**
+- Pressione `Ctrl+Shift+R` (ou `Cmd+Shift+R` no Mac)
+- Ou abra as ferramentas de desenvolvedor e clique com botão direito no botão de atualizar
+
+### **3. Verificar Console do Navegador**
+Abra as ferramentas de desenvolvedor (F12) e verifique se há mensagens de erro relacionadas ao Supabase.
+
+### **4. Reiniciar o Servidor de Desenvolvimento**
+Se estiver rodando localmente, pare e reinicie o servidor:
+```bash
+npm run dev
+```
+
 ## 🧪 **ENDPOINTS DISPONÍVEIS**
 
 ### **✅ TESTADOS E FUNCIONANDO**

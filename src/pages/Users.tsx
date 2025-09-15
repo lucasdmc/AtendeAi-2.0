@@ -84,7 +84,12 @@ export default function Users() {
     return (
       <div className="flex items-center justify-center h-64">
         <Building2 className="h-8 w-8 text-muted-foreground" />
-        <span className="ml-2 text-muted-foreground">Nenhuma clínica selecionada</span>
+        <div className="ml-2 text-center">
+          <p className="text-muted-foreground">Nenhuma clínica selecionada</p>
+          <p className="text-sm text-muted-foreground mt-1">
+            Selecione uma clínica para visualizar os usuários
+          </p>
+        </div>
       </div>
     )
   }

@@ -116,6 +116,28 @@ export default function Clinics() {
     setIsJsonDialogOpen(true)
   }
 
+  const handleDelete = async (clinic: Clinic) => {
+    if (window.confirm(`Tem certeza que deseja deletar a clínica "${clinic.name}"? Esta ação não pode ser desfeita.`)) {
+      try {
+        // TODO: Implementar chamada real para API quando estiver disponível
+        console.log('Deletando clínica:', clinic.id)
+        
+        // Simular delay da API
+        await new Promise(resolve => setTimeout(resolve, 1000))
+        
+        // Recarregar lista de clínicas
+        await refetchClinics()
+        
+        // Mostrar notificação de sucesso
+        alert('Clínica deletada com sucesso!')
+        
+      } catch (error) {
+        console.error('Erro ao deletar clínica:', error)
+        alert('Erro ao deletar clínica. Tente novamente.')
+      }
+    }
+  }
+
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (file && file.type === "application/json") {
@@ -355,7 +377,12 @@ export default function Clinics() {
                        <Button variant="ghost" size="sm" onClick={() => handleEdit(clinic)}>
                          <Edit className="h-4 w-4" />
                        </Button>
-                       <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive">
+                       <Button 
+                         variant="ghost" 
+                         size="sm" 
+                         className="text-destructive hover:text-destructive"
+                         onClick={() => handleDelete(clinic)}
+                       >
                          <Trash2 className="h-4 w-4" />
                        </Button>
                      </div>
