@@ -3,13 +3,13 @@
 
 import { z } from 'zod';
 
-// Microservices URLs - Servidor Integrado (Produção)
+// Microservices URLs - Configuração direta (sem variáveis VITE_*)
 const MICROSERVICES_URLS = {
   // URLs para servidor integrado - produção no Railway
-  clinics: import.meta.env.VITE_CLINIC_SERVICE_URL || 'https://atendeai-20-production.up.railway.app/api/clinics',
-  conversations: import.meta.env.VITE_CONVERSATION_SERVICE_URL || 'https://atendeai-20-production.up.railway.app/api/conversations',
-  appointments: import.meta.env.VITE_APPOINTMENT_SERVICE_URL || 'https://atendeai-20-production.up.railway.app/api/appointments',
-  whatsapp: import.meta.env.VITE_WHATSAPP_SERVICE_URL || 'https://atendeai-20-production.up.railway.app/api/whatsapp',
+  clinics: 'https://atendeai-20-production.up.railway.app/api/clinics',
+  conversations: 'https://atendeai-20-production.up.railway.app/api/conversations',
+  appointments: 'https://atendeai-20-production.up.railway.app/api/appointments',
+  whatsapp: 'https://atendeai-20-production.up.railway.app/api/whatsapp',
 };
 
 // API Configuration
@@ -394,7 +394,7 @@ export const userApi = {
 
   async getUser(id: string) {
     try {
-      const response = await apiClient.get<{ success: boolean; data: User }>('auth', `/api/users/${id}`);
+      const response = await apiClient.get<{ success: boolean; data: User }>('clinics', `/api/users/${id}`);
       if (response.success) {
         return UserSchema.parse(response.data);
       }
@@ -409,7 +409,7 @@ export const userApi = {
     try {
       // Validate input data
       const validatedData = UserSchema.partial().parse(user);
-      const response = await apiClient.post<{ success: boolean; data: User }>('auth', '/api/users', validatedData);
+      const response = await apiClient.post<{ success: boolean; data: User }>('clinics', '/api/users', validatedData);
       if (response.success) {
         return UserSchema.parse(response.data);
       }
@@ -424,7 +424,7 @@ export const userApi = {
     try {
       // Validate input data
       const validatedData = UserSchema.partial().parse(user);
-      const response = await apiClient.put<{ success: boolean; data: User }>('auth', `/api/users/${id}`, validatedData);
+      const response = await apiClient.put<{ success: boolean; data: User }>('clinics', `/api/users/${id}`, validatedData);
       if (response.success) {
         return UserSchema.parse(response.data);
       }
@@ -437,7 +437,7 @@ export const userApi = {
 
   async deleteUser(id: string) {
     try {
-      const response = await apiClient.delete<{ success: boolean }>('auth', `/api/users/${id}`);
+      const response = await apiClient.delete<{ success: boolean }>('clinics', `/api/users/${id}`);
       if (!response.success) {
         throw new Error('Failed to delete user');
       }

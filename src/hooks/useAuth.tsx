@@ -2,7 +2,7 @@ import { useState, useEffect, createContext, useContext, ReactNode, useMemo } fr
 import { supabase } from '@/lib/supabase';
 import type { User, Session } from '@supabase/supabase-js';
 
-interface CustomUser extends User {
+interface CustomUser extends Omit<User, 'user_metadata'> {
   clinic_id?: string;
   role?: string;
   user_metadata?: {
