@@ -3,6 +3,7 @@ import { Agendamento, AgendaFlag, AgendaView } from '@/types/agenda';
 import { addDays, startOfWeek, format, isSameDay, isSameMonth, isSameYear, differenceInDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useAppointments } from '@/hooks/useApi';
+import type { Appointment } from '@/services/api';
 import { useClinic as useClinicContext } from '@/contexts/ClinicContext';
 
 // Default flags - serão carregadas do backend
@@ -121,7 +122,7 @@ export const useAgenda = () => {
       const fim = new Date(`2000-01-01T${agendamento.horario_fim}`);
       const duration = Math.round((fim.getTime() - inicio.getTime()) / 60000); // em minutos
 
-      const appointmentData = {
+      const appointmentData: Partial<Appointment> = {
         clinic_id: selectedClinic.id,
         customer_info: {
           name: agendamento.paciente_nome,
