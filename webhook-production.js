@@ -137,7 +137,11 @@ async function handleAuthRoutes(req, res, pathname) {
       // Login real com banco de dados
       // Pool já importado no topo
       const pool = new Pool({
-        connectionString: config.database.url,
+        host: 'db.kytphnasmdvebmdvvwtx.supabase.co',
+        port: 5432,
+        user: 'postgres',
+        password: 'Supa201294base',
+        database: 'postgres',
         ssl: { rejectUnauthorized: false }
       });
       
@@ -325,7 +329,11 @@ async function handleClinicRoutes(req, res, pathname) {
     try {
       // Pool já importado no topo
       const pool = new Pool({
-        connectionString: config.database.url,
+        host: 'db.kytphnasmdvebmdvvwtx.supabase.co',
+        port: 5432,
+        user: 'postgres',
+        password: 'Supa201294base',
+        database: 'postgres',
         ssl: { rejectUnauthorized: false }
       });
       
@@ -411,7 +419,11 @@ async function handleClinicRoutes(req, res, pathname) {
       const clinicId = pathname.split('/')[3];
       // Pool já importado no topo
       const pool = new Pool({
-        connectionString: config.database.url,
+        host: 'db.kytphnasmdvebmdvvwtx.supabase.co',
+        port: 5432,
+        user: 'postgres',
+        password: 'Supa201294base',
+        database: 'postgres',
         ssl: { rejectUnauthorized: false }
       });
       
@@ -684,7 +696,11 @@ async function handleUserRoutes(req, res, pathname) {
       const userId = pathname.split('/')[3];
       // Pool já importado no topo
       const pool = new Pool({
-        connectionString: config.database.url,
+        host: 'db.kytphnasmdvebmdvvwtx.supabase.co',
+        port: 5432,
+        user: 'postgres',
+        password: 'Supa201294base',
+        database: 'postgres',
         ssl: { rejectUnauthorized: false }
       });
       
@@ -749,7 +765,11 @@ async function handleUserRoutes(req, res, pathname) {
       
       // Pool já importado no topo
       const pool = new Pool({
-        connectionString: config.database.url,
+        host: 'db.kytphnasmdvebmdvvwtx.supabase.co',
+        port: 5432,
+        user: 'postgres',
+        password: 'Supa201294base',
+        database: 'postgres',
         ssl: { rejectUnauthorized: false }
       });
       
