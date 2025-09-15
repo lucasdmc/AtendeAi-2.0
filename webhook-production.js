@@ -35,7 +35,13 @@ const config = {
     refreshTokenExpiry: '7d'
   },
   database: {
-    url: process.env.DATABASE_URL || 'postgresql://postgres:Supa201294base@db.kytphnasmdvebmdvvwtx.supabase.co:5432/postgres'
+    url: process.env.DATABASE_URL || 'postgresql://postgres:Supa201294base@db.kytphnasmdvebmdvvwtx.supabase.co:5432/postgres',
+    // Force IPv4 connection
+    host: 'db.kytphnasmdvebmdvvwtx.supabase.co',
+    port: 5432,
+    user: 'postgres',
+    password: 'Supa201294base',
+    database: 'postgres'
   },
   supabase: {
     url: process.env.SUPABASE_URL || 'https://kytphnasmdvebmdvvwtx.supabase.co',
@@ -137,11 +143,11 @@ async function handleAuthRoutes(req, res, pathname) {
       // Login real com banco de dados
       // Pool já importado no topo
       const pool = new Pool({
-        host: 'db.kytphnasmdvebmdvvwtx.supabase.co',
-        port: 5432,
-        user: 'postgres',
-        password: 'Supa201294base',
-        database: 'postgres',
+        host: config.database.host,
+        port: config.database.port,
+        user: config.database.user,
+        password: config.database.password,
+        database: config.database.database,
         ssl: { rejectUnauthorized: false }
       });
       
@@ -329,11 +335,11 @@ async function handleClinicRoutes(req, res, pathname) {
     try {
       // Pool já importado no topo
       const pool = new Pool({
-        host: 'db.kytphnasmdvebmdvvwtx.supabase.co',
-        port: 5432,
-        user: 'postgres',
-        password: 'Supa201294base',
-        database: 'postgres',
+        host: config.database.host,
+        port: config.database.port,
+        user: config.database.user,
+        password: config.database.password,
+        database: config.database.database,
         ssl: { rejectUnauthorized: false }
       });
       
@@ -419,11 +425,11 @@ async function handleClinicRoutes(req, res, pathname) {
       const clinicId = pathname.split('/')[3];
       // Pool já importado no topo
       const pool = new Pool({
-        host: 'db.kytphnasmdvebmdvvwtx.supabase.co',
-        port: 5432,
-        user: 'postgres',
-        password: 'Supa201294base',
-        database: 'postgres',
+        host: config.database.host,
+        port: config.database.port,
+        user: config.database.user,
+        password: config.database.password,
+        database: config.database.database,
         ssl: { rejectUnauthorized: false }
       });
       
@@ -696,11 +702,11 @@ async function handleUserRoutes(req, res, pathname) {
       const userId = pathname.split('/')[3];
       // Pool já importado no topo
       const pool = new Pool({
-        host: 'db.kytphnasmdvebmdvvwtx.supabase.co',
-        port: 5432,
-        user: 'postgres',
-        password: 'Supa201294base',
-        database: 'postgres',
+        host: config.database.host,
+        port: config.database.port,
+        user: config.database.user,
+        password: config.database.password,
+        database: config.database.database,
         ssl: { rejectUnauthorized: false }
       });
       
@@ -765,11 +771,11 @@ async function handleUserRoutes(req, res, pathname) {
       
       // Pool já importado no topo
       const pool = new Pool({
-        host: 'db.kytphnasmdvebmdvvwtx.supabase.co',
-        port: 5432,
-        user: 'postgres',
-        password: 'Supa201294base',
-        database: 'postgres',
+        host: config.database.host,
+        port: config.database.port,
+        user: config.database.user,
+        password: config.database.password,
+        database: config.database.database,
         ssl: { rejectUnauthorized: false }
       });
       
