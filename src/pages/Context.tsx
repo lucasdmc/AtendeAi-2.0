@@ -102,11 +102,11 @@ export default function Context() {
   }
 
   const clinic = clinicData
-  const contextJson = clinic.context_json || {}
+  const contextJson: any = clinic.context_json || {}
   const clinicInfo = contextJson.clinica || {}
   const services = contextJson.servicos || {}
-  const professionals = professionalsData?.data || []
-  const clinicServices = servicesData?.data || []
+  const professionals = professionalsData || []
+  const clinicServices = servicesData || []
 
   return (
     <div className="space-y-6">
