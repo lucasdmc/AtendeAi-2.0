@@ -1103,6 +1103,18 @@ const server = createServer((req, res) => {
 
   console.log(`${method} ${pathname}`);
 
+  // TESTE BÁSICO - VERIFICAR SE O RAILWAY ESTÁ ATUALIZANDO
+  if (method === 'GET' && pathname === '/test-railway-update') {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ 
+      success: true, 
+      message: 'Railway está atualizado!', 
+      timestamp: new Date().toISOString(),
+      version: 'v1.0.0-test'
+    }));
+    return;
+  }
+
   // OPTIONS preflight
   if (method === 'OPTIONS') {
     res.writeHead(200);
