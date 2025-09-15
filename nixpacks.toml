@@ -6,6 +6,6 @@ NODE_ENV = "production"
 
 [build]
 cmds = [
-  "npm ci",
+  "npm install",
   "npm run build"
 ]
