@@ -321,6 +321,49 @@ async function handleClinicRoutes(req, res, pathname) {
         error: 'Internal server error'
       });
     }
+  } else if (method === 'POST' && pathname === '/api/clinics') {
+    // Criar nova clínica - DADOS REAIS DO BANCO
+    try {
+      const body = await getRequestBody(req);
+      const { name, whatsapp_id_number, status = 'active' } = body;
+      
+      if (!name) {
+        sendJSONResponse(res, 400, {
+          success: false,
+          error: 'Nome da clínica é obrigatório'
+        });
+        return;
+      }
+      
+      // Pool já importado no topo
+      const pool = new Pool({
+        connectionString: config.database.connectionString,
+        ssl: { rejectUnauthorized: false },
+        connectionTimeoutMillis: config.database.connectionTimeout,
+        idleTimeoutMillis: config.database.idleTimeout,
+        max: config.database.poolSize
+      });
+      
+      const result = await pool.query(`
+        INSERT INTO atendeai.clinics (name, whatsapp_id_number, status)
+        VALUES ($1, $2, $3)
+        RETURNING id, name, whatsapp_id_number, status, created_at, updated_at
+      `, [name, whatsapp_id_number, status]);
+      
+      sendJSONResponse(res, 201, {
+        success: true,
+        data: result.rows[0],
+        message: 'Clínica criada com sucesso'
+      });
+      
+      await pool.end();
+    } catch (error) {
+      console.error('Error creating clinic:', error);
+      sendJSONResponse(res, 500, {
+        success: false,
+        error: 'Internal server error'
+      });
+    }
   } else if (method === 'GET' && pathname.startsWith('/api/clinics/')) {
     // Buscar clínica específica - DADOS REAIS DO BANCO
     try {
