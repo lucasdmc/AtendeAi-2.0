@@ -318,6 +318,7 @@ async function handleAuthRoutes(req, res, pathname) {
 // Clinic Service Handlers
 async function handleClinicRoutes(req, res, pathname) {
   const method = req.method;
+  console.log(`🔍 DEBUG: handleClinicRoutes called - Method: ${method}, Path: ${pathname}`);
   
   if (method === 'GET' && pathname === '/api/clinics') {
     // DADOS REAIS DO BANCO - SEM MOCKADOS
@@ -349,6 +350,7 @@ async function handleClinicRoutes(req, res, pathname) {
     }
   } else if (method === 'POST' && pathname === '/api/clinics') {
     // Criar nova clínica - DADOS REAIS DO BANCO
+    console.log(`🔍 DEBUG: POST /api/clinics endpoint reached`);
     try {
       const body = await getRequestBody(req);
       const { name, whatsapp_number, status = 'active', context_json = {} } = body;
