@@ -1192,6 +1192,7 @@ const server = createServer((req, res) => {
     handleAuthRoutes(req, res, pathname);
     return;
   } else if (pathname.startsWith('/api/clinics')) {
+    console.log(`🔍 DEBUG: Routing to handleClinicRoutes - Method: ${req.method}, Path: ${pathname}`);
     handleClinicRoutes(req, res, pathname);
     return;
   } else if (pathname.startsWith('/api/conversations')) {
