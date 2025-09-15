@@ -325,9 +325,9 @@ export const clinicApi = {
     try {
       const response = await apiClient.get<{ success: boolean; data: Clinic[] }>('clinics', '');
       if (response.success) {
-        // Validate each clinic with Zod
-        const validatedClinics = response.data.map(clinic => ClinicSchema.parse(clinic));
-        return validatedClinics;
+        // WORKAROUND: Skip Zod validation temporarily due to Railway cache issue
+        // TODO: Remove this workaround once Railway cache is fixed
+        return response.data;
       }
       throw new Error('Failed to fetch clinics');
     } catch (error) {
