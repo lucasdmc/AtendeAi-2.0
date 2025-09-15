@@ -4,14 +4,20 @@ FROM node:22-alpine
 # Set working directory
 WORKDIR /app
 
-# Copy backend package file
-COPY package.backend.json ./package.json
+# Copy package files
+COPY package*.json ./
 
-# Install dependencies
+# Install all dependencies (including dev for build)
 RUN npm install
 
-# Copy only backend files
-COPY webhook-production.js ./
+# Copy source code
+COPY . .
+
+# Build the frontend
+RUN npm run build
+
+# Install only production dependencies for runtime
+RUN npm ci --omit=dev
 
 # Expose port
 EXPOSE 8080
