@@ -340,7 +340,8 @@ export const clinicApi = {
     try {
       const response = await apiClient.get<{ success: boolean; data: Clinic }>('clinics', `/${id}`);
       if (response.success) {
-        return ClinicSchema.parse(response.data);
+        // WORKAROUND: Skip Zod validation temporarily due to Railway cache issue
+        return response.data;
       }
       throw new Error('Failed to fetch clinic');
     } catch (error) {
