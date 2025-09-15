@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, LogIn } from "lucide-react";
+import { supabase } from "@/lib/supabase";
 
 const CustomAuth = () => {
   const navigate = useNavigate();
@@ -20,22 +21,27 @@ const CustomAuth = () => {
     setLoading(true);
 
     try {
-      console.log('🔐 Tentando login com:', { email, clinicId });
+      console.log('🔐 Tentando login com Supabase:', { email });
       
-      const response = await authApi.login(email, password, clinicId);
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
       
-      if (response.success) {
-        // Salvar token e dados do usuário
-        localStorage.setItem('auth_token', response.data.accessToken);
-        localStorage.setItem('user', JSON.stringify(response.data.user));
+      if (error) {
+        throw error;
+      }
+      
+      if (data.user) {
+        // Salvar dados do usuário
         localStorage.setItem('selectedClinic', JSON.stringify({ id: clinicId }));
         
         toast({
           title: "Login realizado com sucesso!",
-          description: `Bem-vindo, ${response.data.user.name || response.data.user.login}`,
+          description: `Bem-vindo, ${data.user.email}`,
         });
 
-        console.log('✅ Login bem-sucedido:', response.data.user);
+        console.log('✅ Login bem-sucedido:', data.user);
         
         // Redirecionar para dashboard
         navigate("/");
