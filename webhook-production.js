@@ -248,6 +248,37 @@ async function handleAuthRoutes(req, res, pathname) {
         error: 'Internal server error',
       });
     }
+  } else if (method === 'GET' && pathname === '/api/auth/test') {
+    // Endpoint de teste para debug
+    try {
+      const pool = new Pool({
+        connectionString: config.database.url,
+        ssl: { rejectUnauthorized: false }
+      });
+      
+      // Teste simples de busca de usuário
+      const userResult = await pool.query(`
+        SELECT u.id, u.email, u.first_name, u.last_name, u.status, u.clinic_id
+        FROM atendeai.users u
+        WHERE u.email = 'lucas@lify.com'
+      `);
+      
+      await pool.end();
+      
+      sendJSONResponse(res, 200, {
+        success: true,
+        data: {
+          userFound: userResult.rows.length > 0,
+          user: userResult.rows[0] || null,
+          totalUsers: userResult.rows.length
+        }
+      });
+    } catch (error) {
+      sendJSONResponse(res, 500, {
+        success: false,
+        error: error.message
+      });
+    }
   } else if (method === 'GET' && pathname === '/api/auth/validate') {
     const user = authenticateToken(req);
     if (user) {
