@@ -24,15 +24,6 @@ export default defineConfig(({ mode }) => ({
     global: 'globalThis',
     'process.env': {},
   },
-  build: {
-    rollupOptions: {
-      output: {
-        entryFileNames: `assets/index-[hash].js`,
-        chunkFileNames: `assets/[name]-[hash].js`,
-        assetFileNames: `assets/[name]-[hash].[ext]`
-      }
-    }
-  }
   optimizeDeps: {
     include: ['@supabase/supabase-js'],
   },
