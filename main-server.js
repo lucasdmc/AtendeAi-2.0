@@ -380,7 +380,7 @@ async function handleClinicRoutes(req, res, pathname) {
       const result = await pool.query(`
         SELECT id, name, whatsapp_id_number, status, created_at, updated_at
         FROM atendeai.clinics
-        WHERE id = $1
+        WHERE id = $1 AND status = 'active'
       `, [clinicId]);
       
       if (result.rows.length === 0) {
@@ -432,7 +432,7 @@ async function handleClinicRoutes(req, res, pathname) {
       const result = await pool.query(`
         UPDATE atendeai.clinics 
         SET name = $1, whatsapp_id_number = $2, status = $3, updated_at = NOW()
-        WHERE id = $4 AND status != 'deleted'
+        WHERE id = $4 AND status = 'active'
         RETURNING id, name, whatsapp_id_number, status, created_at, updated_at
       `, [name, whatsapp_id_number, status || 'active', clinicId]);
       
@@ -473,12 +473,12 @@ async function handleClinicRoutes(req, res, pathname) {
         max: config.database.poolSize
       });
       
-      // Soft delete - marcar como deleted
+      // Soft delete - marcar como inactive
       console.log('Tentando deletar clínica:', clinicId);
       const result = await pool.query(`
         UPDATE atendeai.clinics 
-        SET status = 'deleted'
-        WHERE id = $1
+        SET status = 'inactive'
+        WHERE id = $1 AND status = 'active'
         RETURNING id, name, whatsapp_id_number, status
       `, [clinicId]);
       console.log('Resultado da query:', result.rows);
@@ -711,6 +711,7 @@ async function handleUserRoutes(req, res, pathname) {
         FROM atendeai.users u
         LEFT JOIN atendeai.user_roles ur ON u.id = ur.user_id
         LEFT JOIN atendeai.roles r ON ur.role_id = r.id
+        WHERE u.status = 'active'
         GROUP BY u.id, u.email, u.first_name, u.last_name, u.status, u.clinic_id, u.created_at, u.updated_at
       `);
       
@@ -763,7 +764,7 @@ async function handleUserRoutes(req, res, pathname) {
         FROM atendeai.users u
         LEFT JOIN atendeai.user_roles ur ON u.id = ur.user_id
         LEFT JOIN atendeai.roles r ON ur.role_id = r.id
-        WHERE u.id = $1
+        WHERE u.id = $1 AND u.status = 'active'
         GROUP BY u.id, u.email, u.first_name, u.last_name, u.status, u.clinic_id, u.created_at, u.updated_at
       `, [userId]);
       
@@ -805,7 +806,14 @@ async function handleUserRoutes(req, res, pathname) {
     // Criar usuário - DADOS REAIS DO BANCO
     try {
       const body = await getRequestBody(req);
-      const { email, password, first_name, last_name, clinic_id, role } = body;
+      const { name, login, role, clinic_id, status } = body;
+      
+      // Separar nome em first_name e last_name
+      const nameParts = name ? name.split(' ') : ['', ''];
+      const first_name = nameParts[0] || '';
+      const last_name = nameParts.slice(1).join(' ') || '';
+      const email = login;
+      const password = 'senha123'; // Senha padrão temporária
       
       // Pool já importado no topo
       const pool = new Pool({
@@ -857,6 +865,122 @@ async function handleUserRoutes(req, res, pathname) {
       await pool.end();
     } catch (error) {
       console.error('Error creating user:', error);
+      sendJSONResponse(res, 500, {
+        success: false,
+        error: 'Internal server error'
+      });
+    }
+  } else if (method === 'PUT' && pathname.startsWith('/api/users/')) {
+    // Atualizar usuário - DADOS REAIS DO BANCO
+    try {
+      const userId = pathname.split('/')[3];
+      const body = await getRequestBody(req);
+      const { name, login, role, status } = body;
+      
+      // Pool já importado no topo
+      const pool = new Pool({
+        connectionString: config.database.connectionString,
+        ssl: { rejectUnauthorized: false },
+        connectionTimeoutMillis: config.database.connectionTimeout,
+        idleTimeoutMillis: config.database.idleTimeout,
+        max: config.database.poolSize
+      });
+      
+      // Separar nome em first_name e last_name
+      const nameParts = name ? name.split(' ') : ['', ''];
+      const firstName = nameParts[0] || '';
+      const lastName = nameParts.slice(1).join(' ') || '';
+      
+      const result = await pool.query(`
+        UPDATE atendeai.users 
+        SET email = $1, first_name = $2, last_name = $3, status = $4, updated_at = NOW()
+        WHERE id = $5 AND status = 'active'
+        RETURNING id, email, first_name, last_name, status, clinic_id, created_at, updated_at
+      `, [login, firstName, lastName, status || 'active', userId]);
+      
+      if (result.rows.length === 0) {
+        sendJSONResponse(res, 404, {
+          success: false,
+          error: 'User not found'
+        });
+        await pool.end();
+        return;
+      }
+      
+      const user = result.rows[0];
+      const userData = {
+        id: user.id,
+        name: `${user.first_name} ${user.last_name}`,
+        login: user.email,
+        role: role || 'atendente',
+        clinic_id: user.clinic_id,
+        status: user.status,
+        created_at: user.created_at,
+        updated_at: user.updated_at
+      };
+      
+      sendJSONResponse(res, 200, {
+        success: true,
+        data: userData,
+        message: 'Usuário atualizado com sucesso'
+      });
+      
+      await pool.end();
+    } catch (error) {
+      console.error('Error updating user:', error);
+      sendJSONResponse(res, 500, {
+        success: false,
+        error: 'Internal server error'
+      });
+    }
+  } else if (method === 'DELETE' && pathname.startsWith('/api/users/')) {
+    // Deletar usuário - DADOS REAIS DO BANCO
+    try {
+      const userId = pathname.split('/')[3];
+      
+      // Pool já importado no topo
+      const pool = new Pool({
+        connectionString: config.database.connectionString,
+        ssl: { rejectUnauthorized: false },
+        connectionTimeoutMillis: config.database.connectionTimeout,
+        idleTimeoutMillis: config.database.idleTimeout,
+        max: config.database.poolSize
+      });
+      
+      // Soft delete - marcar como inactive
+      const result = await pool.query(`
+        UPDATE atendeai.users 
+        SET status = 'inactive', updated_at = NOW()
+        WHERE id = $1 AND status = 'active'
+        RETURNING id, email, first_name, last_name, status
+      `, [userId]);
+      
+      if (result.rows.length === 0) {
+        sendJSONResponse(res, 404, {
+          success: false,
+          error: 'User not found or already deleted'
+        });
+        await pool.end();
+        return;
+      }
+      
+      const user = result.rows[0];
+      const userData = {
+        id: user.id,
+        name: `${user.first_name} ${user.last_name}`,
+        login: user.email,
+        status: user.status
+      };
+      
+      sendJSONResponse(res, 200, {
+        success: true,
+        data: userData,
+        message: 'Usuário deletado com sucesso'
+      });
+      
+      await pool.end();
+    } catch (error) {
+      console.error('Error deleting user:', error);
       sendJSONResponse(res, 500, {
         success: false,
         error: 'Internal server error'

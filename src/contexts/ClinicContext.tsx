@@ -5,10 +5,11 @@ import { clinicApi } from '@/services/api';
 interface Clinic {
   id: string;
   name: string;
-  whatsapp_number: string;
+  whatsapp_number?: string; // Campo opcional para compatibilidade
+  whatsapp_id_number?: string | null; // Campo da API real (pode ser null)
   meta_webhook_url?: string;
   whatsapp_id?: string;
-  context_json: {
+  context_json?: {
     clinica: {
       informacoes_basicas: {
         nome: string;
@@ -57,6 +58,13 @@ export const ClinicProvider = ({ children }: ClinicProviderProps) => {
   // Determine if user can select clinic (admin_lify can see all clinics)
   const canSelectClinic = user?.user_metadata?.role === 'admin_lify' || user?.user_metadata?.role === 'suporte_lify';
   
+  // Debug logs
+  console.log('🔍 ClinicContext Debug:', {
+    user: user ? { role: user.user_metadata?.role, clinic_id: user.clinic_id } : null,
+    canSelectClinic,
+    clinicsCount: clinics.length,
+    clinics: clinics.map(c => ({ id: c.id, name: c.name, status: c.status }))
+  });
   
   // Available clinics based on user role
   const availableClinics = canSelectClinic 

@@ -12,6 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useUsers } from "@/hooks/useApi"
 import { useClinic as useClinicContext } from "@/contexts/ClinicContext"
 import { useToast } from "@/hooks/use-toast"
+import { userApi } from "@/services/api"
 
 interface User {
   id: string
@@ -77,6 +78,113 @@ export default function Users() {
   const handleEdit = (user: User) => {
     setEditingUser(user)
     setIsEditDialogOpen(true)
+  }
+
+  const handleCreate = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    
+    try {
+      const formData = new FormData(e.currentTarget)
+      const userData = {
+        name: formData.get('name') as string,
+        login: formData.get('email') as string,
+        role: formData.get('role') as string,
+        clinic_id: selectedClinic?.id || '',
+        status: 'active'
+      }
+      
+      console.log('Criando usuário:', userData)
+      
+      await userApi.createUser(userData)
+      
+      // Recarregar lista de usuários
+      await refetchUsers()
+      
+      // Fechar modal e limpar formulário
+      setIsCreateDialogOpen(false)
+      e.currentTarget.reset()
+      
+      // Mostrar notificação de sucesso
+      toast({
+        title: "Sucesso",
+        description: "Usuário criado com sucesso!",
+      })
+      
+    } catch (error) {
+      console.error('Erro ao criar usuário:', error)
+      toast({
+        title: "Erro",
+        description: "Erro ao criar usuário. Verifique os dados e tente novamente.",
+        variant: "destructive"
+      })
+    }
+  }
+
+  const handleUpdate = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    if (!editingUser) return
+    
+    try {
+      const formData = new FormData(e.currentTarget)
+      const updateData = {
+        name: formData.get('edit-name') as string,
+        login: formData.get('edit-email') as string,
+        role: formData.get('edit-role') as string,
+        status: formData.get('edit-status') as string
+      }
+      
+      console.log('Atualizando usuário:', editingUser.id, updateData)
+      
+      await userApi.updateUser(editingUser.id, updateData)
+      
+      // Recarregar lista de usuários
+      await refetchUsers()
+      
+      // Fechar modal
+      setIsEditDialogOpen(false)
+      setEditingUser(null)
+      
+      // Mostrar notificação de sucesso
+      toast({
+        title: "Sucesso",
+        description: "Usuário atualizado com sucesso!",
+      })
+      
+    } catch (error) {
+      console.error('Erro ao atualizar usuário:', error)
+      toast({
+        title: "Erro",
+        description: `Erro ao atualizar usuário: ${error.message}`,
+        variant: "destructive"
+      })
+    }
+  }
+
+  const handleDelete = async (user: User) => {
+    if (window.confirm(`Tem certeza que deseja deletar o usuário "${user.name}"? Esta ação não pode ser desfeita.`)) {
+      try {
+        console.log('Deletando usuário:', user.id)
+        
+        await userApi.deleteUser(user.id)
+        
+        // Recarregar lista de usuários
+        await refetchUsers()
+        
+        // Mostrar notificação de sucesso
+        toast({
+          title: "Sucesso",
+          description: "Usuário deletado com sucesso!",
+        })
+        
+      } catch (error) {
+        console.error('Erro ao deletar usuário:', error)
+        toast({
+          title: "Erro",
+          description: `Erro ao deletar usuário: ${error.message}`,
+          variant: "destructive"
+        })
+      }
+    }
   }
 
   // No clinic selected
@@ -149,48 +257,30 @@ export default function Users() {
                 Preencha as informações do novo usuário
               </DialogDescription>
             </DialogHeader>
-            <form className="space-y-4">
+            <form onSubmit={handleCreate} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="name">Nome Completo</Label>
-                  <Input id="name" placeholder="Digite o nome" />
+                  <Label htmlFor="name">Nome Completo *</Label>
+                  <Input id="name" name="name" placeholder="Digite o nome" required />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="email">E-mail</Label>
-                  <Input id="email" type="email" placeholder="usuario@email.com" />
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Telefone</Label>
-                  <Input id="phone" placeholder="(11) 99999-9999" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="role">Função</Label>
-                  <Select>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione a função" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="admin_lify">Admin Lify</SelectItem>
-                      <SelectItem value="clinic_admin">Admin Clínica</SelectItem>
-                      <SelectItem value="attendant">Atendente</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <Label htmlFor="email">E-mail *</Label>
+                  <Input id="email" name="email" type="email" placeholder="usuario@email.com" required />
                 </div>
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="clinic">Clínica</Label>
-                <Select>
+                <Label htmlFor="role">Função *</Label>
+                <Select name="role" required>
                   <SelectTrigger>
-                    <SelectValue placeholder="Selecione a clínica" />
+                    <SelectValue placeholder="Selecione a função" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="1">Clínica Saúde Total</SelectItem>
-                    <SelectItem value="2">Centro Médico Bem Estar</SelectItem>
-                    <SelectItem value="3">Clínica Nova Vida</SelectItem>
+                    <SelectItem value="admin_lify">Admin Lify</SelectItem>
+                    <SelectItem value="suporte_lify">Suporte Lify</SelectItem>
+                    <SelectItem value="atendente">Atendente</SelectItem>
+                    <SelectItem value="gestor">Gestor</SelectItem>
+                    <SelectItem value="administrador">Administrador</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -230,8 +320,10 @@ export default function Users() {
             <SelectContent>
               <SelectItem value="all">Todas</SelectItem>
               <SelectItem value="admin_lify">Admin Lify</SelectItem>
-              <SelectItem value="clinic_admin">Admin Clínica</SelectItem>
-              <SelectItem value="attendant">Atendente</SelectItem>
+              <SelectItem value="suporte_lify">Suporte Lify</SelectItem>
+              <SelectItem value="atendente">Atendente</SelectItem>
+              <SelectItem value="gestor">Gestor</SelectItem>
+              <SelectItem value="administrador">Administrador</SelectItem>
             </SelectContent>
           </Select>
           
@@ -324,7 +416,12 @@ export default function Users() {
                        <Button variant="ghost" size="sm" onClick={() => handleEdit(user)}>
                          <Edit className="h-4 w-4" />
                        </Button>
-                       <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive">
+                       <Button 
+                         variant="ghost" 
+                         size="sm" 
+                         className="text-destructive hover:text-destructive"
+                         onClick={() => handleDelete(user)}
+                       >
                          <Trash2 className="h-4 w-4" />
                        </Button>
                      </div>
@@ -359,63 +456,46 @@ export default function Users() {
             </DialogDescription>
           </DialogHeader>
           {editingUser && (
-            <form className="space-y-4">
+            <form onSubmit={handleUpdate} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="edit-name">Nome Completo</Label>
-                  <Input id="edit-name" defaultValue={editingUser.name} />
+                  <Input id="edit-name" name="edit-name" defaultValue={editingUser.name} />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="edit-email">E-mail</Label>
-                  <Input id="edit-email" type="email" defaultValue={editingUser.login} />
+                  <Input id="edit-email" name="edit-email" type="email" defaultValue={editingUser.login} />
                 </div>
               </div>
               
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="edit-phone">Telefone</Label>
-                  <Input id="edit-phone" defaultValue={""} />
-                </div>
-                <div className="space-y-2">
                   <Label htmlFor="edit-role">Função</Label>
-                  <Select defaultValue={editingUser.role}>
+                  <Select name="edit-role" defaultValue={editingUser.role}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="admin_lify">Admin Lify</SelectItem>
-                      <SelectItem value="clinic_admin">Admin Clínica</SelectItem>
-                      <SelectItem value="attendant">Atendente</SelectItem>
+                      <SelectItem value="suporte_lify">Suporte Lify</SelectItem>
+                      <SelectItem value="atendente">Atendente</SelectItem>
+                      <SelectItem value="gestor">Gestor</SelectItem>
+                      <SelectItem value="administrador">Administrador</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="edit-clinic">Clínica</Label>
-                <Select defaultValue={editingUser.clinic_id}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="1">Clínica Saúde Total</SelectItem>
-                    <SelectItem value="2">Centro Médico Bem Estar</SelectItem>
-                    <SelectItem value="3">Clínica Nova Vida</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="edit-status">Status</Label>
-                <Select defaultValue={editingUser.status}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="active">Ativo</SelectItem>
-                    <SelectItem value="inactive">Inativo</SelectItem>
-                  </SelectContent>
-                </Select>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-status">Status</Label>
+                  <Select name="edit-status" defaultValue={editingUser.status}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="active">Ativo</SelectItem>
+                      <SelectItem value="inactive">Inativo</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
               
               <div className="flex justify-end space-x-2">

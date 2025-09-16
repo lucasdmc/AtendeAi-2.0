@@ -24,10 +24,11 @@ const apiConfig = {
 export const ClinicSchema = z.object({
   id: z.string().min(1, 'ID é obrigatório'), // Removido .uuid() para aceitar IDs simples
   name: z.string().min(1, 'Nome é obrigatório'),
-  whatsapp_number: z.string().min(1, 'Número do WhatsApp é obrigatório'),
+  whatsapp_number: z.string().optional(), // Campo opcional para compatibilidade
+  whatsapp_id_number: z.string().nullable().optional(), // Campo da API real (pode ser null)
   meta_webhook_url: z.string().url().optional(),
   whatsapp_id: z.string().optional(),
-  context_json: z.any().default({}),
+  context_json: z.any().optional().default({}), // Campo opcional
   status: z.enum(['active', 'inactive']).default('active'),
   created_at: z.string().datetime(),
   updated_at: z.string().datetime(),
@@ -200,10 +201,11 @@ const apiClient = new MicroserviceClient(apiConfig);
 export interface Clinic {
   id: string;
   name: string;
-  whatsapp_number: string;
+  whatsapp_number?: string; // Campo opcional para compatibilidade
+  whatsapp_id_number?: string | null; // Campo da API real (pode ser null)
   meta_webhook_url?: string;
   whatsapp_id?: string;
-  context_json: {
+  context_json?: {
     clinica: {
       informacoes_basicas: {
         nome: string;

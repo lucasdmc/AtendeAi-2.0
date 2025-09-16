@@ -7,8 +7,17 @@ import { Building2 } from 'lucide-react';
 export const ClinicSelector: React.FC = () => {
   const { selectedClinic, setSelectedClinic, canSelectClinic, availableClinics } = useClinic();
 
+  // Debug logs
+  console.log('🔍 ClinicSelector Debug:', {
+    canSelectClinic,
+    availableClinicsCount: availableClinics.length,
+    selectedClinic: selectedClinic ? { id: selectedClinic.id, name: selectedClinic.name } : null,
+    availableClinics: availableClinics.map(c => ({ id: c.id, name: c.name }))
+  });
+
   // Só mostrar se o usuário pode selecionar clínica
   if (!canSelectClinic) {
+    console.log('🚫 ClinicSelector não renderizado: canSelectClinic = false');
     return null;
   }
 
@@ -32,7 +41,7 @@ export const ClinicSelector: React.FC = () => {
               <div className="flex flex-col">
                 <span className="font-medium">{clinic.name}</span>
                 <span className="text-xs text-muted-foreground">
-                  {clinic.whatsapp_number}
+                  {clinic.whatsapp_id_number || clinic.whatsapp_number || 'Sem WhatsApp'}
                 </span>
               </div>
             </SelectItem>
