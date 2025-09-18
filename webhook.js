@@ -1103,14 +1103,20 @@ async function identifyClinicByWhatsAppNumber(whatsappNumber) {
 async function generateResponseViaConversationAPI(message, phoneNumber, clinicId) {
   try {
     console.log('🔍 Gerando resposta contextualizada para clinicId:', clinicId);
+    console.log('🔍 Message:', message);
+    console.log('🔍 phoneNumber:', phoneNumber);
     
     // Buscar contexto da clínica do banco de dados
     const clinicContext = await getClinicContext(clinicId);
-    console.log('📋 Contexto carregado:', clinicContext.name);
+    console.log('📋 Contexto carregado:', clinicContext?.name || 'Sem nome');
+    console.log('📋 Contexto completo:', clinicContext);
     
     // Gerar resposta usando o contexto
     const conversation = getConversation(phoneNumber);
     const response = await generateContextualizedResponse(message, phoneNumber, clinicId, clinicContext);
+    
+    console.log('🔍 Resposta final gerada:', response);
+    console.log('🔍 Tipo da resposta final:', typeof response);
     
     return response;
   } catch (error) {
