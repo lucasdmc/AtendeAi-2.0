@@ -1121,8 +1121,9 @@ async function identifyClinicByWhatsAppNumber(whatsappNumber) {
 async function generateResponseViaConversationAPI(message, phoneNumber, clinicId) {
   try {
     console.log('🔍 Chamando API de conversas com clinicId:', clinicId);
+    console.log('🔍 URL da API:', `http://localhost:${config.server.port}/api/conversations/process`);
     
-    const response = await fetch(`${config.server.baseUrl}/api/conversations/process`, {
+    const response = await fetch(`http://localhost:${config.server.port}/api/conversations/process`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -1136,8 +1137,12 @@ async function generateResponseViaConversationAPI(message, phoneNumber, clinicId
       })
     });
     
+    console.log('🔍 Status da resposta:', response.status);
+    
     if (!response.ok) {
       console.error('❌ Erro na API de conversas:', response.status, response.statusText);
+      const errorText = await response.text();
+      console.error('❌ Detalhes do erro:', errorText);
       return 'Desculpe, houve um erro interno. Tente novamente em alguns instantes.';
     }
     
