@@ -261,6 +261,10 @@ class Clinic {
   }
 
   toJSON() {
+    console.log('🔍 DEBUG - toJSON() chamado');
+    console.log('🔍 DEBUG - this.context_json:', this.context_json);
+    console.log('🔍 DEBUG - typeof this.context_json:', typeof this.context_json);
+    
     return {
       id: this.id,
       name: this.name,
