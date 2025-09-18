@@ -1968,7 +1968,7 @@ const server = createServer((req, res) => {
           console.log(`🔧 FORÇANDO clinicId da ESADI: ${forcedClinicId}`);
           
           // Gerar resposta contextualizada diretamente
-          const response = 'Meu nome é Jessica! Sou a assistente virtual da ESADI. Como posso ajudá-lo hoje?';
+          const response = 'TESTE JESSICA ESADI - CONTEXTUALIZAÇÃO FUNCIONANDO!';
           console.log(`🤖 Resposta contextualizada: ${response}`);
           
           // Mostrar dados coletados no log
