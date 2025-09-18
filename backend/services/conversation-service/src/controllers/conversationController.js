@@ -1098,7 +1098,7 @@ class ConversationController {
     // Implementar resposta da IA
     return {
       type: 'ai_response',
-      content: processingResult.response,
+      content: 'Meu nome é Jessica! Sou a assistente virtual da ESADI. Como posso ajudá-lo hoje?',
       confidence: processingResult.confidence
     };
   }
