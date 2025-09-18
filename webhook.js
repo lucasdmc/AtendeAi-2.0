@@ -1446,19 +1446,26 @@ async function tryOpenAIResponse(message, conversation) {
       ? `\nDados do usuário coletados: ${JSON.stringify(userData)}`
       : '\nNenhum dado do usuário coletado ainda.';
 
-    const systemPrompt = `Você é um assistente virtual da Clínica AtendeAI, especializada em atendimento médico de qualidade.
+    // Usar contexto da clínica se disponível
+    const clinicInfo = clinicContext?.clinic_info || {};
+    const aiPersonality = clinicContext?.ai_personality || {};
+    const clinicName = clinicInfo.name || clinicContext?.name || 'Clínica';
+    const assistantName = aiPersonality.name || 'Assistente';
+    
+    const systemPrompt = `Você é ${assistantName}, assistente virtual da ${clinicName}.
 
 INFORMAÇÕES DA CLÍNICA:
-- Nome: Clínica AtendeAI
-- Telefone: (47) 3091-5628
-- Horários: Segunda a Sexta 8h-18h, Sábado 8h-12h, Domingo fechado
-- Especialidades: Clínica Geral, Cardiologia, Ortopedia, Pediatria, Neurologia, Exames
+- Nome: ${clinicName}
+${clinicInfo.description ? `- Descrição: ${clinicInfo.description}` : ''}
+${clinicInfo.specialty ? `- Especialidade: ${clinicInfo.specialty}` : ''}
+${clinicInfo.mission ? `- Missão: ${clinicInfo.mission}` : ''}
 
 PERSONALIDADE:
-- Seja cordial, profissional e empático
+- Seja ${aiPersonality.tone || 'cordial, profissional e empático'}
 - Use emojis moderadamente 
 - Faça perguntas para coletar dados necessários
 - Sempre tente ajudar e direcionar para soluções
+${aiPersonality.greeting ? `- Sua saudação é: "${aiPersonality.greeting}"` : ''}
 
 COLETA DE DADOS:
 Para agendamentos, colete: nome completo, telefone, especialidade desejada, preferência de data/horário.
@@ -1466,7 +1473,7 @@ Para agendamentos, colete: nome completo, telefone, especialidade desejada, pref
 IMPORTANTE:
 - Mantenha respostas concisas (máximo 200 caracteres)
 - Se emergência médica, oriente procurar atendimento imediato
-- Sempre ofereça o telefone (47) 3091-5628 para contato direto
+- Sempre ofereça contato direto quando necessário
 
 Histórico da conversa:
 ${conversationHistory}${userContext}`;
