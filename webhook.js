@@ -1804,13 +1804,17 @@ const server = createServer((req, res) => {
           const clinicId = await identifyClinicByWhatsAppNumber(toPhone);
           console.log(`🏥 Clínica identificada: ${clinicId}`);
           
-          // FORÇAR clinicId da ESADI para teste
-          const forcedClinicId = '9981f126-a9b9-4c7d-819a-3380b9ee61de';
-          console.log(`🔧 FORÇANDO clinicId da ESADI: ${forcedClinicId}`);
+          if (!clinicId) {
+            console.log(`⚠️ Clínica não encontrada para número: ${toPhone}`);
+            const fallbackResponse = 'Desculpe, não consegui identificar sua clínica. Entre em contato diretamente.';
+            await sendWhatsAppMessage(from, fallbackResponse);
+            return;
+          }
           
-          // Gerar resposta contextualizada diretamente
-          const response = 'TESTE JESSICA ESADI - CONTEXTUALIZAÇÃO FUNCIONANDO!';
-          console.log(`🤖 Resposta contextualizada: ${response}`);
+          // Gerar resposta contextualizada usando o motor de conversação
+          console.log(`🤖 Gerando resposta contextualizada para clínica: ${clinicId}`);
+          const response = await generateResponseViaConversationAPI(messageText, from, clinicId);
+          console.log(`📋 Resposta gerada: ${response}`);
           
           // Mostrar dados coletados no log
           const conversation = getConversation(from);
@@ -1819,7 +1823,7 @@ const server = createServer((req, res) => {
           }
           
           // Enviar resposta via WhatsApp API
-          console.log(`🚀 ENVIANDO RESPOSTA FINAL: "${response}"`);
+          console.log(`🚀 Enviando resposta: "${response}"`);
           await sendWhatsAppMessage(from, response);
         }
 
