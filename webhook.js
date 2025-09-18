@@ -1073,7 +1073,7 @@ async function identifyClinicByWhatsAppNumber(whatsappNumber) {
     
     // Buscar clínica pelo número do WhatsApp
     const result = await pool.query(`
-      SELECT id, name, whatsapp_id_number 
+      SELECT id, name, whatsapp_id_number, contextualization_json
       FROM atendeai.clinics 
       WHERE whatsapp_id_number = $1 AND status = 'active'
     `, [whatsappNumber]);
@@ -1085,28 +1085,10 @@ async function identifyClinicByWhatsAppNumber(whatsappNumber) {
     if (result.rows.length > 0) {
       const clinic = result.rows[0];
       console.log(`✅ Clínica encontrada: ${clinic.name} (ID: ${clinic.id}) - WhatsApp: ${clinic.whatsapp_id_number}`);
+      console.log(`📋 Contextualização disponível: ${clinic.contextualization_json ? 'Sim' : 'Não'}`);
       return clinic.id;
     } else {
       console.log(`⚠️ Clínica não encontrada para número: ${whatsappNumber}`);
-      
-      // Buscar todas as clínicas para debug
-      const debugPool = new Pool({
-        connectionString: config.database.url,
-        ssl: { rejectUnauthorized: false }
-      });
-      
-      const debugResult = await debugPool.query(`
-        SELECT id, name, whatsapp_id_number, status 
-        FROM atendeai.clinics 
-        ORDER BY created_at DESC
-      `);
-      
-      console.log(`🔍 Todas as clínicas no banco:`);
-      debugResult.rows.forEach(clinic => {
-        console.log(`  - ${clinic.name}: "${clinic.whatsapp_id_number}" (${clinic.status})`);
-      });
-      
-      await debugPool.end();
       return null;
     }
   } catch (error) {
@@ -1120,84 +1102,50 @@ async function identifyClinicByWhatsAppNumber(whatsappNumber) {
 // =====================================================
 async function generateResponseViaConversationAPI(message, phoneNumber, clinicId) {
   try {
-    console.log('🔍 Chamando API de conversas com clinicId:', clinicId);
+    console.log('🔍 Gerando resposta contextualizada para clinicId:', clinicId);
     
-    // Usar contexto da ESADI diretamente se for a clínica correta
-    if (clinicId === '9981f126-a9b9-4c7d-819a-3380b9ee61de') {
-      console.log('🔍 Usando contexto da ESADI diretamente');
-      
-      const clinicContext = {
-        name: 'ESADI',
-        specialties: ['Gastroenterologia', 'Endoscopia Digestiva', 'Hepatologia', 'Colonoscopia', 'Diagnóstico por Imagem Digestiva'],
-        description: 'Centro especializado em saúde do aparelho digestivo com tecnologia de ponta para Santa Catarina. Oferecemos exames de baixa, média e alta complexidade em ambiente diferenciado.',
-        ai_personality: {
-          name: 'Jessica',
-          personality: 'Profissional, acolhedora e especializada em gastroenterologia. Demonstra conhecimento técnico mas comunica de forma acessível.',
-          tone: 'Formal mas acessível, com foco na tranquilização do paciente',
-          greeting: 'Olá! Sou a Jessica, assistente virtual da ESADI. Estou aqui para ajudá-lo com agendamentos e orientações sobre exames. Como posso ajudá-lo hoje?',
-          farewell: 'Obrigado por escolher a ESADI para cuidar da sua saúde digestiva. Até breve!'
-        },
-        services: [
-          {
-            nome: 'Consulta Gastroenterológica',
-            descricao: 'Avaliação completa do aparelho digestivo',
-            preco_particular: 280.00
-          },
-          {
-            nome: 'Endoscopia Digestiva Alta',
-            descricao: 'Exame endoscópico do esôfago, estômago e duodeno',
-            preco_particular: 450.00
-          }
-        ]
-      };
-      
-      console.log('🔍 DEBUG - Chamando generateRuleBasedResponseWithContext');
-      
-      // Resposta hardcoded para teste
-      const messageLower = message.toLowerCase();
-      if (messageLower.includes('nome')) {
-        return 'Meu nome é Jessica! Sou a assistente virtual da ESADI. 😊';
-      } else if (messageLower.includes('oi') || messageLower.includes('olá')) {
-        return 'Olá! Sou a Jessica, assistente virtual da ESADI. Estou aqui para ajudá-lo com agendamentos e orientações sobre exames. Como posso ajudá-lo hoje?';
-      } else {
-        return 'Olá! Sou a Jessica da ESADI. Como posso ajudá-lo com nossos serviços de gastroenterologia? 😊';
-      }
-    }
+    // Buscar contexto da clínica do banco de dados
+    const clinicContext = await getClinicContext(clinicId);
+    console.log('📋 Contexto carregado:', clinicContext.name);
     
-    // Para outras clínicas, tentar chamar a API
-    console.log('🔍 URL da API:', `http://localhost:${config.server.port}/api/conversations/process`);
+    // Gerar resposta usando o contexto
+    const conversation = getConversation(phoneNumber);
+    const response = await generateContextualizedResponse(message, phoneNumber, clinicId, clinicContext);
     
-    const response = await fetch(`http://localhost:${config.server.port}/api/conversations/process`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer test'
-      },
-      body: JSON.stringify({
-        clinic_id: clinicId,
-        patient_phone: phoneNumber,
-        patient_name: 'Usuário',
-        message_content: message
-      })
-    });
-    
-    console.log('🔍 Status da resposta:', response.status);
-    
-    if (!response.ok) {
-      console.error('❌ Erro na API de conversas:', response.status, response.statusText);
-      const errorText = await response.text();
-      console.error('❌ Detalhes do erro:', errorText);
-      return 'Desculpe, houve um erro interno. Tente novamente em alguns instantes.';
-    }
-    
-    const data = await response.json();
-    console.log('✅ Resposta da API de conversas:', data);
-    
-    return data.response || 'Desculpe, não consegui processar sua mensagem.';
+    return response;
   } catch (error) {
-    console.error('❌ Erro ao chamar API de conversas:', error);
+    console.error('❌ Erro ao gerar resposta contextualizada:', error);
     return 'Desculpe, houve um erro interno. Tente novamente em alguns instantes.';
   }
+}
+
+// =====================================================
+// GERAÇÃO DE RESPOSTA CONTEXTUALIZADA
+// =====================================================
+async function generateContextualizedResponse(message, phoneNumber, clinicId, clinicContext) {
+  const conversation = getConversation(phoneNumber);
+  
+  // Adicionar mensagem do usuário ao histórico
+  addMessageToHistory(phoneNumber, message, 'user');
+  
+  // Se não há contexto da clínica, usar resposta genérica
+  if (!clinicContext) {
+    const genericResponse = generateGenericResponse(message, conversation);
+    addMessageToHistory(phoneNumber, genericResponse, 'assistant');
+    return genericResponse;
+  }
+  
+  // Tentar OpenAI com contexto da clínica
+  const openAIResponse = await tryOpenAIResponseWithContext(message, conversation, clinicContext);
+  if (openAIResponse) {
+    addMessageToHistory(phoneNumber, openAIResponse, 'assistant');
+    return openAIResponse;
+  }
+  
+  // Fallback: Lógica baseada em regras com contexto da clínica
+  const ruleResponse = generateRuleBasedResponseWithContext(message, conversation, clinicContext);
+  addMessageToHistory(phoneNumber, ruleResponse, 'assistant');
+  return ruleResponse;
 }
 
 // =====================================================
@@ -1233,151 +1181,69 @@ async function generateContextualizedResponse(message, phoneNumber, clinicId) {
 }
 
 // =====================================================
-// BUSCAR CONTEXTO DA CLÍNICA
+// BUSCAR CONTEXTO DA CLÍNICA DO BANCO DE DADOS
 // =====================================================
 async function getClinicContext(clinicId) {
-  // Dados específicos da ESADI
-  if (clinicId === '9981f126-a9b9-4c7d-819a-3380b9ee61de') {
-    return {
-      name: 'ESADI',
-      specialties: ['Gastroenterologia', 'Endoscopia Digestiva', 'Hepatologia', 'Colonoscopia', 'Diagnóstico por Imagem Digestiva'],
-      description: 'Centro especializado em saúde do aparelho digestivo com tecnologia de ponta para Santa Catarina. Oferecemos exames de baixa, média e alta complexidade em ambiente diferenciado.',
-      mission: 'Proporcionar diagnósticos precisos e tratamentos eficazes para patologias do aparelho digestivo com tecnologia avançada e atendimento humanizado.',
-      values: ['Excelência em diagnóstico', 'Tecnologia de ponta', 'Atendimento humanizado', 'Segurança do paciente', 'Ética profissional'],
-      differentials: ['Comunicação direta com Hospital Santa Isabel', 'Espaço diferenciado para acolhimento', 'Fluxo otimizado de pacientes', 'Equipamentos de última geração', 'Equipe de anestesiologia especializada'],
-      location: 'Blumenau, SC',
-      address: 'Rua Sete de Setembro, 777 - Centro, Blumenau, SC',
-      phone: '(47) 3222-0432',
-      whatsapp: '(47) 99963-3223',
-      email: 'contato@esadi.com.br',
-      website: 'https://www.esadi.com.br',
-      working_hours: {
-        segunda: { abertura: '07:00', fechamento: '18:00' },
-        terca: { abertura: '07:00', fechamento: '18:00' },
-        quarta: { abertura: '07:00', fechamento: '18:00' },
-        quinta: { abertura: '07:00', fechamento: '18:00' },
-        sexta: { abertura: '07:00', fechamento: '17:00' },
-        sabado: { abertura: '07:00', fechamento: '12:00' },
-        domingo: { abertura: null, fechamento: null }
-      },
-      ai_personality: {
-        name: 'Jessica',
-        personality: 'Profissional, acolhedora e especializada em gastroenterologia. Demonstra conhecimento técnico mas comunica de forma acessível.',
-        tone: 'Formal mas acessível, com foco na tranquilização do paciente',
-        formality: 'Médio-alto',
-        greeting: 'Olá! Sou a Jessica, assistente virtual da ESADI. Estou aqui para ajudá-lo com agendamentos e orientações sobre exames. Como posso ajudá-lo hoje?',
-        farewell: 'Obrigado por escolher a ESADI para cuidar da sua saúde digestiva. Até breve!',
-        out_of_hours: 'No momento estamos fora do horário de atendimento. Para urgências gastroenterológicas, procure o pronto-socorro do Hospital Santa Isabel. Retornaremos seu contato no próximo horário comercial.'
-      },
-      ai_behavior: {
-        proativo: true,
-        oferece_sugestoes: true,
-        solicita_feedback: true,
-        escalacao_automatica: true,
-        limite_tentativas: 3,
-        contexto_conversa: true
-      },
-      services: [
-        {
-          id: 'cons_001',
-          nome: 'Consulta Gastroenterológica',
-          descricao: 'Avaliação completa do aparelho digestivo',
-          duracao_minutos: 30,
-          preco_particular: 280.00,
-          aceita_convenio: true,
-          convenios_aceitos: ['Unimed', 'Bradesco Saúde', 'SulAmérica']
-        },
-        {
-          id: 'exam_001',
-          nome: 'Endoscopia Digestiva Alta',
-          descricao: 'Exame endoscópico do esôfago, estômago e duodeno',
-          duracao_minutos: 30,
-          preco_particular: 450.00,
-          aceita_convenio: true,
-          convenios_aceitos: ['Unimed', 'Bradesco Saúde', 'SulAmérica', 'Amil'],
-          preparacao: {
-            jejum_horas: 12,
-            instrucoes_especiais: 'Jejum absoluto de 12 horas (sólidos e líquidos). Medicamentos de uso contínuo podem ser tomados com pouca água até 2 horas antes do exame.'
-          },
-          resultado_prazo_dias: 2
-        },
-        {
-          id: 'exam_002',
-          nome: 'Colonoscopia',
-          descricao: 'Exame endoscópico do intestino grosso',
-          duracao_minutos: 45,
-          preco_particular: 650.00,
-          aceita_convenio: true,
-          convenios_aceitos: ['Unimed', 'Bradesco Saúde', 'SulAmérica'],
-          preparacao: {
-            jejum_horas: 12,
-            instrucoes_especiais: 'Dieta específica 3 dias antes. Uso de laxante conforme orientação médica. Jejum absoluto de 12 horas.'
-          },
-          resultado_prazo_dias: 3
-        },
-        {
-          id: 'exam_003',
-          nome: 'Teste Respiratório para H. Pylori',
-          descricao: 'Teste não invasivo para detecção da bactéria Helicobacter pylori',
-          duracao_minutos: 60,
-          preco_particular: 180.00,
-          aceita_convenio: true,
-          convenios_aceitos: ['Unimed', 'Bradesco Saúde', 'SulAmérica'],
-          preparacao: {
-            jejum_horas: 6,
-            instrucoes_especiais: 'Suspender antibióticos por 4 semanas. Suspender omeprazol e similares por 2 semanas. Jejum de 6 horas.'
-          },
-          resultado_prazo_dias: 1
-        }
-      ],
-      professionals: [
-        {
-          id: 'prof_001',
-          nome_exibicao: 'Dr. Carlos Eduardo',
-          especialidades: ['Gastroenterologia', 'Endoscopia Digestiva'],
-          experiencia: 'Mais de 25 anos de experiência em gastroenterologia e endoscopia digestiva',
-          aceita_novos_pacientes: true
-        },
-        {
-          id: 'prof_002',
-          nome_exibicao: 'Dr. João',
-          especialidades: ['Endoscopia Digestiva', 'Colonoscopia', 'Diagnóstico por Imagem Digestiva'],
-          experiencia: 'Mais de 10 anos de experiência em endoscopia digestiva, colonoscopia e hepatologia',
-          aceita_novos_pacientes: true
-        }
-      ],
-      insurance_plans: [
-        { nome: 'Unimed', ativo: true, copagamento: false },
-        { nome: 'Bradesco Saúde', ativo: true, copagamento: true, valor_copagamento: 25.00 },
-        { nome: 'SulAmérica', ativo: true, copagamento: true, valor_copagamento: 30.00 }
-      ],
-      policies: {
-        agendamento: {
-          antecedencia_minima_horas: 24,
-          antecedencia_maxima_dias: 90,
-          reagendamento_permitido: true,
-          cancelamento_antecedencia_horas: 24,
-          confirmacao_necessaria: true
-        },
-        atendimento: {
-          tolerancia_atraso_minutos: 15,
-          acompanhante_permitido: true,
-          documentos_obrigatorios: ['RG ou CNH', 'CPF', 'Carteirinha do convênio']
-        }
-      }
-    };
+  try {
+    console.log(`🔍 Buscando contexto da clínica: ${clinicId}`);
+    
+    const pool = new Pool({
+      connectionString: config.database.url,
+      ssl: { rejectUnauthorized: false }
+    });
+    
+    // Buscar clínica com contextualização
+    const result = await pool.query(`
+      SELECT id, name, whatsapp_id_number, contextualization_json
+      FROM atendeai.clinics 
+      WHERE id = $1 AND status = 'active'
+    `, [clinicId]);
+    
+    await pool.end();
+    
+    if (result.rows.length === 0) {
+      console.log(`⚠️ Clínica não encontrada: ${clinicId}`);
+      return getDefaultClinicContext();
+    }
+    
+    const clinic = result.rows[0];
+    console.log(`✅ Clínica encontrada: ${clinic.name}`);
+    
+    // Se não há contextualização, usar dados básicos
+    if (!clinic.contextualization_json) {
+      console.log(`⚠️ Sem contextualização JSON para ${clinic.name}`);
+      return getDefaultClinicContext(clinic);
+    }
+    
+    // Converter JSON string para objeto se necessário
+    let contextualization = clinic.contextualization_json;
+    if (typeof contextualization === 'string') {
+      contextualization = JSON.parse(contextualization);
+    }
+    
+    console.log(`📋 Contextualização carregada para ${clinic.name}`);
+    return contextualization;
+    
+  } catch (error) {
+    console.error('❌ Erro ao buscar contexto da clínica:', error);
+    return getDefaultClinicContext();
   }
-  
-  // Para outras clínicas, retornar contexto genérico
+}
+
+// =====================================================
+// CONTEXTO PADRÃO PARA FALLBACK
+// =====================================================
+function getDefaultClinicContext(clinic = null) {
   return {
-    name: 'Clínica',
+    name: clinic?.name || 'Clínica',
     specialties: ['Clínica Geral', 'Cardiologia', 'Ortopedia', 'Pediatria', 'Neurologia'],
-    description: 'Clínica médica de qualidade',
+    description: clinic?.name ? `${clinic.name} - Clínica médica de qualidade` : 'Clínica médica de qualidade',
     phone: '(47) 3091-5628',
     working_hours: 'Segunda a Sexta 8h-18h, Sábado 8h-12h',
     ai_personality: {
       name: 'Assistente',
-      personality: 'Profissional e atencioso'
+      personality: 'Profissional e atencioso',
+      greeting: 'Olá! Como posso ajudá-lo hoje?'
     }
   };
 }
@@ -1417,41 +1283,36 @@ async function tryOpenAIResponseWithContext(message, conversation, clinicContext
 }
 
 function generateRuleBasedResponseWithContext(message, conversation, clinicContext) {
-  console.log('🔍 DEBUG - generateRuleBasedResponseWithContext chamada com:');
-  console.log('🔍 DEBUG - message:', message);
-  console.log('🔍 DEBUG - clinicContext:', JSON.stringify(clinicContext, null, 2));
+  console.log('🔍 generateRuleBasedResponseWithContext chamada');
+  console.log('📋 Clínica:', clinicContext.name);
   
   const messageLower = message.toLowerCase();
+  const clinicInfo = clinicContext.clinic_info || {};
   const aiPersonality = clinicContext.ai_personality || {};
+  const clinicName = clinicInfo.name || clinicContext.name || 'Clínica';
   const assistantName = aiPersonality.name || 'Assistente';
   
-  console.log('🔍 DEBUG - assistantName:', assistantName);
+  console.log('🤖 Assistente:', assistantName, 'da', clinicName);
   
   // Saudação inicial
   if (messageLower.includes('oi') || messageLower.includes('olá') || messageLower.includes('bom dia') || 
       messageLower.includes('boa tarde') || messageLower.includes('boa noite')) {
-    return aiPersonality.greeting || `Olá! Sou a ${assistantName}, assistente virtual da ${clinicContext.name}. Como posso ajudá-lo hoje? 😊`;
+    return aiPersonality.greeting || `Olá! Sou a ${assistantName}, assistente virtual da ${clinicName}. Como posso ajudá-lo hoje? 😊`;
   }
   
   // Pergunta sobre nome
   if (messageLower.includes('nome') && (messageLower.includes('qual') || messageLower.includes('como'))) {
-    return `Meu nome é ${assistantName}! Sou a assistente virtual da ${clinicContext.name}. 😊`;
+    return `Meu nome é ${assistantName}! Sou a assistente virtual da ${clinicName}. 😊`;
   }
   
   // Informações sobre a clínica
   if (messageLower.includes('clínica') || messageLower.includes('esadi') || messageLower.includes('sobre')) {
-    let response = `Sobre a ${clinicContext.name}:\n\n`;
-    if (clinicContext.description) {
-      response += `${clinicContext.description}\n\n`;
+    let response = `Sobre a ${clinicName}:\n\n`;
+    if (clinicInfo.description) {
+      response += `${clinicInfo.description}\n\n`;
     }
-    if (clinicContext.specialties?.length > 0) {
-      response += `*Especialidades:* ${clinicContext.specialties.join(', ')}\n\n`;
-    }
-    if (clinicContext.address) {
-      response += `*Endereço:* ${clinicContext.address}\n\n`;
-    }
-    if (clinicContext.phone) {
-      response += `*Telefone:* ${clinicContext.phone}\n\n`;
+    if (clinicInfo.specialty) {
+      response += `*Especialidade:* ${clinicInfo.specialty}\n\n`;
     }
     response += `Posso ajudá-lo com agendamentos ou informações sobre nossos serviços! 😊`;
     return response;
@@ -1460,7 +1321,7 @@ function generateRuleBasedResponseWithContext(message, conversation, clinicConte
   // Horários de funcionamento
   if (messageLower.includes('horário') || messageLower.includes('funcionamento') || messageLower.includes('aberto')) {
     if (clinicContext.working_hours) {
-      let response = `*Horários de funcionamento da ${clinicContext.name}:*\n\n`;
+      let response = `*Horários de funcionamento da ${clinicName}:*\n\n`;
       Object.entries(clinicContext.working_hours).forEach(([day, hours]) => {
         const dayName = day.charAt(0).toUpperCase() + day.slice(1);
         if (hours.abertura && hours.fechamento) {
@@ -1477,11 +1338,11 @@ function generateRuleBasedResponseWithContext(message, conversation, clinicConte
   // Serviços
   if (messageLower.includes('serviço') || messageLower.includes('exame') || messageLower.includes('consulta')) {
     if (clinicContext.services?.length > 0) {
-      let response = `*Serviços disponíveis na ${clinicContext.name}:*\n\n`;
+      let response = `*Serviços disponíveis na ${clinicName}:*\n\n`;
       clinicContext.services.forEach(service => {
-        response += `• *${service.nome}*\n`;
-        if (service.descricao) response += `  ${service.descricao}\n`;
-        if (service.preco_particular) response += `  Valor: R$ ${service.preco_particular}\n`;
+        response += `• *${service.name}*\n`;
+        if (service.category) response += `  Categoria: ${service.category}\n`;
+        if (service.price) response += `  Valor: R$ ${service.price}\n`;
         response += `\n`;
       });
       response += `Posso ajudá-lo a agendar algum desses serviços! 😊`;
@@ -1492,27 +1353,21 @@ function generateRuleBasedResponseWithContext(message, conversation, clinicConte
   
   // Convênios
   if (messageLower.includes('convênio') || messageLower.includes('plano') || messageLower.includes('seguro')) {
-    if (clinicContext.insurance_plans?.length > 0) {
-      const activePlans = clinicContext.insurance_plans.filter(plan => plan.ativo);
-      if (activePlans.length > 0) {
-        return `*Convênios aceitos na ${clinicContext.name}:*\n\n${activePlans.map(plan => `• ${plan.nome}`).join('\n')}\n\nPosso ajudá-lo a agendar com seu convênio! 😊`;
-      }
-    }
     return `Aceitamos diversos convênios. Posso ajudá-lo a verificar se o seu é aceito! 😊`;
   }
   
   // Agendamento
   if (messageLower.includes('agendar') || messageLower.includes('marcar') || messageLower.includes('consulta') || messageLower.includes('exame')) {
-    return `Para agendar uma consulta ou exame na ${clinicContext.name}, preciso de algumas informações:\n\n• Seu nome completo\n• Telefone de contato\n• Tipo de serviço desejado\n• Convênio (se houver)\n\nPode me informar esses dados? 😊`;
+    return `Para agendar uma consulta ou exame na ${clinicName}, preciso de algumas informações:\n\n• Seu nome completo\n• Telefone de contato\n• Tipo de serviço desejado\n• Convênio (se houver)\n\nPode me informar esses dados? 😊`;
   }
   
   // Despedida
   if (messageLower.includes('tchau') || messageLower.includes('até') || messageLower.includes('obrigado')) {
-    return aiPersonality.farewell || `Obrigado por entrar em contato com a ${clinicContext.name}! Até breve! 😊`;
+    return aiPersonality.farewell || `Obrigado por entrar em contato com a ${clinicName}! Até breve! 😊`;
   }
   
   // Resposta padrão contextualizada
-  return `Olá! Sou a ${assistantName} da ${clinicContext.name}. Como posso ajudá-lo hoje? Posso fornecer informações sobre nossos serviços, horários, agendamentos ou convênios aceitos. 😊`;
+  return `Olá! Sou a ${assistantName} da ${clinicName}. Como posso ajudá-lo hoje? Posso fornecer informações sobre nossos serviços, horários, agendamentos ou convênios aceitos. 😊`;
 }
 
 function generateGenericResponse(message, conversation) {
