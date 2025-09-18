@@ -96,3 +96,5 @@ http://localhost:8080
 # Verificar logs no console do navegador
 # Procurar por: "🔍 ClinicContext Debug" e "🔍 ClinicSelector Debug"
 ```
+
+

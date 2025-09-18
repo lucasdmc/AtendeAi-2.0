@@ -187,28 +187,113 @@ class LLMOrchestrator {
 
   buildSystemPrompt(clinicContext, userProfile, sessionData) {
     const clinicName = clinicContext?.name || 'clínica';
-    const clinicPersonality = clinicContext?.ai_personality || 'profissional e atencioso';
-    const clinicFormality = clinicContext?.formality_level || 'formal';
+    const aiPersonality = clinicContext?.ai_personality || {};
+    const aiBehavior = clinicContext?.ai_behavior || {};
     
-    let prompt = `Você é um assistente virtual inteligente da ${clinicName}. `;
-    prompt += `Sua personalidade é ${clinicPersonality} e seu nível de formalidade é ${clinicFormality}. `;
+    // Nome da assistente
+    const assistantName = aiPersonality.name || 'Assistente';
+    const personality = aiPersonality.personality || 'profissional e atencioso';
+    const tone = aiPersonality.tone || 'formal mas acessível';
+    const formality = aiPersonality.formality || 'médio';
     
+    let prompt = `Você é ${assistantName}, assistente virtual inteligente da ${clinicName}. `;
+    prompt += `${personality}. ${tone}. `;
+    
+    // Informações sobre a clínica
+    if (clinicContext?.description) {
+      prompt += `\n\nSobre a ${clinicName}: ${clinicContext.description}`;
+    }
+    
+    if (clinicContext?.specialties?.length > 0) {
+      prompt += `\n\nEspecialidades: ${clinicContext.specialties.join(', ')}`;
+    }
+    
+    if (clinicContext?.location) {
+      prompt += `\n\nLocalização: ${clinicContext.location}`;
+    }
+    
+    if (clinicContext?.address) {
+      prompt += `\n\nEndereço: ${clinicContext.address}`;
+    }
+    
+    if (clinicContext?.phone) {
+      prompt += `\n\nTelefone: ${clinicContext.phone}`;
+    }
+    
+    if (clinicContext?.whatsapp) {
+      prompt += `\n\nWhatsApp: ${clinicContext.whatsapp}`;
+    }
+    
+    // Serviços disponíveis
+    if (clinicContext?.services?.length > 0) {
+      prompt += `\n\nServiços disponíveis:`;
+      clinicContext.services.forEach(service => {
+        prompt += `\n- ${service.nome}: ${service.descricao || 'Serviço médico'} (${service.duracao_minutos}min, R$ ${service.preco_particular})`;
+      });
+    }
+    
+    // Profissionais
+    if (clinicContext?.professionals?.length > 0) {
+      prompt += `\n\nProfissionais disponíveis:`;
+      clinicContext.professionals.forEach(prof => {
+        prompt += `\n- ${prof.nome_exibicao}: ${prof.especialidades?.join(', ') || 'Especialista'} (${prof.experiencia || 'Experiência em medicina'})`;
+      });
+    }
+    
+    // Convênios aceitos
+    if (clinicContext?.insurance_plans?.length > 0) {
+      const activePlans = clinicContext.insurance_plans.filter(plan => plan.ativo);
+      if (activePlans.length > 0) {
+        prompt += `\n\nConvênios aceitos: ${activePlans.map(plan => plan.nome).join(', ')}`;
+      }
+    }
+    
+    // Horários de funcionamento
+    if (clinicContext?.working_hours) {
+      prompt += `\n\nHorários de funcionamento:`;
+      Object.entries(clinicContext.working_hours).forEach(([day, hours]) => {
+        if (hours.abertura && hours.fechamento) {
+          prompt += `\n- ${day}: ${hours.abertura} às ${hours.fechamento}`;
+        } else {
+          prompt += `\n- ${day}: Fechado`;
+        }
+      });
+    }
+    
+    // Saudação personalizada
+    if (aiPersonality.greeting) {
+      prompt += `\n\nSua saudação inicial é: "${aiPersonality.greeting}"`;
+    }
+    
+    // Mensagem de despedida
+    if (aiPersonality.farewell) {
+      prompt += `\n\nSua mensagem de despedida é: "${aiPersonality.farewell}"`;
+    }
+    
+    // Mensagem fora do horário
+    if (aiPersonality.out_of_hours) {
+      prompt += `\n\nQuando estiver fora do horário, use: "${aiPersonality.out_of_hours}"`;
+    }
+    
+    // Dados do usuário
     if (userProfile?.name) {
-      prompt += `O usuário se chama ${userProfile.name}. Use o nome dele de forma natural. `;
+      prompt += `\n\nO usuário se chama ${userProfile.name}. Use o nome dele de forma natural.`;
     }
     
     if (userProfile?.preferences) {
-      prompt += `Preferências do usuário: ${JSON.stringify(userProfile.preferences)}. `;
+      prompt += `\n\nPreferências do usuário: ${JSON.stringify(userProfile.preferences)}.`;
     }
     
     prompt += `\n\nRegras importantes:
-    1. Sempre seja ${clinicPersonality}
-    2. Use o nível de formalidade ${clinicFormality}
-    3. Seja conciso mas completo
+    1. Seja ${personality}
+    2. Use ${tone}
+    3. Nível de formalidade: ${formality}
     4. Use emojis apropriados para WhatsApp
     5. Formate respostas para WhatsApp (negrito, itálico quando apropriado)
     6. Mantenha o contexto da conversa
-    7. Se não souber algo, sugira falar com um atendente humano`;
+    7. Use as informações específicas da ${clinicName}
+    8. Se não souber algo específico, sugira falar com um atendente humano
+    9. Seja proativo em oferecer informações relevantes`;
     
     return prompt;
   }

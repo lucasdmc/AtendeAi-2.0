@@ -812,12 +812,141 @@ class ConversationController {
   // =====================================================
 
   async getClinicContext(clinic_id) {
-    // Implementar busca de contexto da clínica
+    try {
+      // Buscar dados da clínica via API
+      const response = await fetch(`${process.env.CLINIC_SERVICE_URL || 'http://localhost:3001'}/api/clinics/${clinic_id}`, {
+        headers: {
+          'Authorization': 'Bearer test'
+        }
+      });
+      
+      if (!response.ok) {
+        logger.warn('Failed to fetch clinic context', { clinic_id, status: response.status });
+        return this.getDefaultClinicContext();
+      }
+      
+      const clinicData = await response.json();
+      const clinic = clinicData.data;
+      
+      // Extrair contexto da contextualização JSON
+      let context = {
+        name: clinic.name || 'Clínica',
+        specialties: [],
+        working_hours: '8h às 18h',
+        location: 'Brasil',
+        ai_personality: {},
+        ai_behavior: {},
+        services: [],
+        professionals: []
+      };
+      
+      if (clinic.contextualization_json) {
+        const ctx = clinic.contextualization_json;
+        
+        // Informações básicas da clínica
+        if (ctx.clinica?.informacoes_basicas) {
+          context.name = ctx.clinica.informacoes_basicas.nome || clinic.name;
+          context.specialties = ctx.clinica.informacoes_basicas.especialidades_secundarias || [];
+          context.description = ctx.clinica.informacoes_basicas.descricao;
+          context.mission = ctx.clinica.informacoes_basicas.missao;
+          context.values = ctx.clinica.informacoes_basicas.valores;
+          context.differentials = ctx.clinica.informacoes_basicas.diferenciais;
+        }
+        
+        // Localização
+        if (ctx.clinica?.localizacao?.endereco_principal) {
+          const endereco = ctx.clinica.localizacao.endereco_principal;
+          context.location = `${endereco.cidade}, ${endereco.estado}`;
+          context.address = `${endereco.logradouro}, ${endereco.numero} - ${endereco.bairro}`;
+        }
+        
+        // Contatos
+        if (ctx.clinica?.contatos) {
+          context.phone = ctx.clinica.contatos.telefone_principal;
+          context.whatsapp = ctx.clinica.contatos.whatsapp;
+          context.email = ctx.clinica.contatos.email_principal;
+          context.website = ctx.clinica.contatos.website;
+        }
+        
+        // Horários de funcionamento
+        if (ctx.clinica?.horario_funcionamento) {
+          context.working_hours = ctx.clinica.horario_funcionamento;
+        }
+        
+        // Personalidade da IA
+        if (ctx.agente_ia?.configuracao) {
+          context.ai_personality = {
+            name: ctx.agente_ia.configuracao.nome,
+            personality: ctx.agente_ia.configuracao.personalidade,
+            tone: ctx.agente_ia.configuracao.tom_comunicacao,
+            formality: ctx.agente_ia.configuracao.nivel_formalidade,
+            greeting: ctx.agente_ia.configuracao.saudacao_inicial,
+            farewell: ctx.agente_ia.configuracao.mensagem_despedida,
+            out_of_hours: ctx.agente_ia.configuracao.mensagem_fora_horario
+          };
+        }
+        
+        // Comportamento da IA
+        if (ctx.agente_ia?.comportamento) {
+          context.ai_behavior = ctx.agente_ia.comportamento;
+        }
+        
+        // Serviços
+        if (ctx.servicos) {
+          context.services = [
+            ...(ctx.servicos.consultas || []),
+            ...(ctx.servicos.exames || [])
+          ];
+        }
+        
+        // Profissionais
+        if (ctx.profissionais) {
+          context.professionals = ctx.profissionais;
+        }
+        
+        // Convênios
+        if (ctx.convenios) {
+          context.insurance_plans = ctx.convenios;
+        }
+        
+        // Políticas
+        if (ctx.politicas) {
+          context.policies = ctx.politicas;
+        }
+      }
+      
+      logger.info('Clinic context loaded successfully', { 
+        clinic_id, 
+        clinic_name: context.name,
+        has_contextualization: !!clinic.contextualization_json
+      });
+      
+      return context;
+      
+    } catch (error) {
+      logger.error('Error fetching clinic context', { error: error.message, clinic_id });
+      return this.getDefaultClinicContext();
+    }
+  }
+  
+  getDefaultClinicContext() {
     return {
-      name: 'Clínica Exemplo',
-      specialties: ['Cardiologia', 'Neurologia'],
+      name: 'Clínica',
+      specialties: [],
       working_hours: '8h às 18h',
-      location: 'São Paulo, SP'
+      location: 'Brasil',
+      ai_personality: {
+        name: 'Assistente',
+        personality: 'Profissional e atencioso',
+        tone: 'Formal mas acessível',
+        formality: 'Médio'
+      },
+      ai_behavior: {
+        proativo: true,
+        oferece_sugestoes: true
+      },
+      services: [],
+      professionals: []
     };
   }
 

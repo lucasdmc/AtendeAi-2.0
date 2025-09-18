@@ -37,6 +37,14 @@ export default function Clinics() {
 
   // API hooks
   const { data: clinics = [], loading: clinicsLoading, error: clinicsError, refetch: refetchClinics } = useClinics()
+  
+  // Debug: Log quando clinics mudam
+  console.log('🔍 Clinics data changed:', { 
+    count: clinics?.length || 0, 
+    loading: clinicsLoading, 
+    error: clinicsError,
+    clinics: clinics?.map(c => ({ id: c.id, name: c.name, status: c.status }))
+  })
 
   const filteredClinics = (clinics || []).filter(clinic =>
     clinic.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -174,9 +182,11 @@ export default function Clinics() {
   }
 
   const handleDelete = async (clinic: Clinic) => {
+    console.log('🗑️ Iniciando processo de deleção para clínica:', clinic.id, clinic.name)
+    
     if (window.confirm(`Tem certeza que deseja deletar a clínica "${clinic.name}"? Esta ação não pode ser desfeita.`)) {
       try {
-        console.log('Deletando clínica:', clinic.id)
+        console.log('✅ Confirmação recebida. Fazendo chamada DELETE para:', clinic.id)
         
         // Chamada real para API de deleção
         const response = await fetch(`https://atendeai-20-production.up.railway.app/api/clinics/${clinic.id}`, {
@@ -187,24 +197,31 @@ export default function Clinics() {
           },
         })
         
+        console.log('📡 Resposta da API DELETE:', response.status, response.statusText)
+        
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}))
+          console.error('❌ Erro na resposta da API:', errorData)
           throw new Error(`Erro ${response.status}: ${errorData.message || 'Falha ao deletar clínica'}`)
         }
         
         const result = await response.json()
-        console.log('Clínica deletada com sucesso:', result)
+        console.log('✅ Clínica deletada com sucesso:', result)
         
         // Recarregar lista de clínicas
+        console.log('🔄 Recarregando lista de clínicas...')
         await refetchClinics()
+        console.log('✅ Lista de clínicas recarregada')
         
         // Mostrar notificação de sucesso
         alert('Clínica deletada com sucesso!')
         
       } catch (error) {
-        console.error('Erro ao deletar clínica:', error)
+        console.error('❌ Erro ao deletar clínica:', error)
         alert(`Erro ao deletar clínica: ${error.message}`)
       }
+    } else {
+      console.log('❌ Deleção cancelada pelo usuário')
     }
   }
 
