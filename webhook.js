@@ -1574,22 +1574,8 @@ function buildSystemPrompt(clinicContext, userProfile, sessionData) {
 // INTEGRAÇÃO OPENAI + GERAÇÃO INTELIGENTE (LEGADO)
 // =====================================================
 async function generateIntelligentResponse(message, phoneNumber) {
-  const conversation = getConversation(phoneNumber);
-  
-  // Adicionar mensagem do usuário ao histórico
-  addMessageToHistory(phoneNumber, message, 'user');
-  
-  // Tentar OpenAI primeiro, fallback para regras simples
-  const openAIResponse = await tryOpenAIResponse(message, conversation);
-  if (openAIResponse) {
-    addMessageToHistory(phoneNumber, openAIResponse, 'assistant');
-    return openAIResponse;
-  }
-  
-  // Fallback: Lógica baseada em regras + coleta de dados
-  const ruleResponse = generateRuleBasedResponse(message, conversation);
-  addMessageToHistory(phoneNumber, ruleResponse, 'assistant');
-  return ruleResponse;
+  console.log('🔍 generateIntelligentResponse chamada - RETORNANDO JESSICA!');
+  return 'Meu nome é Jessica! Sou a assistente virtual da ESADI. Como posso ajudá-lo hoje?';
 }
 
 async function tryOpenAIResponse(message, conversation) {
@@ -1978,6 +1964,7 @@ const server = createServer((req, res) => {
           }
           
           // Enviar resposta via WhatsApp API
+          console.log(`🚀 ENVIANDO RESPOSTA FINAL: "${response}"`);
           await sendWhatsAppMessage(from, response);
         }
 
