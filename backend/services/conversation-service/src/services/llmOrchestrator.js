@@ -186,15 +186,22 @@ class LLMOrchestrator {
   }
 
   buildSystemPrompt(clinicContext, userProfile, sessionData) {
+    console.log('🔍 DEBUG - clinicContext recebido:', JSON.stringify(clinicContext, null, 2));
+    
     const clinicName = clinicContext?.name || 'clínica';
     const aiPersonality = clinicContext?.ai_personality || {};
     const aiBehavior = clinicContext?.ai_behavior || {};
+    
+    console.log('🔍 DEBUG - clinicName:', clinicName);
+    console.log('🔍 DEBUG - aiPersonality:', JSON.stringify(aiPersonality, null, 2));
     
     // Nome da assistente
     const assistantName = aiPersonality.name || 'Assistente';
     const personality = aiPersonality.personality || 'profissional e atencioso';
     const tone = aiPersonality.tone || 'formal mas acessível';
     const formality = aiPersonality.formality || 'médio';
+    
+    console.log('🔍 DEBUG - assistantName:', assistantName);
     
     let prompt = `Você é ${assistantName}, assistente virtual inteligente da ${clinicName}. `;
     prompt += `${personality}. ${tone}. `;
@@ -285,15 +292,18 @@ class LLMOrchestrator {
     }
     
     prompt += `\n\nRegras importantes:
-    1. Seja ${personality}
-    2. Use ${tone}
-    3. Nível de formalidade: ${formality}
-    4. Use emojis apropriados para WhatsApp
-    5. Formate respostas para WhatsApp (negrito, itálico quando apropriado)
-    6. Mantenha o contexto da conversa
-    7. Use as informações específicas da ${clinicName}
-    8. Se não souber algo específico, sugira falar com um atendente humano
-    9. Seja proativo em oferecer informações relevantes`;
+1. Seja ${personality}
+2. Use ${tone}
+3. Nível de formalidade: ${formality}
+4. Use emojis apropriados para WhatsApp
+5. Formate respostas para WhatsApp (negrito, itálico quando apropriado)
+6. Mantenha o contexto da conversa
+7. Use as informações específicas da ${clinicName}
+8. Se não souber algo específico, sugira falar com um atendente humano
+9. Seja proativo em oferecer informações relevantes`;
+    
+    console.log('🔍 DEBUG - Prompt final construído:');
+    console.log(prompt);
     
     return prompt;
   }
