@@ -317,7 +317,7 @@ class Clinic {
       phone: this.phone,
       working_hours: this.working_hours,
       timezone: this.timezone,
-      contextualization_json: this.context_json,
+      context_json: this.context_json,
       ai_personality: this.ai_personality,
       ai_behavior: this.ai_behavior,
       appointment_policies: this.appointment_policies,
