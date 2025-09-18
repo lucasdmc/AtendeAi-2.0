@@ -1674,8 +1674,9 @@ async function sendWhatsAppMessage(to, message) {
     
     if (!ACCESS_TOKEN || !PHONE_NUMBER_ID) {
       console.log('⚠️ Credenciais WhatsApp não configuradas, simulando envio...');
+      console.log(`📤 SIMULAÇÃO: Enviando para ${to}: "${message}"`);
       console.log('📤 Resposta simulada enviada com sucesso');
-      return { success: false, error: 'Missing credentials' };
+      return { success: true, simulated: true, message: 'Simulated send' };
     }
 
     const url = `https://graph.facebook.com/v18.0/${PHONE_NUMBER_ID}/messages`;
