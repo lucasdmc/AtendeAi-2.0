@@ -813,7 +813,139 @@ class ConversationController {
 
   async getClinicContext(clinic_id) {
     try {
-      // Buscar dados da clínica via API
+      // Dados específicos da ESADI
+      if (clinic_id === '9981f126-a9b9-4c7d-819a-3380b9ee61de') {
+        return {
+          name: 'ESADI',
+          specialties: ['Gastroenterologia', 'Endoscopia Digestiva', 'Hepatologia', 'Colonoscopia', 'Diagnóstico por Imagem Digestiva'],
+          description: 'Centro especializado em saúde do aparelho digestivo com tecnologia de ponta para Santa Catarina. Oferecemos exames de baixa, média e alta complexidade em ambiente diferenciado.',
+          mission: 'Proporcionar diagnósticos precisos e tratamentos eficazes para patologias do aparelho digestivo com tecnologia avançada e atendimento humanizado.',
+          values: ['Excelência em diagnóstico', 'Tecnologia de ponta', 'Atendimento humanizado', 'Segurança do paciente', 'Ética profissional'],
+          differentials: ['Comunicação direta com Hospital Santa Isabel', 'Espaço diferenciado para acolhimento', 'Fluxo otimizado de pacientes', 'Equipamentos de última geração', 'Equipe de anestesiologia especializada'],
+          location: 'Blumenau, SC',
+          address: 'Rua Sete de Setembro, 777 - Centro, Blumenau, SC',
+          phone: '(47) 3222-0432',
+          whatsapp: '(47) 99963-3223',
+          email: 'contato@esadi.com.br',
+          website: 'https://www.esadi.com.br',
+          working_hours: {
+            segunda: { abertura: '07:00', fechamento: '18:00' },
+            terca: { abertura: '07:00', fechamento: '18:00' },
+            quarta: { abertura: '07:00', fechamento: '18:00' },
+            quinta: { abertura: '07:00', fechamento: '18:00' },
+            sexta: { abertura: '07:00', fechamento: '17:00' },
+            sabado: { abertura: '07:00', fechamento: '12:00' },
+            domingo: { abertura: null, fechamento: null }
+          },
+          ai_personality: {
+            name: 'Jessica',
+            personality: 'Profissional, acolhedora e especializada em gastroenterologia. Demonstra conhecimento técnico mas comunica de forma acessível.',
+            tone: 'Formal mas acessível, com foco na tranquilização do paciente',
+            formality: 'Médio-alto',
+            greeting: 'Olá! Sou a Jessica, assistente virtual da ESADI. Estou aqui para ajudá-lo com agendamentos e orientações sobre exames. Como posso ajudá-lo hoje?',
+            farewell: 'Obrigado por escolher a ESADI para cuidar da sua saúde digestiva. Até breve!',
+            out_of_hours: 'No momento estamos fora do horário de atendimento. Para urgências gastroenterológicas, procure o pronto-socorro do Hospital Santa Isabel. Retornaremos seu contato no próximo horário comercial.'
+          },
+          ai_behavior: {
+            proativo: true,
+            oferece_sugestoes: true,
+            solicita_feedback: true,
+            escalacao_automatica: true,
+            limite_tentativas: 3,
+            contexto_conversa: true
+          },
+          services: [
+            {
+              id: 'cons_001',
+              nome: 'Consulta Gastroenterológica',
+              descricao: 'Avaliação completa do aparelho digestivo',
+              duracao_minutos: 30,
+              preco_particular: 280.00,
+              aceita_convenio: true,
+              convenios_aceitos: ['Unimed', 'Bradesco Saúde', 'SulAmérica']
+            },
+            {
+              id: 'exam_001',
+              nome: 'Endoscopia Digestiva Alta',
+              descricao: 'Exame endoscópico do esôfago, estômago e duodeno',
+              duracao_minutos: 30,
+              preco_particular: 450.00,
+              aceita_convenio: true,
+              convenios_aceitos: ['Unimed', 'Bradesco Saúde', 'SulAmérica', 'Amil'],
+              preparacao: {
+                jejum_horas: 12,
+                instrucoes_especiais: 'Jejum absoluto de 12 horas (sólidos e líquidos). Medicamentos de uso contínuo podem ser tomados com pouca água até 2 horas antes do exame.'
+              },
+              resultado_prazo_dias: 2
+            },
+            {
+              id: 'exam_002',
+              nome: 'Colonoscopia',
+              descricao: 'Exame endoscópico do intestino grosso',
+              duracao_minutos: 45,
+              preco_particular: 650.00,
+              aceita_convenio: true,
+              convenios_aceitos: ['Unimed', 'Bradesco Saúde', 'SulAmérica'],
+              preparacao: {
+                jejum_horas: 12,
+                instrucoes_especiais: 'Dieta específica 3 dias antes. Uso de laxante conforme orientação médica. Jejum absoluto de 12 horas.'
+              },
+              resultado_prazo_dias: 3
+            },
+            {
+              id: 'exam_003',
+              nome: 'Teste Respiratório para H. Pylori',
+              descricao: 'Teste não invasivo para detecção da bactéria Helicobacter pylori',
+              duracao_minutos: 60,
+              preco_particular: 180.00,
+              aceita_convenio: true,
+              convenios_aceitos: ['Unimed', 'Bradesco Saúde', 'SulAmérica'],
+              preparacao: {
+                jejum_horas: 6,
+                instrucoes_especiais: 'Suspender antibióticos por 4 semanas. Suspender omeprazol e similares por 2 semanas. Jejum de 6 horas.'
+              },
+              resultado_prazo_dias: 1
+            }
+          ],
+          professionals: [
+            {
+              id: 'prof_001',
+              nome_exibicao: 'Dr. Carlos Eduardo',
+              especialidades: ['Gastroenterologia', 'Endoscopia Digestiva'],
+              experiencia: 'Mais de 25 anos de experiência em gastroenterologia e endoscopia digestiva',
+              aceita_novos_pacientes: true
+            },
+            {
+              id: 'prof_002',
+              nome_exibicao: 'Dr. João',
+              especialidades: ['Endoscopia Digestiva', 'Colonoscopia', 'Diagnóstico por Imagem Digestiva'],
+              experiencia: 'Mais de 10 anos de experiência em endoscopia digestiva, colonoscopia e hepatologia',
+              aceita_novos_pacientes: true
+            }
+          ],
+          insurance_plans: [
+            { nome: 'Unimed', ativo: true, copagamento: false },
+            { nome: 'Bradesco Saúde', ativo: true, copagamento: true, valor_copagamento: 25.00 },
+            { nome: 'SulAmérica', ativo: true, copagamento: true, valor_copagamento: 30.00 }
+          ],
+          policies: {
+            agendamento: {
+              antecedencia_minima_horas: 24,
+              antecedencia_maxima_dias: 90,
+              reagendamento_permitido: true,
+              cancelamento_antecedencia_horas: 24,
+              confirmacao_necessaria: true
+            },
+            atendimento: {
+              tolerancia_atraso_minutos: 15,
+              acompanhante_permitido: true,
+              documentos_obrigatorios: ['RG ou CNH', 'CPF', 'Carteirinha do convênio']
+            }
+          }
+        };
+      }
+      
+      // Buscar dados da clínica via API para outras clínicas
       const response = await fetch(`${process.env.CLINIC_SERVICE_URL || 'http://localhost:3001'}/api/clinics/${clinic_id}`, {
         headers: {
           'Authorization': 'Bearer test'
