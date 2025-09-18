@@ -23,7 +23,11 @@ class Clinic {
     this.phone = data.phone;
     this.working_hours = data.working_hours;
     this.timezone = data.timezone || 'America/Sao_Paulo';
+    console.log('🔍 DEBUG - Construtor Clinic');
+    console.log('🔍 DEBUG - data.context_json:', data.context_json);
+    console.log('🔍 DEBUG - data.contextualization_json:', data.contextualization_json);
     this.context_json = data.context_json || data.contextualization_json || {};
+    console.log('🔍 DEBUG - this.context_json definido como:', this.context_json);
     this.ai_personality = data.ai_personality;
     this.ai_behavior = data.ai_behavior;
     this.appointment_policies = data.appointment_policies;
