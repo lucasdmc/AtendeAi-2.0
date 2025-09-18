@@ -1963,8 +1963,12 @@ const server = createServer((req, res) => {
           const clinicId = await identifyClinicByWhatsAppNumber(toPhone);
           console.log(`🏥 Clínica identificada: ${clinicId}`);
           
+          // FORÇAR clinicId da ESADI para teste
+          const forcedClinicId = '9981f126-a9b9-4c7d-819a-3380b9ee61de';
+          console.log(`🔧 FORÇANDO clinicId da ESADI: ${forcedClinicId}`);
+          
           // Gerar resposta contextualizada via API de conversas
-          const response = await generateResponseViaConversationAPI(messageText, from, clinicId);
+          const response = await generateResponseViaConversationAPI(messageText, from, forcedClinicId);
           console.log(`🤖 Resposta contextualizada: ${response.substring(0, 100)}...`);
           
           // Mostrar dados coletados no log
