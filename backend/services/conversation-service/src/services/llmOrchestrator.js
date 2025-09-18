@@ -355,20 +355,30 @@ class LLMOrchestrator {
   }
 
   generateFallbackResponse(intent, clinicContext) {
+    console.log('🔍 DEBUG - generateFallbackResponse chamado com intent:', intent);
+    console.log('🔍 DEBUG - clinicContext no fallback:', JSON.stringify(clinicContext, null, 2));
+    
+    const clinicName = clinicContext?.name || 'clínica';
+    const aiPersonality = clinicContext?.ai_personality || {};
+    const assistantName = aiPersonality.name || 'Assistente';
+    
     const fallbackResponses = {
-      appointment: 'Desculpe, não consegui processar sua solicitação de agendamento. Por favor, tente novamente ou entre em contato com um atendente humano.',
-      reschedule: 'Não consegui entender sua solicitação de reagendamento. Pode reformular ou falar com um atendente humano?',
-      cancel: 'Não consegui processar o cancelamento. Entre em contato com um atendente humano para ajudá-lo.',
-      information: 'Desculpe, não consegui processar sua pergunta. Pode reformular ou falar com um atendente humano?',
-      greeting: 'Olá! Como posso ajudá-lo hoje?',
-      farewell: 'Até logo! Tenha um ótimo dia!',
-      emergency: '⚠️ ATENÇÃO: Se esta é uma emergência médica, procure atendimento imediato ou ligue para emergências (192).',
-      human_support: 'Vou transferir você para um atendente humano. Aguarde um momento...',
-      unknown: 'Desculpe, não entendi sua mensagem. Pode reformular ou falar com um atendente humano?'
+      appointment: `Desculpe, não consegui processar sua solicitação de agendamento na ${clinicName}. Por favor, tente novamente ou entre em contato com um atendente humano.`,
+      reschedule: `Não consegui entender sua solicitação de reagendamento na ${clinicName}. Pode reformular ou falar com um atendente humano?`,
+      cancel: `Não consegui processar o cancelamento na ${clinicName}. Entre em contato com um atendente humano para ajudá-lo.`,
+      information: `Desculpe, não consegui processar sua pergunta sobre a ${clinicName}. Pode reformular ou falar com um atendente humano?`,
+      greeting: aiPersonality.greeting || `Olá! Sou a ${assistantName}, assistente virtual da ${clinicName}. Como posso ajudá-lo hoje?`,
+      farewell: aiPersonality.farewell || `Obrigado por entrar em contato com a ${clinicName}! Até breve!`,
+      emergency: `⚠️ ATENÇÃO: Se esta é uma emergência médica, procure atendimento imediato ou ligue para emergências (192).`,
+      human_support: `Vou transferir você para um atendente humano da ${clinicName}. Aguarde um momento...`,
+      unknown: `Desculpe, não entendi sua mensagem sobre a ${clinicName}. Pode reformular ou falar com um atendente humano?`
     };
     
+    const response = fallbackResponses[intent] || fallbackResponses.unknown;
+    console.log('🔍 DEBUG - Resposta do fallback:', response);
+    
     return {
-      content: fallbackResponses[intent] || fallbackResponses.unknown,
+      content: response,
       intent,
       confidence: 0.1,
       metadata: { fallback: true, reason: 'LLM service unavailable' }
