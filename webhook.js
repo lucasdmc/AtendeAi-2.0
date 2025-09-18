@@ -1073,9 +1073,9 @@ async function identifyClinicByWhatsAppNumber(whatsappNumber) {
     
     // Buscar clínica pelo número do WhatsApp
     const result = await pool.query(`
-      SELECT id, name, whatsapp_id_number, contextualization_json
+      SELECT id, name, whatsapp_number, context_json
       FROM atendeai.clinics 
-      WHERE whatsapp_id_number = $1 AND status = 'active'
+      WHERE whatsapp_number = $1 AND status = 'active'
     `, [whatsappNumber]);
     
     console.log(`📊 Resultado da query: ${result.rows.length} clínicas encontradas`);
@@ -1084,8 +1084,8 @@ async function identifyClinicByWhatsAppNumber(whatsappNumber) {
     
     if (result.rows.length > 0) {
       const clinic = result.rows[0];
-      console.log(`✅ Clínica encontrada: ${clinic.name} (ID: ${clinic.id}) - WhatsApp: ${clinic.whatsapp_id_number}`);
-      console.log(`📋 Contextualização disponível: ${clinic.contextualization_json ? 'Sim' : 'Não'}`);
+      console.log(`✅ Clínica encontrada: ${clinic.name} (ID: ${clinic.id}) - WhatsApp: ${clinic.whatsapp_number}`);
+      console.log(`📋 Contextualização disponível: ${clinic.context_json ? 'Sim' : 'Não'}`);
       return clinic.id;
     } else {
       console.log(`⚠️ Clínica não encontrada para número: ${whatsappNumber}`);
@@ -1163,7 +1163,7 @@ async function getClinicContext(clinicId) {
     
     // Buscar clínica com contextualização
     const result = await pool.query(`
-      SELECT id, name, whatsapp_id_number, contextualization_json
+      SELECT id, name, whatsapp_number, context_json
       FROM atendeai.clinics 
       WHERE id = $1 AND status = 'active'
     `, [clinicId]);
@@ -1177,16 +1177,16 @@ async function getClinicContext(clinicId) {
     
     const clinic = result.rows[0];
     console.log(`✅ Clínica encontrada: ${clinic.name}`);
-    console.log(`🔍 contextualization_json:`, clinic.contextualization_json);
+    console.log(`🔍 context_json:`, clinic.context_json);
     
     // Se não há contextualização, usar dados básicos
-    if (!clinic.contextualization_json) {
+    if (!clinic.context_json) {
       console.log(`⚠️ Sem contextualização JSON para ${clinic.name}`);
       return getDefaultClinicContext(clinic);
     }
     
     // Converter JSON string para objeto se necessário
-    let contextualization = clinic.contextualization_json;
+    let contextualization = clinic.context_json;
     if (typeof contextualization === 'string') {
       try {
         contextualization = JSON.parse(contextualization);

@@ -42,25 +42,20 @@ class Clinic {
       const clinic = new Clinic(clinicData);
       
       const query = `
-        INSERT INTO clinics (
-          id, name, type, specialty, description, mission, values, differentials,
-          whatsapp_phone, email, website, address, city, state,
-          zip_code, country, phone, working_hours, timezone, contextualization_json,
-          ai_personality, ai_behavior, appointment_policies, calendar_mappings,
-          status, created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15,
-                 $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28)
+        INSERT INTO atendeai.clinics (
+          id, name, whatsapp_number, context_json, status, created_at, updated_at
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7)
         RETURNING *
       `;
       
       const values = [
-        clinic.id, clinic.name, clinic.type, clinic.specialty, clinic.description,
-        clinic.mission, clinic.values, clinic.differentials,
-        clinic.whatsapp_phone, clinic.email, clinic.website, clinic.address,
-        clinic.city, clinic.state, clinic.zip_code, clinic.country, clinic.phone,
-        clinic.working_hours, clinic.timezone, clinic.contextualization_json,
-        clinic.ai_personality, clinic.ai_behavior, clinic.appointment_policies,
-        clinic.calendar_mappings, clinic.status, clinic.created_at, clinic.updated_at
+        clinic.id, 
+        clinic.name, 
+        clinic.whatsapp_phone, 
+        JSON.stringify(clinic.context_json),
+        clinic.status, 
+        clinic.created_at, 
+        clinic.updated_at
       ];
       
       const result = await db.query(query, values);
@@ -75,14 +70,26 @@ class Clinic {
 
   static async findById(id) {
     try {
-      const query = 'SELECT * FROM clinics WHERE id = $1 AND status != $2';
+      const query = 'SELECT * FROM atendeai.clinics WHERE id = $1 AND status != $2';
       const result = await db.query(query, [id, 'deleted']);
       
       if (result.rows.length === 0) {
         return null;
       }
       
-      return new Clinic(result.rows[0]);
+      // Mapear campos da tabela para o modelo
+      const row = result.rows[0];
+      const clinicData = {
+        id: row.id,
+        name: row.name,
+        whatsapp_phone: row.whatsapp_number,
+        context_json: row.context_json,
+        status: row.status,
+        created_at: row.created_at,
+        updated_at: row.updated_at
+      };
+      
+      return new Clinic(clinicData);
     } catch (error) {
       logger.error('Error finding clinic by ID:', error);
       throw error;
@@ -91,14 +98,26 @@ class Clinic {
 
   static async findByWhatsAppPhone(phone) {
     try {
-      const query = 'SELECT * FROM clinics WHERE whatsapp_phone = $1 AND status = $2';
+      const query = 'SELECT * FROM atendeai.clinics WHERE whatsapp_number = $1 AND status = $2';
       const result = await db.query(query, [phone, 'active']);
       
       if (result.rows.length === 0) {
         return null;
       }
       
-      return new Clinic(result.rows[0]);
+      // Mapear campos da tabela para o modelo
+      const row = result.rows[0];
+      const clinicData = {
+        id: row.id,
+        name: row.name,
+        whatsapp_phone: row.whatsapp_number,
+        context_json: row.context_json,
+        status: row.status,
+        created_at: row.created_at,
+        updated_at: row.updated_at
+      };
+      
+      return new Clinic(clinicData);
     } catch (error) {
       logger.error('Error finding clinic by WhatsApp phone:', error);
       throw error;
@@ -126,18 +145,27 @@ class Clinic {
     try {
       updateData.updated_at = new Date();
       
-      const fields = Object.keys(updateData).filter(key => key !== 'id');
-      const values = Object.values(updateData);
+      // Mapear campos para a estrutura correta da tabela
+      const mappedData = {
+        name: updateData.name,
+        whatsapp_number: updateData.whatsapp_id_number || updateData.whatsapp_phone,
+        context_json: updateData.contextualization_json ? JSON.stringify(updateData.contextualization_json) : undefined,
+        status: updateData.status,
+        updated_at: updateData.updated_at
+      };
+      
+      const fields = Object.keys(mappedData).filter(key => mappedData[key] !== undefined);
+      const values = fields.map(field => mappedData[field]);
       const setClause = fields.map((field, index) => `${field} = $${index + 2}`).join(', ');
       
       const query = `
-        UPDATE clinics 
-        SET ${setClause}, updated_at = $${fields.length + 2}
+        UPDATE atendeai.clinics 
+        SET ${setClause}
         WHERE id = $1 AND status != 'deleted'
         RETURNING *
       `;
       
-      const result = await db.query(query, [id, ...values, updateData.updated_at]);
+      const result = await db.query(query, [id, ...values]);
       
       if (result.rows.length === 0) {
         throw new Error('Clinic not found or deleted');
