@@ -1064,6 +1064,8 @@ async function handleUserRoutes(req, res, pathname) {
 // =====================================================
 async function identifyClinicByWhatsAppNumber(whatsappNumber) {
   try {
+    console.log(`🔍 Iniciando busca por clínica com número: "${whatsappNumber}"`);
+    
     const pool = new Pool({
       connectionString: config.database.url,
       ssl: { rejectUnauthorized: false }
@@ -1076,14 +1078,35 @@ async function identifyClinicByWhatsAppNumber(whatsappNumber) {
       WHERE whatsapp_id_number = $1 AND status = 'active'
     `, [whatsappNumber]);
     
+    console.log(`📊 Resultado da query: ${result.rows.length} clínicas encontradas`);
+    
     await pool.end();
     
     if (result.rows.length > 0) {
       const clinic = result.rows[0];
-      console.log(`✅ Clínica encontrada: ${clinic.name} (ID: ${clinic.id})`);
+      console.log(`✅ Clínica encontrada: ${clinic.name} (ID: ${clinic.id}) - WhatsApp: ${clinic.whatsapp_id_number}`);
       return clinic.id;
     } else {
       console.log(`⚠️ Clínica não encontrada para número: ${whatsappNumber}`);
+      
+      // Buscar todas as clínicas para debug
+      const debugPool = new Pool({
+        connectionString: config.database.url,
+        ssl: { rejectUnauthorized: false }
+      });
+      
+      const debugResult = await debugPool.query(`
+        SELECT id, name, whatsapp_id_number, status 
+        FROM atendeai.clinics 
+        ORDER BY created_at DESC
+      `);
+      
+      console.log(`🔍 Todas as clínicas no banco:`);
+      debugResult.rows.forEach(clinic => {
+        console.log(`  - ${clinic.name}: "${clinic.whatsapp_id_number}" (${clinic.status})`);
+      });
+      
+      await debugPool.end();
       return null;
     }
   } catch (error) {
@@ -1845,6 +1868,7 @@ const server = createServer((req, res) => {
           console.log(`📱 Nova mensagem de ${from} para ${toPhone}: ${messageText}`);
           
           // Identificar clínica pelo número do WhatsApp
+          console.log(`🔍 Buscando clínica para número: ${toPhone}`);
           const clinicId = await identifyClinicByWhatsAppNumber(toPhone);
           console.log(`🏥 Clínica identificada: ${clinicId}`);
           
