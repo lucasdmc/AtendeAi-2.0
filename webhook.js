@@ -1121,6 +1121,40 @@ async function identifyClinicByWhatsAppNumber(whatsappNumber) {
 async function generateResponseViaConversationAPI(message, phoneNumber, clinicId) {
   try {
     console.log('🔍 Chamando API de conversas com clinicId:', clinicId);
+    
+    // Usar contexto da ESADI diretamente se for a clínica correta
+    if (clinicId === '9981f126-a9b9-4c7d-819a-3380b9ee61de') {
+      console.log('🔍 Usando contexto da ESADI diretamente');
+      
+      const clinicContext = {
+        name: 'ESADI',
+        specialties: ['Gastroenterologia', 'Endoscopia Digestiva', 'Hepatologia', 'Colonoscopia', 'Diagnóstico por Imagem Digestiva'],
+        description: 'Centro especializado em saúde do aparelho digestivo com tecnologia de ponta para Santa Catarina. Oferecemos exames de baixa, média e alta complexidade em ambiente diferenciado.',
+        ai_personality: {
+          name: 'Jessica',
+          personality: 'Profissional, acolhedora e especializada em gastroenterologia. Demonstra conhecimento técnico mas comunica de forma acessível.',
+          tone: 'Formal mas acessível, com foco na tranquilização do paciente',
+          greeting: 'Olá! Sou a Jessica, assistente virtual da ESADI. Estou aqui para ajudá-lo com agendamentos e orientações sobre exames. Como posso ajudá-lo hoje?',
+          farewell: 'Obrigado por escolher a ESADI para cuidar da sua saúde digestiva. Até breve!'
+        },
+        services: [
+          {
+            nome: 'Consulta Gastroenterológica',
+            descricao: 'Avaliação completa do aparelho digestivo',
+            preco_particular: 280.00
+          },
+          {
+            nome: 'Endoscopia Digestiva Alta',
+            descricao: 'Exame endoscópico do esôfago, estômago e duodeno',
+            preco_particular: 450.00
+          }
+        ]
+      };
+      
+      return generateRuleBasedResponseWithContext(message, getConversation(phoneNumber), clinicContext);
+    }
+    
+    // Para outras clínicas, tentar chamar a API
     console.log('🔍 URL da API:', `http://localhost:${config.server.port}/api/conversations/process`);
     
     const response = await fetch(`http://localhost:${config.server.port}/api/conversations/process`, {
