@@ -1362,6 +1362,9 @@ function generateRuleBasedResponseWithContext(message, conversation, clinicConte
 }
 
 function generateGenericResponse(message, conversation) {
+  console.log('⚠️ generateGenericResponse chamada - USANDO RESPOSTA GENÉRICA!');
+  console.log('📋 message:', message);
+  
   const messageLower = message.toLowerCase();
   
   if (messageLower.includes('oi') || messageLower.includes('olá')) {
