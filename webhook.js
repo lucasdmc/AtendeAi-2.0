@@ -1259,15 +1259,19 @@ async function tryOpenAIResponseWithContext(message, conversation, clinicContext
 
 function generateRuleBasedResponseWithContext(message, conversation, clinicContext) {
   console.log('🔍 generateRuleBasedResponseWithContext chamada');
-  console.log('📋 Clínica:', clinicContext.name);
+  console.log('📋 Clínica recebida:', clinicContext);
+  console.log('📋 Tipo do contexto:', typeof clinicContext);
+  console.log('📋 Clínica name:', clinicContext?.name);
   
   const messageLower = message.toLowerCase();
-  const clinicInfo = clinicContext.clinic_info || {};
-  const aiPersonality = clinicContext.ai_personality || {};
-  const clinicName = clinicInfo.name || clinicContext.name || 'Clínica';
+  const clinicInfo = clinicContext?.clinic_info || {};
+  const aiPersonality = clinicContext?.ai_personality || {};
+  const clinicName = clinicInfo.name || clinicContext?.name || 'Clínica';
   const assistantName = aiPersonality.name || 'Assistente';
   
   console.log('🤖 Assistente:', assistantName, 'da', clinicName);
+  console.log('🔍 clinicInfo:', clinicInfo);
+  console.log('🔍 aiPersonality:', aiPersonality);
   
   // Saudação inicial
   if (messageLower.includes('oi') || messageLower.includes('olá') || messageLower.includes('bom dia') || 
