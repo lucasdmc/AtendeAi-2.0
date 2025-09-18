@@ -79,6 +79,9 @@ class Clinic {
       
       // Mapear campos da tabela para o modelo
       const row = result.rows[0];
+      console.log('🔍 DEBUG - Row do banco:', row);
+      console.log('🔍 DEBUG - context_json do banco:', row.context_json);
+      
       const clinicData = {
         id: row.id,
         name: row.name,
@@ -88,6 +91,8 @@ class Clinic {
         created_at: row.created_at,
         updated_at: row.updated_at
       };
+      
+      console.log('🔍 DEBUG - clinicData mapeado:', clinicData);
       
       return new Clinic(clinicData);
     } catch (error) {
