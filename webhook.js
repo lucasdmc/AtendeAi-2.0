@@ -1197,6 +1197,9 @@ async function getClinicContext(clinicId) {
     }
     
     console.log(`📋 Contextualização carregada para ${clinic.name}:`, JSON.stringify(contextualization, null, 2));
+    console.log(`📋 Tipo da contextualização:`, typeof contextualization);
+    console.log(`📋 clinic_info:`, contextualization?.clinic_info);
+    console.log(`📋 ai_personality:`, contextualization?.ai_personality);
     return contextualization;
     
   } catch (error) {
