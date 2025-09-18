@@ -1123,6 +1123,10 @@ async function generateResponseViaConversationAPI(message, phoneNumber, clinicId
 // GERAÇÃO DE RESPOSTA CONTEXTUALIZADA
 // =====================================================
 async function generateContextualizedResponse(message, phoneNumber, clinicId, clinicContext) {
+  console.log('🔍 generateContextualizedResponse chamada');
+  console.log('📋 clinicId:', clinicId);
+  console.log('📋 clinicContext:', clinicContext);
+  
   const conversation = getConversation(phoneNumber);
   
   // Adicionar mensagem do usuário ao histórico
@@ -1130,18 +1134,23 @@ async function generateContextualizedResponse(message, phoneNumber, clinicId, cl
   
   // Se não há contexto da clínica, usar resposta genérica
   if (!clinicContext) {
+    console.log('⚠️ Sem contexto da clínica, usando resposta genérica');
     const genericResponse = generateGenericResponse(message, conversation);
     addMessageToHistory(phoneNumber, genericResponse, 'assistant');
     return genericResponse;
   }
   
+  console.log('✅ Contexto da clínica disponível, processando...');
+  
   // Tentar OpenAI com contexto da clínica
   const openAIResponse = await tryOpenAIResponseWithContext(message, conversation, clinicContext);
   if (openAIResponse) {
+    console.log('✅ Resposta do OpenAI gerada');
     addMessageToHistory(phoneNumber, openAIResponse, 'assistant');
     return openAIResponse;
   }
   
+  console.log('⚠️ OpenAI falhou, usando regras baseadas em contexto');
   // Fallback: Lógica baseada em regras com contexto da clínica
   const ruleResponse = generateRuleBasedResponseWithContext(message, conversation, clinicContext);
   addMessageToHistory(phoneNumber, ruleResponse, 'assistant');
