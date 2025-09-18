@@ -1183,6 +1183,9 @@ async function getClinicContext(clinicId) {
       WHERE id = $1 AND status = 'active'
     `, [clinicId]);
     
+    console.log(`🔍 Query executada para clinicId: ${clinicId}`);
+    console.log(`🔍 Número de linhas retornadas: ${result.rows.length}`);
+    
     await pool.end();
     
     if (result.rows.length === 0) {
@@ -1193,10 +1196,14 @@ async function getClinicContext(clinicId) {
     const clinic = result.rows[0];
     console.log(`✅ Clínica encontrada: ${clinic.name}`);
     console.log(`🔍 context_json:`, clinic.context_json);
+    console.log(`🔍 Tipo do context_json:`, typeof clinic.context_json);
+    console.log(`🔍 context_json é null?:`, clinic.context_json === null);
+    console.log(`🔍 context_json é undefined?:`, clinic.context_json === undefined);
     
     // Se não há contextualização, usar dados básicos
     if (!clinic.context_json) {
       console.log(`⚠️ Sem contextualização JSON para ${clinic.name}`);
+      console.log(`⚠️ Retornando contexto padrão`);
       return getDefaultClinicContext(clinic);
     }
     
