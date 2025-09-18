@@ -1151,7 +1151,10 @@ async function generateResponseViaConversationAPI(message, phoneNumber, clinicId
         ]
       };
       
-      return generateRuleBasedResponseWithContext(message, getConversation(phoneNumber), clinicContext);
+      console.log('🔍 DEBUG - Chamando generateRuleBasedResponseWithContext');
+      const response = generateRuleBasedResponseWithContext(message, getConversation(phoneNumber), clinicContext);
+      console.log('🔍 DEBUG - Resposta gerada:', response);
+      return response;
     }
     
     // Para outras clínicas, tentar chamar a API
@@ -1407,9 +1410,15 @@ async function tryOpenAIResponseWithContext(message, conversation, clinicContext
 }
 
 function generateRuleBasedResponseWithContext(message, conversation, clinicContext) {
+  console.log('🔍 DEBUG - generateRuleBasedResponseWithContext chamada com:');
+  console.log('🔍 DEBUG - message:', message);
+  console.log('🔍 DEBUG - clinicContext:', JSON.stringify(clinicContext, null, 2));
+  
   const messageLower = message.toLowerCase();
   const aiPersonality = clinicContext.ai_personality || {};
   const assistantName = aiPersonality.name || 'Assistente';
+  
+  console.log('🔍 DEBUG - assistantName:', assistantName);
   
   // Saudação inicial
   if (messageLower.includes('oi') || messageLower.includes('olá') || messageLower.includes('bom dia') || 
