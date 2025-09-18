@@ -242,6 +242,42 @@ class ClinicController {
     }
   }
 
+  async getClinicContext(req, res) {
+    try {
+      const { id } = req.params;
+      
+      // Busca dados completos da clínica
+      const clinic = await Clinic.findById(id);
+      if (!clinic) {
+        return res.status(404).json({
+          success: false,
+          message: 'Clinic not found'
+        });
+      }
+
+      // Busca contextualização se disponível
+      const contextualization = await ContextualizationService.getClinicContextualization(id, false);
+      
+      // Monta contexto completo para o Conversation Service
+      const context = {
+        ...clinic,
+        contextualization: contextualization?.contextualization || contextualization || null
+      };
+
+      res.status(200).json({
+        success: true,
+        data: context
+      });
+    } catch (error) {
+      logger.error('Error getting clinic context:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error getting clinic context',
+        error: error.message
+      });
+    }
+  }
+
   async getClinicContextualization(req, res) {
     try {
       const { id } = req.params;
