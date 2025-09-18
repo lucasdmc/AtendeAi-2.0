@@ -70,6 +70,9 @@ class ConversationController {
       await Conversation.updateLastMessage(conversation.id, message_content);
 
       const clinicContext = await this.getClinicContext(clinic_id);
+      console.log('🔍 DEBUG - Controller - clinic_id:', clinic_id);
+      console.log('🔍 DEBUG - Controller - clinicContext retornado:', JSON.stringify(clinicContext, null, 2));
+      
       const processingResult = await this.llmOrchestrator.processMessage(
         message_content, 
         clinic_id, 
