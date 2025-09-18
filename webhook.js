@@ -1815,7 +1815,9 @@ const server = createServer((req, res) => {
           // Gerar resposta contextualizada usando o motor de conversação
           console.log(`🤖 Gerando resposta contextualizada para clínica: ${clinicId}`);
           const response = await generateResponseViaConversationAPI(messageText, from, clinicId);
-          console.log(`📋 Resposta gerada: ${response}`);
+          console.log(`📋 Resposta gerada: "${response}"`);
+          console.log(`📋 Tipo da resposta: ${typeof response}`);
+          console.log(`📋 Tamanho da resposta: ${response?.length || 0} caracteres`);
           
           // Mostrar dados coletados no log
           const conversation = getConversation(from);
@@ -1825,7 +1827,8 @@ const server = createServer((req, res) => {
           
           // Enviar resposta via WhatsApp API
           console.log(`🚀 Enviando resposta: "${response}"`);
-          await sendWhatsAppMessage(from, response);
+          const sendResult = await sendWhatsAppMessage(from, response);
+          console.log(`📤 Resultado do envio:`, sendResult);
         }
 
         res.writeHead(200, { 'Content-Type': 'application/json' });
