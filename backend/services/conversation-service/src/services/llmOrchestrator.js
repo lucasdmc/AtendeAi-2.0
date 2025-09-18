@@ -135,12 +135,17 @@ class LLMOrchestrator {
 
   async generateResponse(message, intent, clinic_id, patient_phone, clinicContext) {
     try {
+      console.log('🔍 DEBUG - generateResponse chamado com clinic_id:', clinic_id);
+      console.log('🔍 DEBUG - clinicContext recebido:', JSON.stringify(clinicContext, null, 2));
+      
       const userProfile = await this.memory.getUserProfile(clinic_id, patient_phone);
       const conversationContext = await this.memory.getConversationContext(clinic_id, patient_phone, 5);
       const sessionData = await this.memory.getSessionData(clinic_id, patient_phone);
 
       const systemPrompt = this.buildSystemPrompt(clinicContext, userProfile, sessionData);
       const userPrompt = this.buildUserPrompt(message, intent, conversationContext);
+      
+      console.log('🔍 DEBUG - Tentando chamar OpenAI...');
 
       const completion = await this.openai.chat.completions.create({
         model: config.openai.model,
@@ -169,6 +174,8 @@ class LLMOrchestrator {
         patient_phone
       });
 
+      console.log('🔍 DEBUG - Resposta do OpenAI recebida:', response);
+      
       return {
         content: response,
         intent,
@@ -180,8 +187,11 @@ class LLMOrchestrator {
         }
       };
     } catch (error) {
+      console.log('❌ DEBUG - Erro no generateResponse:', error.message);
       logger.error('Error generating response', { error: error.message, intent, clinic_id, patient_phone });
-      return this.generateFallbackResponse(intent, clinicContext);
+      const fallback = this.generateFallbackResponse(intent, clinicContext);
+      console.log('🔍 DEBUG - Usando fallback:', fallback);
+      return fallback;
     }
   }
 
