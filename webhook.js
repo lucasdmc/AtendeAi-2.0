@@ -1148,37 +1148,6 @@ async function generateContextualizedResponse(message, phoneNumber, clinicId, cl
   return ruleResponse;
 }
 
-// =====================================================
-// GERAÇÃO DE RESPOSTA CONTEXTUALIZADA (LEGADO)
-// =====================================================
-async function generateContextualizedResponse(message, phoneNumber, clinicId) {
-  const conversation = getConversation(phoneNumber);
-  
-  // Adicionar mensagem do usuário ao histórico
-  addMessageToHistory(phoneNumber, message, 'user');
-  
-  // Se não há clínica identificada, usar resposta genérica
-  if (!clinicId) {
-    const genericResponse = generateGenericResponse(message, conversation);
-    addMessageToHistory(phoneNumber, genericResponse, 'assistant');
-    return genericResponse;
-  }
-  
-  // Buscar contexto da clínica
-  const clinicContext = await getClinicContext(clinicId);
-  
-  // Tentar OpenAI com contexto da clínica
-  const openAIResponse = await tryOpenAIResponseWithContext(message, conversation, clinicContext);
-  if (openAIResponse) {
-    addMessageToHistory(phoneNumber, openAIResponse, 'assistant');
-    return openAIResponse;
-  }
-  
-  // Fallback: Lógica baseada em regras com contexto da clínica
-  const ruleResponse = generateRuleBasedResponseWithContext(message, conversation, clinicContext);
-  addMessageToHistory(phoneNumber, ruleResponse, 'assistant');
-  return ruleResponse;
-}
 
 // =====================================================
 // BUSCAR CONTEXTO DA CLÍNICA DO BANCO DE DADOS
@@ -1208,6 +1177,7 @@ async function getClinicContext(clinicId) {
     
     const clinic = result.rows[0];
     console.log(`✅ Clínica encontrada: ${clinic.name}`);
+    console.log(`🔍 contextualization_json:`, clinic.contextualization_json);
     
     // Se não há contextualização, usar dados básicos
     if (!clinic.contextualization_json) {
@@ -1218,10 +1188,15 @@ async function getClinicContext(clinicId) {
     // Converter JSON string para objeto se necessário
     let contextualization = clinic.contextualization_json;
     if (typeof contextualization === 'string') {
-      contextualization = JSON.parse(contextualization);
+      try {
+        contextualization = JSON.parse(contextualization);
+      } catch (error) {
+        console.error('❌ Erro ao fazer parse do JSON:', error);
+        return getDefaultClinicContext(clinic);
+      }
     }
     
-    console.log(`📋 Contextualização carregada para ${clinic.name}`);
+    console.log(`📋 Contextualização carregada para ${clinic.name}:`, JSON.stringify(contextualization, null, 2));
     return contextualization;
     
   } catch (error) {
