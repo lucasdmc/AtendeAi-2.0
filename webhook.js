@@ -1116,7 +1116,43 @@ async function identifyClinicByWhatsAppNumber(whatsappNumber) {
 }
 
 // =====================================================
-// GERAÇÃO DE RESPOSTA CONTEXTUALIZADA
+// GERAÇÃO DE RESPOSTA VIA API DE CONVERSAS
+// =====================================================
+async function generateResponseViaConversationAPI(message, phoneNumber, clinicId) {
+  try {
+    console.log('🔍 Chamando API de conversas com clinicId:', clinicId);
+    
+    const response = await fetch(`${config.server.baseUrl}/api/conversations/process`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer test'
+      },
+      body: JSON.stringify({
+        clinic_id: clinicId,
+        patient_phone: phoneNumber,
+        patient_name: 'Usuário',
+        message_content: message
+      })
+    });
+    
+    if (!response.ok) {
+      console.error('❌ Erro na API de conversas:', response.status, response.statusText);
+      return 'Desculpe, houve um erro interno. Tente novamente em alguns instantes.';
+    }
+    
+    const data = await response.json();
+    console.log('✅ Resposta da API de conversas:', data);
+    
+    return data.response || 'Desculpe, não consegui processar sua mensagem.';
+  } catch (error) {
+    console.error('❌ Erro ao chamar API de conversas:', error);
+    return 'Desculpe, houve um erro interno. Tente novamente em alguns instantes.';
+  }
+}
+
+// =====================================================
+// GERAÇÃO DE RESPOSTA CONTEXTUALIZADA (LEGADO)
 // =====================================================
 async function generateContextualizedResponse(message, phoneNumber, clinicId) {
   const conversation = getConversation(phoneNumber);
@@ -1872,8 +1908,8 @@ const server = createServer((req, res) => {
           const clinicId = await identifyClinicByWhatsAppNumber(toPhone);
           console.log(`🏥 Clínica identificada: ${clinicId}`);
           
-          // Gerar resposta contextualizada
-          const response = await generateContextualizedResponse(messageText, from, clinicId);
+          // Gerar resposta contextualizada via API de conversas
+          const response = await generateResponseViaConversationAPI(messageText, from, clinicId);
           console.log(`🤖 Resposta contextualizada: ${response.substring(0, 100)}...`);
           
           // Mostrar dados coletados no log
