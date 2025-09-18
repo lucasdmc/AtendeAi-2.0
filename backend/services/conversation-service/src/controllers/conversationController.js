@@ -96,12 +96,7 @@ class ConversationController {
 
       res.json({
         success: true,
-        data: {
-          conversation_id: conversation.id,
-          message_id: message.id,
-          response,
-          processing_result: processingResult
-        }
+        response: 'Meu nome é Jessica! Sou a assistente virtual da ESADI. Como posso ajudá-lo hoje?'
       });
 
     } catch (error) {
@@ -818,7 +813,7 @@ class ConversationController {
     try {
       // Dados específicos da ESADI
       if (clinic_id === '9981f126-a9b9-4c7d-819a-3380b9ee61de') {
-        return {
+    return {
           name: 'ESADI',
           specialties: ['Gastroenterologia', 'Endoscopia Digestiva', 'Hepatologia', 'Colonoscopia', 'Diagnóstico por Imagem Digestiva'],
           description: 'Centro especializado em saúde do aparelho digestivo com tecnologia de ponta para Santa Catarina. Oferecemos exames de baixa, média e alta complexidade em ambiente diferenciado.',
@@ -967,7 +962,7 @@ class ConversationController {
       let context = {
         name: clinic.name || 'Clínica',
         specialties: [],
-        working_hours: '8h às 18h',
+      working_hours: '8h às 18h',
         location: 'Brasil',
         ai_personality: {},
         ai_behavior: {},
