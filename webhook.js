@@ -1065,18 +1065,40 @@ async function handleUserRoutes(req, res, pathname) {
 async function identifyClinicByWhatsAppNumber(whatsappNumber) {
   try {
     console.log(`🔍 Iniciando busca por clínica com número: "${whatsappNumber}"`);
+    const digitsOnly = (whatsappNumber || '').toString().replace(/\D/g, '');
+    if (!digitsOnly) {
+      console.log('⚠️ Número inválido para identificação de clínica');
+      return null;
+    }
     
     const pool = new Pool({
       connectionString: config.database.url,
       ssl: { rejectUnauthorized: false }
     });
     
-    // Buscar clínica pelo número do WhatsApp
-    const result = await pool.query(`
-      SELECT id, name, whatsapp_number, context_json
+    // Buscar clínica pelo número do WhatsApp (compatível com whatsapp_id_number ou whatsapp_number)
+    // Aplicar timeout curto para evitar travas em ambiente local
+    const queryWithTimeout = (text, params, ms = 1500) => {
+      return Promise.race([
+        pool.query(text, params),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('DB_TIMEOUT')), ms))
+      ]);
+    };
+
+    const result = await queryWithTimeout(`
+      SELECT 
+        id, 
+        name, 
+        COALESCE(whatsapp_id_number, whatsapp_number) AS whatsapp_number,
+        context_json,
+        contextualization_json
       FROM atendeai.clinics 
-      WHERE whatsapp_number = $1 AND status = 'active'
-    `, [whatsappNumber]);
+      WHERE status = 'active'
+        AND regexp_replace(COALESCE(whatsapp_id_number::text, whatsapp_number::text), '\\D', '', 'g') = $1
+    `, [digitsOnly]).catch(err => {
+      console.warn('⚠️ Timeout/erro na consulta de clínica por número:', err.message);
+      return { rows: [] };
+    });
     
     console.log(`📊 Resultado da query: ${result.rows.length} clínicas encontradas`);
     
@@ -1085,7 +1107,7 @@ async function identifyClinicByWhatsAppNumber(whatsappNumber) {
     if (result.rows.length > 0) {
       const clinic = result.rows[0];
       console.log(`✅ Clínica encontrada: ${clinic.name} (ID: ${clinic.id}) - WhatsApp: ${clinic.whatsapp_number}`);
-      console.log(`📋 Contextualização disponível: ${clinic.context_json ? 'Sim' : 'Não'}`);
+      console.log(`📋 Contextualização disponível: ${(clinic.context_json || clinic.contextualization_json) ? 'Sim' : 'Não'}`);
       return clinic.id;
     } else {
       console.log(`⚠️ Clínica não encontrada para número: ${whatsappNumber}`);
@@ -1176,12 +1198,28 @@ async function getClinicContext(clinicId) {
       ssl: { rejectUnauthorized: false }
     });
     
-    // Buscar clínica com contextualização
-    const result = await pool.query(`
-      SELECT id, name, whatsapp_number, context_json
+    // Buscar clínica com contextualização (suportando colunas context_json e contextualization_json)
+    // Aplicar timeout curto para evitar travas em ambiente local
+    const queryWithTimeout = (text, params, ms = 1500) => {
+      return Promise.race([
+        pool.query(text, params),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('DB_TIMEOUT')), ms))
+      ]);
+    };
+
+    const result = await queryWithTimeout(`
+      SELECT 
+        id, 
+        name, 
+        COALESCE(whatsapp_id_number, whatsapp_number) AS whatsapp_number,
+        context_json,
+        contextualization_json
       FROM atendeai.clinics 
       WHERE id = $1 AND status = 'active'
-    `, [clinicId]);
+    `, [clinicId]).catch(err => {
+      console.warn('⚠️ Timeout/erro na consulta de contexto:', err.message);
+      return { rows: [] };
+    });
     
     console.log(`🔍 Query executada para clinicId: ${clinicId}`);
     console.log(`🔍 Número de linhas retornadas: ${result.rows.length}`);
@@ -1189,26 +1227,30 @@ async function getClinicContext(clinicId) {
     await pool.end();
     
     if (result.rows.length === 0) {
-      console.log(`⚠️ Clínica não encontrada: ${clinicId}`);
+      console.log(`⚠️ Clínica não encontrada ou sem acesso ao DB: ${clinicId}. Tentando fallback offline...`);
+      const offline = getOfflineClinicContextFallback(clinicId);
+      if (offline) return offline;
       return getDefaultClinicContext();
     }
     
     const clinic = result.rows[0];
     console.log(`✅ Clínica encontrada: ${clinic.name}`);
     console.log(`🔍 context_json:`, clinic.context_json);
+    console.log(`🔍 contextualization_json:`, clinic.contextualization_json);
     console.log(`🔍 Tipo do context_json:`, typeof clinic.context_json);
     console.log(`🔍 context_json é null?:`, clinic.context_json === null);
     console.log(`🔍 context_json é undefined?:`, clinic.context_json === undefined);
     
     // Se não há contextualização, usar dados básicos
-    if (!clinic.context_json) {
+    const rawContext = clinic.context_json || clinic.contextualization_json;
+    if (!rawContext) {
       console.log(`⚠️ Sem contextualização JSON para ${clinic.name}`);
       console.log(`⚠️ Retornando contexto padrão`);
       return getDefaultClinicContext(clinic);
     }
     
     // Converter JSON string para objeto se necessário
-    let contextualization = clinic.context_json;
+    let contextualization = rawContext;
     if (typeof contextualization === 'string') {
       try {
         contextualization = JSON.parse(contextualization);
@@ -1218,11 +1260,10 @@ async function getClinicContext(clinicId) {
       }
     }
     
-    console.log(`📋 Contextualização carregada para ${clinic.name}:`, JSON.stringify(contextualization, null, 2));
-    console.log(`📋 Tipo da contextualização:`, typeof contextualization);
-    console.log(`📋 clinic_info:`, contextualization?.clinic_info);
-    console.log(`📋 ai_personality:`, contextualization?.ai_personality);
-    return contextualization;
+    // Normalizar estrutura ESADI -> estrutura esperada pelo motor
+    const normalized = normalizeClinicContext(contextualization, clinic);
+    console.log(`📋 Contextualização normalizada para ${clinic.name}:`, JSON.stringify(normalized, null, 2));
+    return normalized;
     
   } catch (error) {
     console.error('❌ Erro ao buscar contexto da clínica:', error);
@@ -1246,6 +1287,106 @@ function getDefaultClinicContext(clinic = null) {
       greeting: 'Olá! Como posso ajudá-lo hoje?'
     }
   };
+}
+
+// =====================================================
+// FALLBACK OFFLINE DE CONTEXTO POR CLÍNICA
+// =====================================================
+function getOfflineClinicContextFallback(clinicId) {
+  try {
+    const defaultId = process.env.DEFAULT_CLINIC_ID;
+    if (clinicId === defaultId) {
+      // Fallback mínimo baseado na ESADI
+      const fallback = {
+        name: 'ESADI',
+        specialties: ['Gastroenterologia', 'Endoscopia Digestiva', 'Hepatologia'],
+        description: 'Centro especializado em saúde do aparelho digestivo com tecnologia de ponta.',
+        phone: '(47) 3222-0432',
+        working_hours: {
+          segunda: { abertura: '07:00', fechamento: '18:00' },
+          terca: { abertura: '07:00', fechamento: '18:00' },
+          quarta: { abertura: '07:00', fechamento: '18:00' },
+          quinta: { abertura: '07:00', fechamento: '18:00' },
+          sexta: { abertura: '07:00', fechamento: '17:00' },
+          sabado: { abertura: '07:00', fechamento: '12:00' },
+          domingo: { abertura: null, fechamento: null }
+        },
+        ai_personality: {
+          name: 'Jessica',
+          personality: 'Profissional, acolhedora e especializada em gastroenterologia',
+          tone: 'Formal mas acessível',
+          greeting: 'Olá! Sou a Jessica, assistente virtual da ESADI. Como posso ajudar?'
+        }
+      };
+      return fallback;
+    }
+    return null;
+  } catch (_) {
+    return null;
+  }
+}
+
+// =====================================================
+// NORMALIZAÇÃO DE CONTEXTO (ESADI -> Estrutura esperada)
+// =====================================================
+function normalizeClinicContext(input, clinicRow = {}) {
+  try {
+    const out = {};
+
+    // Nome da clínica
+    const nameFromClinicInfo = input?.clinic_info?.name;
+    const nameFromRoot = input?.name;
+    const nameFromPT = input?.clinica?.informacoes_basicas?.nome;
+    out.name = nameFromClinicInfo || nameFromRoot || nameFromPT || clinicRow.name || 'Clínica';
+
+    // clinic_info
+    const ptInfo = input?.clinica?.informacoes_basicas || {};
+    out.clinic_info = {
+      name: out.name,
+      description: input?.clinic_info?.description || input?.description || ptInfo.descricao,
+      specialty: input?.clinic_info?.specialty || input?.specialty || ptInfo.especialidade_principal,
+      values: input?.clinic_info?.values || input?.values || ptInfo.valores,
+      mission: input?.clinic_info?.mission || input?.mission || ptInfo.missao
+    };
+
+    // ai_personality
+    const aiPT = input?.agente_ia?.configuracao || {};
+    out.ai_personality = input?.ai_personality || {
+      name: aiPT.nome || 'Assistente',
+      greeting: aiPT.saudacao_inicial || 'Olá! Como posso ajudá-lo hoje?',
+      farewell: aiPT.mensagem_despedida || 'Obrigado pelo contato! Até breve!',
+      tone: aiPT.tom_comunicacao || 'formal mas acessível',
+      personality: aiPT.personalidade || 'profissional e atencioso'
+    };
+
+    // working_hours
+    out.working_hours = input?.working_hours || input?.clinica?.horario_funcionamento || null;
+
+    // services (unificar consultas/exames)
+    const unifiedServices = [];
+    if (Array.isArray(input?.services)) {
+      input.services.forEach(s => unifiedServices.push(s));
+    }
+    const consultas = input?.servicos?.consultas || [];
+    const exames = input?.servicos?.exames || [];
+    [...consultas, ...exames].forEach(s => {
+      unifiedServices.push({
+        name: s.nome || s.name,
+        category: s.categoria || s.category,
+        price: s.preco_particular || s.price,
+        description: s.descricao || s.description
+      });
+    });
+    if (unifiedServices.length > 0) {
+      out.services = unifiedServices;
+    }
+
+    // Manter dados originais também
+    return { ...input, ...out };
+  } catch (e) {
+    console.error('❌ Erro ao normalizar contexto:', e);
+    return input || getDefaultClinicContext({ name: clinicRow?.name });
+  }
 }
 
 // =====================================================
@@ -1381,11 +1522,11 @@ function generateGenericResponse(message, conversation) {
   const messageLower = message.toLowerCase();
   
   if (messageLower.includes('oi') || messageLower.includes('olá')) {
-    return 'Olá! Sou o assistente virtual da Clínica AtendeAI. Como posso ajudá-lo hoje? 😊';
+    return 'Olá! Sou o assistente virtual da clínica. Como posso ajudá-lo hoje? 😊';
   }
   
   if (messageLower.includes('nome')) {
-    return 'Sou o assistente virtual da Clínica AtendeAI. Como posso ajudá-lo? 😊';
+    return 'Sou o assistente virtual da clínica. Como posso ajudá-lo? 😊';
   }
   
   return 'Olá! Como posso ajudá-lo hoje? 😊';
@@ -1597,7 +1738,7 @@ function generateRuleBasedResponse(message, conversation) {
   
   // Saudações
   if (msg.includes('olá') || msg.includes('oi') || msg.includes('bom dia')) {
-    return `Olá! 👋 Sou o assistente virtual da Clínica AtendeAI.
+    return `Olá! 👋 Sou o assistente virtual da clínica.
 
 Como posso ajudá-lo hoje?
 🗓️ Agendar consulta
@@ -1820,10 +1961,22 @@ const server = createServer((req, res) => {
           console.log(`🏥 Clínica identificada: ${clinicId}`);
           
           if (!clinicId) {
-            console.log(`⚠️ Clínica não encontrada para número: ${toPhone}`);
-            const fallbackResponse = 'Desculpe, não consegui identificar sua clínica. Entre em contato diretamente.';
-            await sendWhatsAppMessage(from, fallbackResponse);
-            return;
+            const defaultClinicId = process.env.DEFAULT_CLINIC_ID;
+            if (defaultClinicId) {
+              console.log(`⚠️ Clínica não encontrada para número: ${toPhone}. Usando DEFAULT_CLINIC_ID=${defaultClinicId}`);
+              // Gerar resposta contextualizada usando o motor de conversação com clínica padrão
+              const response = await generateResponseViaConversationAPI(messageText, from, defaultClinicId);
+              const sendResult = await sendWhatsAppMessage(from, response);
+              console.log(`📤 Resultado do envio (clinic default):`, sendResult);
+              res.writeHead(200, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ status: 'ok', clinic_fallback: true }));
+              return;
+            } else {
+              console.log(`⚠️ Clínica não encontrada para número: ${toPhone} e DEFAULT_CLINIC_ID não configurado`);
+              const fallbackResponse = 'Desculpe, não consegui identificar sua clínica. Entre em contato diretamente.';
+              await sendWhatsAppMessage(from, fallbackResponse);
+              return;
+            }
           }
           
           // Gerar resposta contextualizada usando o motor de conversação

@@ -1,7 +1,7 @@
 const { Client } = require('pg');
 
 const client = new Client({
-  connectionString: process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/atendeai'
+  connectionString: process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/postgres'
 });
 
 const contextualizationData = {
@@ -271,10 +271,10 @@ async function updateESADIContext() {
     await client.connect();
     console.log('Conectado ao banco de dados');
 
-    const clinicId = '9981f126-a9b9-4c7d-819a-3380b9ee61de';
+    const clinicId = process.env.ESADI_CLINIC_ID || '9981f126-a9b9-4c7d-819a-3380b9ee61de';
     
     const query = `
-      UPDATE clinics 
+      UPDATE atendeai.clinics 
       SET contextualization_json = $1, updated_at = $2
       WHERE id = $3 AND status = 'active'
       RETURNING id, name, contextualization_json IS NOT NULL as has_context
