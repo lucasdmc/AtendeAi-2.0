@@ -367,7 +367,7 @@ class LLMOrchestrator {
       reschedule: `Não consegui entender sua solicitação de reagendamento na ${clinicName}. Pode reformular ou falar com um atendente humano?`,
       cancel: `Não consegui processar o cancelamento na ${clinicName}. Entre em contato com um atendente humano para ajudá-lo.`,
       information: `Desculpe, não consegui processar sua pergunta sobre a ${clinicName}. Pode reformular ou falar com um atendente humano?`,
-      greeting: 'Meu nome é Jessica! Sou a assistente virtual da ESADI. Como posso ajudá-lo hoje?',
+      greeting: aiPersonality.greeting || `Olá! Sou ${assistantName}, assistente virtual da ${clinicName}. Como posso ajudá-lo hoje?`,
       farewell: aiPersonality.farewell || `Obrigado por entrar em contato com a ${clinicName}! Até breve!`,
       emergency: `⚠️ ATENÇÃO: Se esta é uma emergência médica, procure atendimento imediato ou ligue para emergências (192).`,
       human_support: `Vou transferir você para um atendente humano da ${clinicName}. Aguarde um momento...`,

@@ -16,6 +16,7 @@ router.put('/:id', validateClinicData, clinicController.updateClinic);
 router.delete('/:id', clinicController.deleteClinic);
 
 // Rotas de Contextualização
+router.get('/:id/context', clinicController.getClinicContext); // Rota simplificada para o contexto completo
 router.get('/:id/contextualization', clinicController.getClinicContextualization);
 router.put('/:id/contextualization', validateContextualizationData, clinicController.updateClinicContextualization);
 router.get('/:id/intentions', clinicController.getClinicIntentions);
