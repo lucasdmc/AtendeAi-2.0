@@ -40,7 +40,7 @@ const config = {
     host: 'db.kytphnasmdvebmdvvwtx.supabase.co',
     port: 5432,
     user: 'postgres',
-    password: 'Supa201294base',
+    password: 'lify2025supa',
     database: 'postgres',
     ssl: { rejectUnauthorized: false }
   },
